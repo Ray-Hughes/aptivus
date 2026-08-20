@@ -1,0 +1,155 @@
+<!doctype html>
+<title>Aptivus - browser/server parity</title>
+<style>
+ body{background:#1b1c1f;color:#dfe1e5;font:13px -apple-system,sans-serif;padding:16px}
+ pre{background:#232427;padding:8px;border-radius:4px;overflow:auto;font-size:11px}
+ .ok{color:#39c06c} .bad{color:#ec5b5b} .muted{color:#8b8f96}
+</style>
+<h2>Browser vs server parity</h2>
+<div id="status" class="muted">booting Pyodide...</div>
+<pre id="out"></pre>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.11.0/sql-wasm.js"></script>
+<script>
+const out = document.getElementById("out");
+const status = document.getElementById("status");
+const log = (s) => { out.textContent += s + "\n"; };
+
+/* ---- worker plumbing ---------------------------------------------------- */
+const worker = new Worker("/static/engine-worker.js");
+let seq = 0; const pending = new Map();
+worker.onmessage = (e) => {
+  const p = pending.get(e.data.id);
+  if (p) { pending.delete(e.data.id); e.data.ok ? p.res(e.data.result) : p.rej(new Error(e.data.error)); }
+};
+const ask = (op, payload) => new Promise((res, rej) => {
+  const id = ++seq; pending.set(id, { res, rej });
+  worker.postMessage({ id, op, payload });
+});
+const post = (path, body) => fetch(path, { method: "POST",
+  headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+  .then((r) => r.json());
+
+/* ---- normalise a trace so two runs can be compared ---------------------- */
+function canon(t) {
+  if (!t || !t.steps) return { error: t && t.error };
+  const pool = t.pool || [];
+  return {
+    result: t.result, error: t.error, printed: t.printed,
+    truncated: t.truncated, collapsed: t.collapsed, funcs: t.funcs,
+    steps: t.steps.map((s) => ({
+      line: s.line, func: s.func, returned: s.returned,
+      changed: (s.changed || []).slice().sort(),
+      // resolve pool indices to values: the indices themselves are an
+      // implementation detail, the values are the contract
+      locals: Object.fromEntries(Object.keys(s.locals).sort()
+        .map((k) => [k, (pool[s.locals[k]] || {}).s])),
+    })),
+  };
+}
+const maskAddrs = (s) => s.replace(/0x[0-9a-f]+/g, "0xADDR");
+const same = (a, b) => maskAddrs(JSON.stringify(a)) === maskAddrs(JSON.stringify(b));
+
+(async () => {
+  await ask("ping", {});
+  status.textContent = "Pyodide ready. Running parity checks...";
+
+  const bundleText = await (await fetch("/api/dev/bundle")).text();
+  const bundle = JSON.parse(bundleText);
+  await ask("load_bundle", { text: bundleText });
+  const py = bundle.problems.filter((p) => p.kind === "python");
+  const sql = bundle.problems.filter((p) => p.kind === "sql");
+
+  let fails = 0, checks = 0;
+
+  /* ---- Python: run, trace, eval ---------------------------------------- */
+  for (const p of py) {
+    const code = p.solution;
+    const cases = p.tests;
+
+    const srv = await post("/api/submit", { id: p.id, code });
+    const br = await ask("run", { code, from_bundle: p.id, mode: p.mode,
+                                  func: p.func, unordered: p.unordered });
+    const sPass = srv.results.map((r) => r.passed);
+    const bPass = br.results.map((r) => r.passed);
+    const sGot = srv.results.map((r) => JSON.stringify(r.got));
+    const bGot = br.results.map((r) => JSON.stringify(r.got));
+    checks++;
+    const runOk = same(sPass, bPass) && same(sGot, bGot) && bPass.every(Boolean);
+    if (!runOk) { fails++; log("FAIL run   " + p.id + "\n  server " + sPass + "\n  browser " + bPass); }
+
+    const sT = canon(await post("/api/trace", { id: p.id, code, test: 0 }));
+    const bT = canon(await ask("trace", { code, from_bundle: p.id, case_index: 0,
+                                          mode: p.mode, func: p.func }));
+    checks++;
+    const traceOk = same(sT, bT);
+    if (!traceOk) {
+      fails++;
+      log("FAIL trace " + p.id + "  server=" + (sT.steps || []).length +
+          " browser=" + (bT.steps || []).length);
+      const n = Math.max((sT.steps || []).length, (bT.steps || []).length);
+      for (let i = 0; i < n; i++) {
+        if (!same(sT.steps[i], bT.steps[i])) {
+          log("  first divergence at step " + i +
+              "\n    server  " + JSON.stringify(sT.steps[i]) +
+              "\n    browser " + JSON.stringify(bT.steps[i]));
+          break;
+        }
+      }
+    }
+
+    // evaluate a real variable at a middle step
+    const mid = Math.floor(((sT.steps || []).length || 2) / 2);
+    const names = Object.keys((sT.steps && sT.steps[mid] && sT.steps[mid].locals) || {});
+    if (names.length) {
+      const expr = names[names.length - 1];
+      const sE = await post("/api/eval", { id: p.id, code, step: mid, expr, test: 0 });
+      const bE = await ask("eval", { code, from_bundle: p.id, case_index: 0,
+                                     step: mid, expr, mode: p.mode, func: p.func });
+      checks++;
+      if (maskAddrs(String(sE.repr)) !== maskAddrs(String(bE.repr))) {
+        fails++;
+        log("FAIL eval  " + p.id + " expr=" + expr +
+            "\n  server " + sE.repr + "\n  browser " + bE.repr);
+      }
+    }
+    log((runOk && traceOk ? "ok   " : "---  ") + p.id +
+        "  (" + (bT.steps || []).length + " steps)");
+  }
+
+  /* ---- SQL: sql.js in the browser vs sqlite3 on the server -------------- */
+  const SQL = await initSqlJs({ locateFile: (f) =>
+    "https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.11.0/" + f });
+  for (const p of sql) {
+    const db = new SQL.Database();
+    db.run(p.schema); db.run(p.seed);
+    let brows = [];
+    try {
+      const r = db.exec(p.solution);
+      brows = r.length ? r[0].values : [];
+    } catch (e) { log("FAIL sql   " + p.id + " -> " + e.message); fails++; db.close(); continue; }
+    db.close();
+    const srv = await post("/api/submit", { id: p.id, code: p.solution });
+    const s = srv.got ? srv.got.rows : [];
+    checks++;
+    const norm = (rows) => JSON.stringify(rows.map((r) => r.map((v) =>
+      typeof v === "number" ? Math.round(v * 1e6) / 1e6 : v)));
+    const ok = norm(s) === norm(brows) && srv.passed;
+    if (!ok) {
+      fails++;
+      log("FAIL sql   " + p.id + "\n  server rows " + s.length +
+          "\n  browser rows " + brows.length);
+    } else {
+      log("ok   " + p.id + "  (" + brows.length + " rows)");
+    }
+  }
+
+  const msg = fails === 0
+    ? "PARITY OK - " + checks + " checks across " + (py.length + sql.length) + " problems"
+    : fails + " MISMATCH(ES) out of " + checks + " checks";
+  status.innerHTML = '<b class="' + (fails ? "bad" : "ok") + '">' + msg + "</b>";
+  window.__parity = { fails, checks, problems: py.length + sql.length };
+})().catch((e) => {
+  status.innerHTML = '<b class="bad">crashed: ' + e.message + "</b>";
+  window.__parity = { fails: -1, error: e.message };
+});
+</script>

@@ -19,8 +19,10 @@ import urllib.parse
 
 import coach
 import tracer
+from core import runner
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(ROOT)
@@ -123,150 +125,30 @@ def public_problem(p):
 
 
 # --------------------------------------------------------------------------
-# Python execution
+# Python execution - delegated to core.engine, run out-of-process
 # --------------------------------------------------------------------------
-HARNESS = r'''
-import json, sys, copy, traceback
-sys.setrecursionlimit(20000)
-import solution
-
-def norm(v):
-    if isinstance(v, set):
-        return sorted(norm(x) for x in v)
-    if isinstance(v, tuple):
-        return [norm(x) for x in v]
-    if isinstance(v, list):
-        return [norm(x) for x in v]
-    if isinstance(v, dict):
-        return {str(k): norm(x) for k, x in v.items()}
-    return v
-
-cfg = json.load(open("cases.json"))
-fname = cfg["func"]
-fn = getattr(solution, fname, None)
-out = []
-if fn is None:
-    names = [n for n in dir(solution) if not n.startswith("_") and callable(getattr(solution, n))]
-    print(json.dumps({"fatal": "No function named '%s' found. Defined: %s" % (fname, names)}))
-    sys.exit(0)
-for case in cfg["cases"]:
-    args = copy.deepcopy(case["args"])
-    try:
-        res = fn(*args)
-        out.append({"ok": True, "value": norm(res)})
-    except Exception as e:
-        out.append({"ok": False, "error": "%s: %s" % (type(e).__name__, e),
-                    "trace": traceback.format_exc().splitlines()[-3:]})
-print("---HARNESS---")
-print(json.dumps({"results": out}))
-'''
-
-
-def run_python_file(workdir, argv, stdin_data=""):
-    try:
-        proc = subprocess.run(
-            argv, cwd=workdir, input=stdin_data, capture_output=True,
-            text=True, timeout=TIMEOUT_SEC,
-        )
-        return proc.returncode, proc.stdout, proc.stderr, False
-    except subprocess.TimeoutExpired:
-        return -1, "", "Timed out after %ds (infinite loop? or too slow)" % TIMEOUT_SEC, True
-
-
 def run_python_freeform(code, stdin_data):
-    """Just execute the file with the given stdin, like HackerRank's Run Code."""
-    with tempfile.TemporaryDirectory() as td:
-        with open(os.path.join(td, "solution.py"), "w") as f:
-            f.write(code)
-        rc, out, err, to = run_python_file(td, [sys.executable, "solution.py"], stdin_data)
-        return {"stdout": out, "stderr": err, "timeout": to, "returncode": rc}
+    """Execute the file with the given stdin, like HackerRank's Run Code."""
+    res, err = runner.call({"op": "scratch", "code": code, "stdin": stdin_data})
+    if err:
+        return {"stdout": "", "stderr": err,
+                "timeout": "Timed out" in err, "returncode": -1}
+    return {"stdout": res.get("stdout", ""), "stderr": res.get("stderr", ""),
+            "timeout": False, "returncode": 0}
 
 
 def run_python_tests(problem, code, tests):
-    mode = problem.get("mode", "function")
-    results = []
-    if mode == "stdin":
-        with tempfile.TemporaryDirectory() as td:
-            with open(os.path.join(td, "solution.py"), "w") as f:
-                f.write(code)
-            for t in tests:
-                rc, out, err, to = run_python_file(
-                    td, [sys.executable, "solution.py"], t.get("stdin", ""))
-                got = out.strip()
-                exp = str(t["expected"]).strip()
-                results.append({
-                    "input": t.get("stdin", ""),
-                    "expected": exp,
-                    "got": got,
-                    "passed": (got == exp) and not to and rc == 0,
-                    "error": err.strip() if (err.strip() and rc != 0) or to else "",
-                    "sample": bool(t.get("sample")),
-                })
-        return results
-
-    with tempfile.TemporaryDirectory() as td:
-        with open(os.path.join(td, "solution.py"), "w") as f:
-            f.write(code)
-        with open(os.path.join(td, "harness.py"), "w") as f:
-            f.write(HARNESS)
-        with open(os.path.join(td, "cases.json"), "w") as f:
-            json.dump({"func": problem.get("func", "solve"),
-                       "cases": [{"args": t["args"]} for t in tests]}, f)
-        rc, out, err, to = run_python_file(td, [sys.executable, "harness.py"], "")
-
-    if to:
-        return [{"input": _fmt_args(t["args"]), "expected": t["expected"], "got": "",
-                 "passed": False, "error": "Timed out after %ds" % TIMEOUT_SEC,
-                 "sample": bool(t.get("sample"))} for t in tests]
-
-    payload, user_stdout = None, out
-    if "---HARNESS---" in out:
-        user_stdout, _, tail = out.partition("---HARNESS---")
-        try:
-            payload = json.loads(tail.strip())
-        except Exception:
-            payload = None
-    if payload is None:
-        try:
-            payload = json.loads(out.strip())
-        except Exception:
-            payload = None
-    if payload is None or "fatal" in (payload or {}):
-        msg = (payload or {}).get("fatal") if payload else (err.strip() or "Your code crashed before tests ran.")
-        return [{"input": _fmt_args(t["args"]), "expected": t["expected"], "got": "",
-                 "passed": False, "error": msg, "sample": bool(t.get("sample"))} for t in tests]
-
-    for t, r in zip(tests, payload["results"]):
-        if not r["ok"]:
-            results.append({"input": _fmt_args(t["args"]), "expected": t["expected"], "got": "",
-                            "passed": False, "error": r["error"], "sample": bool(t.get("sample")),
-                            "stdout": user_stdout.strip()})
-            continue
-        got = r["value"]
-        exp = t["expected"]
-        passed = compare(got, exp, t.get("unordered") or problem.get("unordered"))
-        results.append({"input": _fmt_args(t["args"]), "expected": exp, "got": got,
-                        "passed": passed, "error": "", "sample": bool(t.get("sample")),
-                        "stdout": user_stdout.strip()})
-    return results
-
-
-def _fmt_args(args):
-    return ", ".join(json.dumps(a) for a in args)
-
-
-def compare(got, exp, unordered=False):
-    if unordered and isinstance(got, list) and isinstance(exp, list):
-        try:
-            return sorted(map(json.dumps, got)) == sorted(map(json.dumps, exp))
-        except Exception:
-            pass
-    if isinstance(exp, float) or isinstance(got, float):
-        try:
-            return abs(float(got) - float(exp)) < 1e-6
-        except Exception:
-            return False
-    return json.loads(json.dumps(got)) == json.loads(json.dumps(exp))
+    res, err = runner.call({
+        "op": "run", "code": code, "cases": tests,
+        "mode": problem.get("mode", "function"),
+        "func": problem.get("func", ""),
+        "unordered": bool(problem.get("unordered")),
+    })
+    if err:
+        return [{"input": "", "expected": t.get("expected"), "got": None,
+                 "passed": False, "error": err, "sample": bool(t.get("sample"))}
+                for t in tests]
+    return res["results"]
 
 
 # --------------------------------------------------------------------------
@@ -400,10 +282,34 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         p = u.path
         if p in ("/", "/index.html"):
             return self._file(os.path.join(STATIC, "index.html"), "text/html; charset=utf-8")
+        if p == "/static/engine-worker.js":
+            return self._file(os.path.join(REPO, "web", "static", "engine-worker.js"),
+                              "application/javascript")
+        if p == "/parity":
+            return self._file(os.path.join(REPO, "web", "static", "parity.html"),
+                              "text/html; charset=utf-8")
         if p == "/static/app.js":
             return self._file(os.path.join(STATIC, "app.js"), "application/javascript")
         if p == "/static/style.css":
             return self._file(os.path.join(STATIC, "style.css"), "text/css")
+        if p == "/core/engine.py":
+            # The browser worker loads the same engine source the server runs.
+            return self._file(os.path.join(REPO, "core", "engine.py"),
+                              "text/x-python; charset=utf-8")
+        if p == "/api/dev/bundle":
+            # Everything needed to check browser/server parity, including hidden
+            # tests and reference solutions. Dev only - the hosted product must
+            # never serve this.
+            if os.environ.get("APTIVUS_DEV") != "1":
+                return self._send(404, {"error": "not found"})
+            return self._send(200, {"problems": [
+                {"id": x["id"], "kind": x["kind"], "mode": x.get("mode", "function"),
+                 "func": x.get("func", ""), "difficulty": x.get("difficulty"),
+                 "tests": x.get("tests", []), "solution": x.get("solution", ""),
+                 "schema": x.get("schema", ""), "seed": x.get("seed", ""),
+                 "ordered": x.get("ordered", False),
+                 "unordered": bool(x.get("unordered"))}
+                for x in PROBLEMS.values()]})
         if p == "/static/logo.svg":
             return self._file(os.path.join(STATIC, "logo.svg"), "image/svg+xml")
         if p == "/api/problems":

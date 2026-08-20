@@ -6,166 +6,12 @@ which local variables changed. Shows YOUR code running, not a canned animation.
 SQL: split a WITH clause into its CTEs and run each one on its own, which is the
 single most useful SQL debugging technique and the one this repo's docs recommend.
 """
-import json
 import os
 import re
-import subprocess
 import sys
-import tempfile
 
-MAX_STEPS = 600
-
-TRACE_HARNESS = r'''
-import copy, json, os, pprint, sys
-
-SOL = os.path.abspath("solution.py")
-MAX_STEPS = %d
-steps = []
-state = {"truncated": False, "collapsed": False, "n": 0}
-
-
-MAX_POOL = 1200
-PRETTY_LIMIT = 20000
-
-pool = []
-pool_ix = {}
-
-
-def short(v):
-    try:
-        r = repr(v)
-    except Exception:
-        return "<unrepr-able>"
-    return r if len(r) <= 160 else r[:157] + "..."
-
-
-def val_id(v):
-    """Intern one value and return its index. Identical values across steps
-    share an entry, which is what makes a full pretty copy affordable."""
-    try:
-        r = repr(v)
-    except Exception:
-        r = "<unrepr-able>"
-    if len(r) > PRETTY_LIMIT:
-        pretty = r[:PRETTY_LIMIT] + "\n... (truncated)"
-    else:
-        try:
-            pretty = pprint.pformat(v, width=76, sort_dicts=False)
-        except Exception:
-            pretty = r
-    if pretty in pool_ix:
-        return pool_ix[pretty]
-    if len(pool) >= MAX_POOL:
-        return -1
-    try:
-        n = len(v)
-    except Exception:
-        n = None
-    i = len(pool)
-    pool.append({"s": r if len(r) <= 160 else r[:157] + "...",
-                 "p": pretty, "t": type(v).__name__, "n": n})
-    pool_ix[pretty] = i
-    return i
-
-
-def snap(loc):
-    # "." names are the implicit arguments CPython gives comprehension frames.
-    return {k: val_id(v) for k, v in loc.items()
-            if not k.startswith("__") and not k.startswith(".")}
-
-
-# Comprehensions and lambdas get their own frames. Stepping through them
-# interleaved with the real function makes the flow unreadable, so collapse them.
-SYNTHETIC = {"<lambda>", "<genexpr>", "<listcomp>", "<dictcomp>", "<setcomp>"}
-
-
-def tracer(frame, event, arg):
-    if frame.f_code.co_filename != SOL:
-        return None
-    if frame.f_code.co_name in SYNTHETIC:
-        state["collapsed"] = True
-        return None
-    if event == "call":
-        return tracer
-    if event not in ("line", "return"):
-        return tracer
-    if state["n"] >= MAX_STEPS:
-        state["truncated"] = True
-        return None
-    if EV is not None:
-        # Same counting as trace mode, so step indices match exactly.
-        if not ev["done"] and state["n"] == EV["step"]:
-            do_eval(frame)
-        state["n"] += 1
-        return tracer
-    row = {"line": frame.f_lineno, "func": frame.f_code.co_name,
-           "fid": id(frame), "locals": snap(frame.f_locals)}
-    if event == "return":
-        row["returned"] = short(arg)
-    steps.append(row)
-    state["n"] += 1
-    return tracer
-
-
-cfg = json.load(open("cases.json"))
-EV = cfg.get("eval")            # {"step": int, "expr": str} when evaluating
-ev = {"done": False}
-result, error = None, None
-
-
-def do_eval(frame):
-    """Evaluate the user's expression in this frame, once."""
-    ev["done"] = True
-    try:
-        val = eval(compile(EV["expr"], "<expr>", "eval"),
-                   frame.f_globals, frame.f_locals)
-    except Exception as e:
-        ev["ok"] = False
-        ev["error"] = "%%s: %%s" %% (type(e).__name__, e)
-        return
-    ev["ok"] = True
-    ev["repr"] = short(val)
-    ev["type"] = type(val).__name__
-    try:
-        ev["len"] = len(val)
-    except Exception:
-        ev["len"] = None
-    try:
-        ev["pretty"] = pprint.pformat(val, width=76, sort_dicts=False)
-    except Exception:
-        ev["pretty"] = ev["repr"]
-
-if cfg["mode"] == "function":
-    import solution                      # module body runs untraced
-    fn = getattr(solution, cfg["func"], None)
-    if fn is None:
-        error = "No function named %%r in your code." %% cfg["func"]
-    else:
-        sys.settrace(tracer)
-        try:
-            result = fn(*copy.deepcopy(cfg["args"]))
-        except Exception as e:
-            error = "%%s: %%s" %% (type(e).__name__, e)
-        finally:
-            sys.settrace(None)
-else:
-    sys.settrace(tracer)                 # trace the module body itself
-    try:
-        import solution
-    except Exception as e:
-        error = "%%s: %%s" %% (type(e).__name__, e)
-    finally:
-        sys.settrace(None)
-
-print("---TRACE---")
-if EV is not None:
-    print(json.dumps({"eval": ev}))
-else:
-    print(json.dumps({"steps": steps, "truncated": state["truncated"],
-                      "collapsed": state["collapsed"], "pool": pool,
-                      "result": short(result), "error": error}))
-''' % MAX_STEPS
-
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from core import runner
 
 def pick_case(problem, test_index):
     """Resolve a case selector to (case, cfg). test_index may be an int index into
@@ -185,95 +31,34 @@ def pick_case(problem, test_index):
                   "func": problem.get("func", ""), "args": case.get("args", [])}
 
 
-def _run_traced(problem, code, cfg_extra, test_index=0):
-    """Execute one case under the harness. Returns (payload, printed, err)."""
+def trace_python(problem, code, test_index=0):
+    """Run one case under the tracer and return per-step variable state."""
     case, cfg = pick_case(problem, test_index)
     if case is None:
-        return None, "", "This problem has no test cases to trace."
-    cfg.update(cfg_extra)
-
-    with tempfile.TemporaryDirectory() as td:
-        with open(os.path.join(td, "solution.py"), "w") as f:
-            f.write(code)
-        with open(os.path.join(td, "trace_run.py"), "w") as f:
-            f.write(TRACE_HARNESS)
-        with open(os.path.join(td, "cases.json"), "w") as f:
-            json.dump(cfg, f)
-        try:
-            proc = subprocess.run([sys.executable, "trace_run.py"], cwd=td,
-                                  input=case.get("stdin", ""), capture_output=True,
-                                  text=True, timeout=20)
-        except subprocess.TimeoutExpired:
-            return None, "", ("Timed out. Tracing is slower than a normal run, so a "
-                              "near-infinite loop will hit this.")
-
-    out = proc.stdout
-    if "---TRACE---" not in out:
-        return None, "", (proc.stderr.strip() or
-                          "Your code crashed before tracing could start.")[:2000]
-    printed, _, tail = out.partition("---TRACE---")
-    try:
-        return json.loads(tail.strip()), printed.strip(), None
-    except Exception:
-        return None, printed, "Could not read the trace output."
+        return {"error": "This problem has no test cases to trace."}
+    res, err = runner.call({"op": "trace", "code": code, "case": case,
+                            "mode": cfg["mode"], "func": cfg["func"]},
+                           timeout=runner.TRACE_TIMEOUT)
+    if err:
+        return {"error": err}
+    res["case"] = {"args": case.get("args"), "stdin": case.get("stdin"),
+                   "expected": case.get("expected"), "label": case.get("label"),
+                   "file": bool(case.get("file"))}
+    return res
 
 
 def eval_at_step(problem, code, step, expr, test_index=0):
     """Re-run to `step` and evaluate `expr` in that frame."""
-    if not expr.strip():
-        return {"error": "Type an expression."}
-    payload, _printed, err = _run_traced(
-        problem, code, {"eval": {"step": int(step), "expr": expr}}, test_index)
-    if err:
-        return {"error": err}
-    ev = (payload or {}).get("eval") or {}
-    if not ev.get("done"):
-        return {"error": "That step was never reached on this run."}
-    if not ev.get("ok"):
-        return {"error": ev.get("error", "Could not evaluate that.")}
-    return {"repr": ev["repr"], "pretty": ev["pretty"],
-            "type": ev["type"], "len": ev["len"]}
-
-
-def trace_python(problem, code, test_index=0):
-    """Run one case under the tracer and return per-step variable state."""
-    case, _cfg = pick_case(problem, test_index)
+    case, cfg = pick_case(problem, test_index)
     if case is None:
         return {"error": "This problem has no test cases to trace."}
-
-    payload, printed, err = _run_traced(problem, code, {}, test_index)
+    res, err = runner.call({"op": "eval", "code": code, "case": case,
+                            "step": step, "expr": expr,
+                            "mode": cfg["mode"], "func": cfg["func"]},
+                           timeout=runner.TRACE_TIMEOUT)
     if err:
         return {"error": err}
-
-    # Diff each step against its own frame's previous state. The exception is a
-    # frame's FIRST step: diff that against the caller, so entering a closure
-    # reports the arguments rather than every captured variable.
-    steps, prev_by_frame, last = [], {}, {}
-    for s in payload["steps"]:
-        loc = s["locals"]
-        prev = prev_by_frame.get(s["fid"])
-        if prev is None:
-            prev = last
-        s["changed"] = [k for k, v in loc.items() if prev.get(k) != v]
-        prev_by_frame[s["fid"]] = dict(loc)
-        last = dict(loc)
-        steps.append(s)
-
-    return {
-        "kind": "python",
-        "source": code.split("\n"),
-        "steps": steps,
-        "pool": payload.get("pool", []),
-        "truncated": payload["truncated"],
-        "collapsed": payload.get("collapsed", False),
-        "funcs": sorted({s["func"] for s in steps}),
-        "result": payload["result"],
-        "error": payload["error"],
-        "printed": printed,
-        "case": {"args": case.get("args"), "stdin": case.get("stdin"),
-                 "expected": case.get("expected"), "label": case.get("label"),
-                 "file": bool(case.get("file"))},
-    }
+    return res
 
 
 # ---------------------------------------------------------------------------

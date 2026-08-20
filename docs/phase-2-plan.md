@@ -72,11 +72,38 @@ rework to run in a Web Worker instead of a subprocess. The tracing logic itself 
 over — it is the same CPython.
 
 **Recommendation: move execution to the browser.** This is the decision that makes the
-free tier economically viable and removes the scariest security surface. Prove it with a
-spike (M0 below) before committing to the rest.
+free tier economically viable and removes the scariest security surface.
 
-One consequence to design around: **hidden tests and reference solutions must not be sent
-to the client** unless the user has paid or spent for them. Grading a submission client-side
+### M0 result — done Aug 20, it holds
+
+`core/engine.py` is now the single implementation of run/trace/eval. The local server
+runs it in a subprocess; `web/static/engine-worker.js` runs *the same file* in Pyodide in
+a Web Worker. A parity harness at `/parity` runs both and diffs them.
+
+**57 checks across all 27 problems, zero mismatches** (`docs/parity.png`): per-test
+pass/fail and return values, full step-by-step traces including every variable at every
+step, expression evaluation mid-trace, and SQL results via `sql.js` against SQLite.
+
+Three environment differences surfaced, all now handled:
+
+1. **Memory addresses in reprs** (`<function walk at 0x…>`) differ by construction.
+   Masked when comparing; nothing to fix.
+2. **Set iteration order** differs between CPython and the WASM build, because it is
+   hash-derived. Fixed properly rather than papered over: `stable_repr()` renders sets
+   sorted, so a set now displays the same way twice in a row anywhere. That is a better
+   product, not just a greener test.
+3. **JSON has one number type**, so parsing problem data in JavaScript turns `1.0` into
+   `1` and cannot turn it back. Fixed by shipping problem data to the browser as text and
+   parsing it in Python, which keeps ints and floats distinct.
+
+Point 3 is the one to remember when wiring the real client: **parse problem data in
+Python, not in JS.**
+
+Startup cost measured informally: Pyodide boots in a few seconds on first load and is
+cached afterwards; each subsequent run is effectively instant.
+
+One consequence to design around, and the reason `/api/dev/bundle` is gated behind an
+env var: **hidden tests and reference solutions must not be sent to the client** unless the user has paid or spent for them. Grading a submission client-side
 means either shipping the expected outputs (and losing the metering) or keeping a
 server-side check for the hidden set. Simplest workable split: run sample tests in the
 browser, submit to the server for the hidden set (cheap — the server runs the *reference*
@@ -343,7 +370,7 @@ Roughly, for one person working evenings and weekends:
 
 | | Milestone | Estimate | Why this order |
 |---|---|---|---|
-| **M0** | **Pyodide spike** — runner, tracer, SQL in a Web Worker, at parity with today | 1 week | Everything else assumes it. If it fails, the plan changes shape, so find out first. |
+| **M0** | ~~Pyodide spike~~ **done Aug 20** — see below | — | Everything else assumed it. It holds. |
 | **M1** | Django skeleton, accounts, magic links, email | 1–1.5 weeks | Nothing is multi-user until this exists. |
 | **M2** | Landing page + dashboard + settings | 1 week | Makes it feel like a product; needed for any real feedback. |
 | **M3** | Entitlements, daily limits, gem ledger | 1 week | Server-authoritative from day one; retrofitting metering is painful. |
