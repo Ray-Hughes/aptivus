@@ -17,6 +17,11 @@ import tempfile
 import traceback
 import urllib.parse
 
+import coach
+import tracer
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 ROOT = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(ROOT)
 STATIC = os.path.join(ROOT, "static")
@@ -423,6 +428,26 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             entry.update(body.get("patch", {}))
             save_progress(prog)
             return self._send(200, {"ok": True})
+
+        if p == "/api/trace":
+            pid = body.get("id")
+            if pid not in PROBLEMS:
+                return self._send(404, {"error": "no such problem"})
+            pr = PROBLEMS[pid]
+            if pr["kind"] == "sql":
+                return self._send(200, tracer.step_sql(pr, body.get("code", ""), run_sql))
+            return self._send(200, tracer.trace_python(
+                pr, body.get("code", ""), int(body.get("test", 0))))
+
+        if p == "/api/ask":
+            pid = body.get("id")
+            if pid not in PROBLEMS:
+                return self._send(404, {"error": "no such problem"})
+            q = (body.get("question") or "").strip()
+            if not q:
+                return self._send(400, {"error": "empty question"})
+            return self._send(200, coach.ask(
+                PROBLEMS[pid], body.get("code", ""), q, body.get("results")))
 
         if p == "/api/scratch":
             return self._send(200, run_python_freeform(body.get("code", ""), body.get("stdin", "")))

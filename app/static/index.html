@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>FedPrep — HackerRank clone</title>
+<title>whetstone</title>
 <link rel="stylesheet" href="/static/style.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
@@ -14,10 +14,16 @@
 <body>
 
 <header id="topbar">
-  <div class="brand">H<span>R</span></div>
+  <div class="brand">
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+      <rect x="2" y="15" width="20" height="5" rx="2.5" fill="#6b7280"/>
+      <path d="M5.5 13.2 L17.2 3.2 L19.6 5.6 L8.6 14.2 Z" fill="#39c06c"/>
+    </svg>
+    <span class="wordmark">whetstone</span>
+  </div>
   <nav id="tabs">
     <button class="tab active" data-view="list">Problems</button>
-    <button class="tab" data-view="solve">Coding&nbsp;1</button>
+    <button class="tab" data-view="solve">Solve</button>
     <button class="tab" data-view="mock">Mock&nbsp;Interview</button>
   </nav>
   <div class="spacer"></div>
@@ -26,7 +32,6 @@
     <button id="tstart">Start</button>
     <button id="treset">Reset</button>
   </div>
-  <div class="candidate">Candidate</div>
 </header>
 
 <!-- ===================== PROBLEM LIST ===================== -->
@@ -55,11 +60,25 @@
       <div class="pane-head">
         <span id="p-title">—</span>
         <div>
+          <button id="btn-ask" class="ghost accent">Ask</button>
           <button id="btn-hint" class="ghost">Hint</button>
           <button id="btn-solution" class="ghost">Solution</button>
         </div>
       </div>
       <div id="p-body" class="pane-body"></div>
+      <div id="ask-panel" class="hidden">
+        <div class="ask-head">
+          <span>Ask about this problem</span>
+          <button id="ask-close" class="ghost">Close</button>
+        </div>
+        <div id="ask-log"></div>
+        <textarea id="ask-input" rows="3" spellcheck="false"
+          placeholder="e.g. I don't understand why seen[p] = i comes after the check"></textarea>
+        <div class="ask-foot">
+          <span class="muted small">Your code and test output are sent along automatically.</span>
+          <button id="ask-send" class="primary">Ask</button>
+        </div>
+      </div>
     </div>
     <div class="gutter" data-drag="1"></div>
     <div id="pane-editor" class="pane">
@@ -73,6 +92,7 @@
       <div class="editor-foot">
         <span id="pos">Line: 1 Col: 1</span>
         <div>
+          <button id="btn-trace" class="secondary">Trace</button>
           <button id="btn-run" class="secondary">Run Code</button>
           <button id="btn-submit" class="primary">Submit</button>
         </div>

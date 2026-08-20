@@ -64,14 +64,26 @@ function makeEditor() {
                                               : cm.replaceSelection("    "),
       },
     });
+    window.__cm = cm;
     cm.on("cursorActivity", () => {
       const c = cm.getCursor();
       $("#pos").textContent = "Line: " + (c.line + 1) + " Col: " + (c.ch + 1);
     });
+    let marked = null;
     return {
       get: () => cm.getValue(), set: (v) => cm.setValue(v),
       mode: (m) => cm.setOption("mode", m),
       focus: () => cm.focus(), refresh: () => cm.refresh(),
+      highlight: (lineNo) => {
+        if (marked !== null) cm.removeLineClass(marked, "background", "cm-traceline");
+        marked = null;
+        if (lineNo == null) return;
+        const l = lineNo - 1;
+        if (l < 0 || l >= cm.lineCount()) return;
+        marked = l;
+        cm.addLineClass(l, "background", "cm-traceline");
+        cm.scrollIntoView({ line: l, ch: 0 }, 80);
+      },
     };
   }
   const ta = document.createElement("textarea");
@@ -86,7 +98,8 @@ function makeEditor() {
   });
   host.appendChild(ta);
   return { get: () => ta.value, set: (v) => { ta.value = v; },
-           mode: () => {}, focus: () => ta.focus(), refresh: () => {} };
+           mode: () => {}, focus: () => ta.focus(), refresh: () => {},
+           highlight: () => {} };
 }
 
 /* ------------------------------------------------------------------ */
@@ -143,7 +156,10 @@ function daysLeft() {
 /* ------------------------------------------------------------------ */
 async function openProblem(id) {
   const p = await fetch("/api/problem/" + id).then((r) => r.json());
-  CUR = p; hintIdx = 0;
+  CUR = p; hintIdx = 0; TRACE = null;
+  if (EDITOR.highlight) EDITOR.highlight(null);
+  $("#ask-panel").classList.add("hidden");
+  $("#ask-log").innerHTML = "";
   if (location.hash !== "#/p/" + id) history.replaceState(null, "", "#/p/" + id);
   show("solve");
   $("#p-title").textContent = p.title;
@@ -407,6 +423,13 @@ window.addEventListener("DOMContentLoaded", () => {
   $("#btn-run").onclick = () => (CUR && CUR.mode === "stdin" && $("#io-input").value.trim())
     ? scratchRun() : runCode();
   $("#btn-submit").onclick = submitCode;
+  $("#btn-trace").onclick = runTrace;
+  $("#btn-ask").onclick = toggleAsk;
+  $("#ask-close").onclick = toggleAsk;
+  $("#ask-send").onclick = sendAsk;
+  $("#ask-input").addEventListener("keydown", (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); sendAsk(); }
+  });
   $("#btn-hint").onclick = showHint;
   $("#btn-solution").onclick = showSolution;
   $("#btn-reset").onclick = () => {
@@ -416,6 +439,12 @@ window.addEventListener("DOMContentLoaded", () => {
   $("#treset").onclick = () => resetTimer(45);
   document.addEventListener("keydown", (e) => {
     if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); submitCode(); }
+    const typing = /^(TEXTAREA|INPUT)$/.test((e.target.tagName || "")) ||
+                   e.target.closest(".CodeMirror");
+    if (TRACE && !typing && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
+      e.preventDefault();
+      setStep(TRACE.idx + (e.key === "ArrowRight" ? 1 : -1));
+    }
   });
   initDrag(); paint();
   loadAll().then(() => {
@@ -423,3 +452,176 @@ window.addEventListener("DOMContentLoaded", () => {
     if (m) openProblem(decodeURIComponent(m[1]));
   });
 });
+
+/* ------------------------------------------------------------------ */
+/* trace                                                               */
+/* ------------------------------------------------------------------ */
+let TRACE = null;
+
+async function runTrace() {
+  if (!CUR) return;
+  $("#io-output").innerHTML = '<div class="muted center">Tracing...</div>';
+  const res = await fetch("/api/trace", { method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id: CUR.id, code: EDITOR.get() }) }).then((r) => r.json());
+  if (res.kind === "sql") return renderSqlTrace(res);
+  return renderPyTrace(res);
+}
+
+function renderPyTrace(res) {
+  if (res.error && !res.steps) {
+    $("#io-output").innerHTML = '<div class="banner bad">' + escapeHtml(res.error) + "</div>";
+    return;
+  }
+  if (!res.steps || !res.steps.length) {
+    $("#io-output").innerHTML = '<div class="banner bad">Nothing was traced. ' +
+      'Did you write the function yet?</div>';
+    return;
+  }
+  TRACE = { steps: res.steps, source: res.source, idx: 0, res: res };
+  const c = res.case;
+  const inp = c.stdin ? c.stdin : (c.args || []).map((a) => JSON.stringify(a)).join(", ");
+  $("#io-output").innerHTML =
+    '<div class="trace-note">Tracing with input <b>' + escapeHtml(inp) + "</b>" +
+    (c.expected !== undefined ? " &middot; expected " + escapeHtml(JSON.stringify(c.expected)) : "") +
+    "</div>" +
+    '<div class="trace-bar">' +
+    '<button id="t-prev">&larr;</button>' +
+    '<input id="t-range" type="range" min="0" max="' + (res.steps.length - 1) + '" value="0">' +
+    '<button id="t-next">&rarr;</button>' +
+    '<span class="step-count" id="t-count"></span></div>' +
+    '<div class="trace-line" id="t-line"></div>' +
+    '<table class="vars"><thead><tr><th>variable</th><th>value</th></tr></thead>' +
+    '<tbody id="t-vars"></tbody></table>' +
+    '<div id="t-end"></div>';
+  $("#t-prev").onclick = () => setStep(TRACE.idx - 1);
+  $("#t-next").onclick = () => setStep(TRACE.idx + 1);
+  $("#t-range").oninput = (e) => setStep(+e.target.value);
+  setStep(0);
+}
+
+function setStep(i) {
+  if (!TRACE) return;
+  i = Math.max(0, Math.min(TRACE.steps.length - 1, i));
+  TRACE.idx = i;
+  const s = TRACE.steps[i];
+  const src = (TRACE.source[s.line - 1] || "").trim();
+  $("#t-range").value = i;
+  $("#t-count").textContent = (i + 1) + " / " + TRACE.steps.length;
+  $("#t-prev").disabled = i === 0;
+  $("#t-next").disabled = i === TRACE.steps.length - 1;
+  $("#t-line").innerHTML = "<b>line " + s.line + "</b>  " + escapeHtml(src) +
+    (s.returned !== undefined
+      ? '<br><span class="ok">returns ' + escapeHtml(s.returned) + "</span>" : "") +
+    '<br><span class="muted small">' +
+    (s.returned !== undefined ? "this line has just finished"
+                              : "about to run this line") + "</span>";
+  const names = Object.keys(s.locals).sort();
+  $("#t-vars").innerHTML = names.length
+    ? names.map((n) =>
+        '<tr class="' + (s.changed.indexOf(n) >= 0 ? "changed" : "") + '">' +
+        '<td class="name">' + escapeHtml(n) + "</td><td>" +
+        escapeHtml(s.locals[n]) + "</td></tr>").join("")
+    : '<tr><td colspan="2" class="muted">no local variables yet</td></tr>';
+  if (i === TRACE.steps.length - 1) {
+    const r = TRACE.res;
+    let end = "";
+    if (r.truncated) end += '<div class="trace-note">Trace stopped at the step limit ' +
+      "(the run was longer than the tracer records).</div>";
+    if (r.error) end += '<div class="banner bad">' + escapeHtml(r.error) + "</div>";
+    else end += '<div class="banner ok">returned ' + escapeHtml(r.result) + "</div>";
+    if (r.printed) end += '<p class="muted small">your prints</p><pre class="out">' +
+      escapeHtml(r.printed) + "</pre>";
+    $("#t-end").innerHTML = end;
+  } else {
+    $("#t-end").innerHTML = "";
+  }
+  if (EDITOR.highlight) EDITOR.highlight(s.line);
+}
+
+function renderSqlTrace(res) {
+  let h = "";
+  if (res.note) h += '<div class="trace-note">' + escapeHtml(res.note) + "</div>";
+  res.steps.forEach((st, i) => {
+    const rows = st.error
+      ? '<pre class="out bad">' + escapeHtml(st.error) + "</pre>"
+      : '<p class="muted small">' + st.rows.length + " rows</p>" + tableHtml(st.cols, st.rows);
+    h += '<details class="cte-step"' + (i === res.steps.length - 1 ? " open" : "") +
+      "><summary>step " + (i + 1) + ": " + escapeHtml(st.name) + "</summary>" +
+      '<div class="inner">' + rows + "</div></details>";
+  });
+  if (res.final) {
+    h += '<details class="cte-step" open><summary>final result</summary><div class="inner">' +
+      (res.final.error ? '<pre class="out bad">' + escapeHtml(res.final.error) + "</pre>"
+        : '<p class="muted small">' + res.final.rows.length + " rows</p>" +
+          tableHtml(res.final.cols, res.final.rows)) + "</div></details>";
+  }
+  if (res.plan && !res.plan.error) {
+    h += '<details class="cte-step"><summary>query plan</summary><div class="inner">' +
+      tableHtml(res.plan.cols, res.plan.rows) + "</div></details>";
+  }
+  $("#io-output").innerHTML = h;
+}
+
+/* ------------------------------------------------------------------ */
+/* ask                                                                 */
+/* ------------------------------------------------------------------ */
+function lastResultsText() {
+  const el = $("#io-output");
+  if (!el) return "";
+  const t = el.innerText || "";
+  return t.indexOf("Run Code to see") >= 0 ? "" : t.slice(0, 1500);
+}
+
+const ASK_REASONS = {
+  install: "The <code>anthropic</code> package is not installed, so answers cannot be " +
+    "generated here. Run <code>pip install anthropic</code> to enable it, or paste the " +
+    "prompt below into any AI tool.",
+  auth: "No working Anthropic credentials were found. Set <code>ANTHROPIC_API_KEY</code> " +
+    "(or run <code>ant auth login</code>), or paste the prompt below into any AI tool.",
+  ratelimit: "Rate limited. Paste the prompt below into any AI tool, or retry shortly.",
+  offline: "Could not reach the API. Paste the prompt below into any AI tool.",
+  refusal: "The model declined to answer that. Try rephrasing.",
+  error: "Something went wrong calling the API. Paste the prompt below into any AI tool.",
+};
+
+async function sendAsk() {
+  const q = $("#ask-input").value.trim();
+  if (!q || !CUR) return;
+  const log = $("#ask-log");
+  log.innerHTML += '<p class="ask-q">' + escapeHtml(q) + "</p>" +
+    '<div class="ask-a" id="ask-pending"><span class="muted">Thinking...</span></div>';
+  log.scrollTop = log.scrollHeight;
+  $("#ask-input").value = "";
+
+  const res = await fetch("/api/ask", { method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id: CUR.id, code: EDITOR.get(), question: q,
+                           results: lastResultsText() }) }).then((r) => r.json());
+
+  const slot = $("#ask-pending");
+  slot.removeAttribute("id");
+  if (res.mode === "live") {
+    slot.innerHTML = md(res.answer);
+  } else {
+    const why = ASK_REASONS[res.reason] || ASK_REASONS.error;
+    slot.innerHTML = '<div class="trace-note">' + why +
+      (res.detail ? "<br><i>" + escapeHtml(res.detail) + "</i>" : "") + "</div>" +
+      '<button class="secondary" id="copy-prompt">Copy prompt</button>' +
+      "<details><summary>show the prompt</summary>" +
+      '<div class="copybox">' + escapeHtml(res.prompt || "") + "</div></details>";
+    const btn = slot.querySelector("#copy-prompt");
+    if (btn) btn.onclick = () => {
+      navigator.clipboard.writeText(res.prompt || "");
+      btn.textContent = "Copied";
+      setTimeout(() => { btn.textContent = "Copy prompt"; }, 1500);
+    };
+  }
+  log.scrollTop = log.scrollHeight;
+}
+
+function toggleAsk() {
+  const p = $("#ask-panel");
+  p.classList.toggle("hidden");
+  if (!p.classList.contains("hidden")) $("#ask-input").focus();
+}

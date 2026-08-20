@@ -40,6 +40,14 @@ an interviewer is likely to reach for next.
   - *SQL:* every problem seeds a fresh in-memory SQLite database. Your query is graded by
     executing it and diffing the result set against the reference query, so you can see
     your rows next to the expected rows.
+- **Trace mode.** Step through your own code line by line and watch the variables
+  change, with the current line highlighted in the editor. It traces *your* code, not a
+  canned animation, so it works on a half-finished attempt. For SQL it splits your WITH
+  clause and runs each CTE on its own, which is how you debug a query in real life.
+- **Ask.** Stuck on *why* rather than *what*? Ask a question in the app and get an
+  answer grounded in the problem, your current code, and your last test run. See
+  [Using an AI assistant](#using-an-ai-assistant-with-it) — it works with or without an
+  API key.
 - **Progressive hints**, then the reference solution with an explanation you would
   actually want to read.
 - **Mock rounds** that pair one SQL problem with one algorithms problem and start the clock.
@@ -119,21 +127,37 @@ pass its own tests, which catches most authoring mistakes.
 
 ## Using an AI assistant with it
 
-whetstone runs locally, so a coding agent working in the same directory can read
-`packs/` and write to it. Two workflows that work well:
+### The Ask panel
 
-**Generating a pack.** Point your agent at a company and the round description you were
-given, and have it produce problems in the pack format. Ask it to run `./whetstone verify`
-and fix anything failing - the verifier is the quality gate, and it catches wrong expected
-values, which is the failure mode LLM-generated problems actually have.
+Every problem has an **Ask** button. Type a question and the app sends the problem
+statement, your current code, and your last test output along with it, so the answer is
+about *your* attempt rather than the problem in the abstract.
 
-**Coaching.** After you solve a problem, paste your solution and ask for a review against
-the reference: what would an interviewer have pushed on, what did you leave unstated.
-That is the part self-study normally cannot give you.
+It works two ways and picks automatically:
 
-**But turn it off for the drill itself.** Many companies explicitly prohibit AI assistance
-during the interview, and the point of practising is to find out what you can do without
-it. Assistance belongs before and after a problem, not during one.
+- **With credentials** - `pip install anthropic` and set `ANTHROPIC_API_KEY` (or run
+  `ant auth login`), and answers appear in the panel.
+- **Without** - it assembles the full prompt and gives you a **Copy prompt** button.
+  Paste it into whatever AI tool you already use. No key, no install, no signup.
+
+The second mode is the default on a fresh clone, and it is a first-class path rather
+than a degraded one - the value is in assembling the right context, which is the part
+that is tedious to do by hand.
+
+### Generating packs
+
+whetstone runs locally, so a coding agent working in the same directory can read `packs/`
+and write to it. Point it at a company and the round description you were given, and have
+it produce problems in the pack format. Tell it to run `./whetstone verify` and fix
+whatever fails - the verifier is the quality gate, and it specifically catches wrong
+expected values, which is the failure mode LLM-generated problems actually have. Every
+problem in the shipped pack went through exactly that loop.
+
+### Turn it off for the drill itself
+
+Many companies explicitly prohibit AI assistance during the interview, and the point of
+practising is to find out what you can do without it. Assistance belongs before and after
+a problem, not during one. Start the timer, close the panel, and earn the explanation.
 
 ## Roadmap
 
@@ -141,6 +165,7 @@ it. Assistance belongs before and after a problem, not during one.
 - A whiteboard tab for system design practice
 - Spaced repetition over problems you got wrong
 - More languages in the runner (currently Python and SQL)
+- Trace mode for more than the first sample case
 
 ## Contributing
 
