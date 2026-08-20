@@ -44,7 +44,9 @@ an interviewer is likely to reach for next.
   the current line highlights in the code above while the panel narrates what just
   happened - *"the condition on line 6 was false, so we skipped its block"*, *"line 11
   called dfs(), with node = 'B'"* - and shows every variable, changed ones highlighted.
-  It traces *your* code, so it works on a half-finished attempt. Steps inside lambdas
+  It traces *your* code, so it works on a half-finished attempt. Drag the panel's top
+  edge to resize it, double-click to collapse it to just the controls, and it remembers
+  the size. Steps inside lambdas
   and generator expressions are collapsed so the flow stays readable. For SQL it splits
   your WITH clause and runs each CTE on its own, which is how you debug a query for real.
 - **Ask.** Stuck on *why* rather than *what*? Ask a question in the app and get an

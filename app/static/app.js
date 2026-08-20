@@ -451,7 +451,7 @@ window.addEventListener("DOMContentLoaded", () => {
       setStep(TRACE.idx + (e.key === "ArrowRight" ? 1 : -1));
     }
   });
-  initDrag(); paint();
+  initDrag(); initTraceDrag(); paint();
   loadAll().then(() => {
     const m = location.hash.match(/^#\/p\/(.+)$/);
     if (m) openProblem(decodeURIComponent(m[1]));
@@ -474,9 +474,53 @@ async function runTrace() {
   return renderPyTrace(res);
 }
 
+const TRACE_H_KEY = "whetstone.traceHeight";
+const TRACE_H_DEFAULT = 265;
+
+function traceHeight(h) {
+  const panel = $("#trace-panel"), pane = $("#pane-editor");
+  const max = Math.max(80, pane.clientHeight - 110);   // always leave code visible
+  h = Math.max(34, Math.min(max, h));                  // 34px = just the controls
+  panel.style.height = h + "px";
+  if (EDITOR.refresh) EDITOR.refresh();
+  return h;
+}
+
 function openTracePanel() {
-  $("#trace-panel").classList.remove("hidden");
+  const panel = $("#trace-panel");
+  panel.classList.remove("hidden");
+  const cur = panel.getBoundingClientRect().height;
+  if (cur < 60) {   // was collapsed: reopen at the last size the user chose
+    traceHeight(+localStorage.getItem(TRACE_H_KEY) || TRACE_H_DEFAULT);
+  }
   if (EDITOR.refresh) setTimeout(() => EDITOR.refresh(), 30);
+}
+
+function initTraceDrag() {
+  const grip = $("#trace-grip"), panel = $("#trace-panel");
+  grip.addEventListener("mousedown", (e) => {
+    e.preventDefault();
+    const startY = e.clientY, startH = panel.getBoundingClientRect().height;
+    grip.classList.add("dragging");
+    document.body.classList.add("row-resizing");
+    const move = (ev) => traceHeight(startH + (startY - ev.clientY));
+    const up = () => {
+      grip.classList.remove("dragging");
+      document.body.classList.remove("row-resizing");
+      const h = panel.getBoundingClientRect().height;
+      if (h > 60) localStorage.setItem(TRACE_H_KEY, Math.round(h));
+      document.removeEventListener("mousemove", move);
+      document.removeEventListener("mouseup", up);
+    };
+    document.addEventListener("mousemove", move);
+    document.addEventListener("mouseup", up);
+  });
+  grip.addEventListener("dblclick", () => {
+    const h = panel.getBoundingClientRect().height;
+    traceHeight(h <= 60 ? (+localStorage.getItem(TRACE_H_KEY) || TRACE_H_DEFAULT) : 34);
+  });
+  const saved = +localStorage.getItem(TRACE_H_KEY);
+  if (saved > 60) panel.style.height = saved + "px";
 }
 
 function closeTrace() {
