@@ -226,3 +226,12 @@ body.row-resizing{cursor:row-resize;user-select:none}
 .copybox{background:var(--bg);border:1px solid var(--line);border-radius:4px;
   padding:8px;font-family:var(--mono);font-size:11px;max-height:200px;
   overflow:auto;white-space:pre-wrap;margin:6px 0}
+
+/* ---------- solved ---------- */
+.confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:9999}
+.solved-box{background:linear-gradient(180deg,#15361f,#12291a);border:1px solid #2f6b45;
+  border-radius:6px;padding:14px;margin-bottom:12px;text-align:center}
+.solved-title{font-size:17px;font-weight:800;color:var(--accent);letter-spacing:.3px}
+.solved-sub{font-size:12px;color:var(--muted);margin:4px 0 10px}
+.solved-box .primary{padding:7px 16px}
+.solved-box .small{display:block;margin-top:7px}

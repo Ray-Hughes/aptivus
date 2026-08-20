@@ -228,10 +228,10 @@ function saveCode(patch) {
     body: JSON.stringify({ id: CUR.id, patch }) });
 }
 
-async function runCode() { await execute("/api/run", "Sample tests"); }
-async function submitCode() { await execute("/api/submit", "All tests"); }
+async function runCode() { await execute("/api/run", "Sample tests", false); }
+async function submitCode() { await execute("/api/submit", "All tests", true); }
 
-async function execute(url, label) {
+async function execute(url, label, isSubmit) {
   if (!CUR) return;
   const code = EDITOR.get();
   saveCode({ code, status: (PROGRESS[CUR.id] || {}).status || "tried" });
@@ -239,11 +239,11 @@ async function execute(url, label) {
   const res = await fetch(url, { method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ id: CUR.id, code }) }).then((r) => r.json());
-  if (res.kind === "sql") return renderSql(res, label);
-  return renderPy(res, label);
+  if (res.kind === "sql") return renderSql(res, label, isSubmit);
+  return renderPy(res, label, isSubmit);
 }
 
-function renderPy(res, label) {
+function renderPy(res, label, isSubmit) {
   const all = res.passed === res.total && res.total > 0;
   let h = '<div class="banner ' + (all ? "ok" : "bad") + '">' + label + ": " +
           res.passed + "/" + res.total + " passed</div>";
@@ -263,11 +263,11 @@ function renderPy(res, label) {
     }
     h += "</div>";
   });
-  if (all) { saveCode({ status: "solved" }); renderList(); }
-  $("#io-output").innerHTML = h;
+  $("#io-output").innerHTML = (all && isSubmit ? successBanner() : "") + h;
+  if (all && isSubmit) markSolved();
 }
 
-function renderSql(res, label) {
+function renderSql(res, label, isSubmit) {
   let h = '<div class="banner ' + (res.passed ? "ok" : "bad") + '">' + label + ": " +
           escapeHtml(res.message) + "</div>";
   if (res.got && res.got.error) {
@@ -280,8 +280,8 @@ function renderSql(res, label) {
            " rows)</summary>" + tableHtml(res.expected.cols, res.expected.rows) + "</details>";
     }
   }
-  if (res.passed) { saveCode({ status: "solved" }); renderList(); }
-  $("#io-output").innerHTML = h;
+  $("#io-output").innerHTML = (res.passed && isSubmit ? successBanner() : "") + h;
+  if (res.passed && isSubmit) markSolved();
 }
 
 function escapeHtml(s) {
@@ -446,6 +446,9 @@ window.addEventListener("DOMContentLoaded", () => {
     if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); submitCode(); }
     const typing = /^(TEXTAREA|INPUT)$/.test((e.target.tagName || "")) ||
                    e.target.closest(".CodeMirror");
+    if (!typing && (e.key === "n" || e.key === "N") && $("#btn-next")) {
+      e.preventDefault(); goNext(); return;
+    }
     if (TRACE && !typing && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
       e.preventDefault();
       setStep(TRACE.idx + (e.key === "ArrowRight" ? 1 : -1));
@@ -760,4 +763,90 @@ function toggleAsk() {
   const p = $("#ask-panel");
   p.classList.toggle("hidden");
   if (!p.classList.contains("hidden")) $("#ask-input").focus();
+}
+
+/* ------------------------------------------------------------------ */
+/* celebrate + move on                                                 */
+/* ------------------------------------------------------------------ */
+function successBanner() {
+  const next = nextProblem();
+  return '<div class="solved-box">' +
+    '<div class="solved-title">Solved</div>' +
+    '<div class="solved-sub">' +
+    (next ? "Up next: " + escapeHtml(next.title) : "That was the last unsolved problem.") +
+    "</div>" +
+    '<button class="primary" id="btn-next">' +
+    (next ? "Next problem &rarr;" : "Back to the list") + "</button>" +
+    (next ? '<span class="muted small">or press N</span>' : "") + "</div>";
+}
+
+function nextProblem() {
+  if (!CUR) return null;
+  const i = PROBLEMS.findIndex((p) => p.id === CUR.id);
+  if (i < 0) return null;
+  for (let k = 1; k <= PROBLEMS.length; k++) {
+    const p = PROBLEMS[(i + k) % PROBLEMS.length];
+    if ((PROGRESS[p.id] || {}).status !== "solved") return p;
+  }
+  return null;
+}
+
+function goNext() {
+  const n = nextProblem();
+  if (n) openProblem(n.id);
+  else show("list");
+}
+
+function markSolved() {
+  saveCode({ status: "solved" });
+  renderList();
+  celebrate();
+  const b = $("#btn-next");
+  if (b) b.onclick = goNext;
+}
+
+function celebrate() {
+  if (window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const cv = document.createElement("canvas");
+  cv.className = "confetti";
+  document.body.appendChild(cv);
+  const ctx = cv.getContext("2d");
+  const dpr = window.devicePixelRatio || 1;
+  const W = cv.width = innerWidth * dpr, H = cv.height = innerHeight * dpr;
+  cv.style.width = innerWidth + "px";
+  cv.style.height = innerHeight + "px";
+  const colors = ["#39c06c", "#4aa3ff", "#e2b93b", "#ec5b5b", "#ffffff", "#9b6bff"];
+  const parts = [];
+  for (let i = 0; i < 150; i++) {
+    parts.push({
+      x: W * (0.15 + 0.7 * Math.random()),
+      y: H * (0.5 + 0.15 * Math.random()),
+      vx: (Math.random() - 0.5) * 15 * dpr,
+      vy: (-9 - Math.random() * 10) * dpr,
+      w: (5 + Math.random() * 6) * dpr,
+      h: (8 + Math.random() * 9) * dpr,
+      rot: Math.random() * Math.PI,
+      vr: (Math.random() - 0.5) * 0.32,
+      c: colors[(Math.random() * colors.length) | 0],
+    });
+  }
+  let f = 0;
+  (function tick() {
+    ctx.clearRect(0, 0, W, H);
+    f++;
+    for (const p of parts) {
+      p.vy += 0.34 * dpr; p.vx *= 0.995;
+      p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.globalAlpha = Math.max(0, 1 - f / 145);
+      ctx.fillStyle = p.c;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
+    }
+    if (f < 145) requestAnimationFrame(tick);
+    else cv.remove();
+  })();
 }

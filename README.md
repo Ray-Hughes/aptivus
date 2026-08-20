@@ -57,6 +57,7 @@ an interviewer is likely to reach for next.
   actually want to read.
 - **Mock rounds** that pair one SQL problem with one algorithms problem and start the clock.
 - **Progress and code saved** per problem, so you can stop mid-problem and come back.
+  Pass every test on Submit and you get confetti and a jump to the next unsolved problem.
 
 ## Install
 
