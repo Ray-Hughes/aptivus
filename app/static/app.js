@@ -74,6 +74,7 @@ function makeEditor() {
       get: () => cm.getValue(), set: (v) => cm.setValue(v),
       mode: (m) => cm.setOption("mode", m),
       focus: () => cm.focus(), refresh: () => cm.refresh(),
+      onChange: (fn) => cm.on("change", fn),
       highlight: (lineNo) => {
         if (marked !== null) cm.removeLineClass(marked, "background", "cm-traceline");
         marked = null;
@@ -99,6 +100,7 @@ function makeEditor() {
   host.appendChild(ta);
   return { get: () => ta.value, set: (v) => { ta.value = v; },
            mode: () => {}, focus: () => ta.focus(), refresh: () => {},
+           onChange: (fn) => ta.addEventListener("input", fn),
            highlight: () => {} };
 }
 
@@ -157,6 +159,7 @@ function daysLeft() {
 async function openProblem(id) {
   const p = await fetch("/api/problem/" + id).then((r) => r.json());
   CUR = p; hintIdx = 0;
+  SOLVED_LOCK = false; setBusy(false);
   closeTrace();
   $("#ask-panel").classList.add("hidden");
   $("#ask-log").innerHTML = "";
@@ -228,19 +231,49 @@ function saveCode(patch) {
     body: JSON.stringify({ id: CUR.id, patch }) });
 }
 
+let BUSY = false, SOLVED_LOCK = false;
+
+function setBusy(on, label) {
+  BUSY = on;
+  const sub = $("#btn-submit");
+  ["#btn-run", "#btn-trace"].forEach((sel) => {
+    const b = $(sel); if (b) b.disabled = on;
+  });
+  if (sub) {
+    sub.disabled = on || SOLVED_LOCK;
+    sub.textContent = on ? (label || "Running...") : (SOLVED_LOCK ? "Solved" : "Submit");
+  }
+}
+
+/* Passing locks Submit so the celebration cannot be re-fired by clicking.
+   Editing the code re-arms it, so a different attempt can still be submitted. */
+function lockSubmit() { SOLVED_LOCK = true; setBusy(false); }
+
+function unlockSubmit() {
+  if (!SOLVED_LOCK) return;
+  SOLVED_LOCK = false;
+  setBusy(false);
+}
+
 async function runCode() { await execute("/api/run", "Sample tests", false); }
 async function submitCode() { await execute("/api/submit", "All tests", true); }
 
 async function execute(url, label, isSubmit) {
-  if (!CUR) return;
+  if (!CUR || BUSY) return;
+  if (isSubmit && SOLVED_LOCK) return;
   const code = EDITOR.get();
+  setBusy(true, isSubmit ? "Checking..." : "Running...");
   saveCode({ code, status: (PROGRESS[CUR.id] || {}).status || "tried" });
   $("#io-output").innerHTML = '<div class="muted center">Running...</div>';
   const res = await fetch(url, { method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ id: CUR.id, code }) }).then((r) => r.json());
-  if (res.kind === "sql") return renderSql(res, label, isSubmit);
-  return renderPy(res, label, isSubmit);
+  try {
+    if (res.kind === "sql") renderSql(res, label, isSubmit);
+    else renderPy(res, label, isSubmit);
+  } finally {
+    setBusy(false);
+  }
 }
 
 function renderPy(res, label, isSubmit) {
@@ -414,6 +447,7 @@ function initDrag() {
 
 window.addEventListener("DOMContentLoaded", () => {
   EDITOR = makeEditor();
+  if (EDITOR.onChange) EDITOR.onChange(unlockSubmit);
   $$(".tab").forEach((t) => (t.onclick = () => show(t.dataset.view)));
   $$(".filt").forEach((b) => (b.onclick = () => {
     $$(".filt").forEach((x) => x.classList.remove("active"));
@@ -800,6 +834,7 @@ function goNext() {
 function markSolved() {
   saveCode({ status: "solved" });
   renderList();
+  lockSubmit();
   celebrate();
   const b = $("#btn-next");
   if (b) b.onclick = goNext;

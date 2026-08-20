@@ -235,3 +235,5 @@ body.row-resizing{cursor:row-resize;user-select:none}
 .solved-sub{font-size:12px;color:var(--muted);margin:4px 0 10px}
 .solved-box .primary{padding:7px 16px}
 .solved-box .small{display:block;margin-top:7px}
+.primary:disabled,.secondary:disabled{opacity:.4;cursor:default}
+.primary:disabled{background:#2f6b45;color:#9fd8b6}
