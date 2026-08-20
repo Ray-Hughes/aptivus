@@ -111,24 +111,61 @@ solution, not the user's code, and compares hashes of outputs).
 
 ---
 
-## 2. Stack
+## 2. Stack — TypeScript / Next.js
 
-The current stdlib `http.server` is right for a local tool and wrong for this. Auth,
-sessions, password reset, migrations, an admin, and CSRF are all things you do not want
-to hand-roll on a service holding user credentials.
+**Superseding an earlier recommendation in this document.** The first draft said Django,
+on the reasoning that the server would import `core/` directly and should therefore be
+Python. M0 removed that premise: execution moved to the browser, so the server never runs
+the engine. With that gone, the argument for a Python backend goes with it.
 
-**Recommendation: Django.** It ships auth, sessions, password reset, an ORM with
-migrations, CSRF, and an admin. Coming from Rails it will feel familiar — models,
-migrations, middleware, an admin console. It keeps the language the same as the tracer
-and the problem format, so `core/` is imported directly rather than called over a wire.
+**Verified Aug 20:** `core/engine.py` also runs under **Node** via Pyodide — same
+CPython 3.12.1, same 18 steps, same result, tests passing. So Python is not a runtime
+dependency of this project at all. It is a WASM payload we ship, in the browser and in CI.
 
-FastAPI is the fashionable answer and is a worse fit here: you would be assembling auth
-and admin by hand, which is precisely the part where mistakes are expensive.
+That makes the stack a free choice, and TypeScript is the better one here:
 
-Postgres for the database. Redis only if and when you need rate-limit counters or
-background jobs — do not start with it.
+- **One language end to end.** The JavaScript tracer is an AST instrumenter — it is
+  TypeScript by nature. Writing the app around it in the same language removes a seam.
+- **Next.js gives the pages we actually need**: a statically rendered landing page (this
+  product lives or dies on search traffic), a server-rendered dashboard, and API routes
+  for auth, webhooks and generation.
+- **Auth.js** covers magic links, password, and OAuth — precisely the sign-in matrix in §4.
+- **It fixes two live problems.** `npx aptivus` becomes possible, since the CLI collapses
+  to "serve static files and open a browser". And the Python-version trap disappears:
+  Pyodide pins 3.12.1 everywhere, so traces cannot differ between a contributor's machine,
+  CI, and the browser.
 
----
+Concretely:
+
+| | Choice |
+|---|---|
+| App | Next.js (App Router) + TypeScript |
+| Auth | Auth.js — magic link, password, OAuth later |
+| Database | Postgres + Drizzle (SQL-first, and this codebase likes SQL) |
+| Payments | Stripe Checkout + Customer Portal |
+| Engines | Web Workers: Pyodide, ruby.wasm, native JS + Acorn, sql.js |
+| Content | JSON/TS problem packs — see `multi-language.md` |
+| CI | Node + Pyodide runs `verify` with no Python installed |
+
+```
+aptivus/
+  apps/web/            # Next.js: landing, auth, dashboard, billing, generation
+  packages/engine/     # adapter interface + per-language adapters
+  packages/problems/   # packs in the language-neutral format
+  packages/core-py/    # engine.py, shipped to Pyodide (browser and CI)
+```
+
+**What a framework does not solve, and it is worth being clear-eyed about this:** the
+stepper. Tracing Python, Ruby and JavaScript is our code in any stack. Next.js makes the
+product around it much easier to build and extend; it does not make the hard part easier.
+
+Two things to watch:
+
+- **Workers and WASM need care in Next.** Worker bundling and asset paths are fiddly, and
+  Pyodide and ruby.wasm are large — load them only when that language is selected.
+- **Auth.js is deliberately thin on passwords.** Magic links and OAuth are its happy path;
+  with the credentials provider you own hashing and session policy. The §4 security list
+  still applies in full.
 
 ## 3. Data model
 
@@ -371,7 +408,7 @@ Roughly, for one person working evenings and weekends:
 | | Milestone | Estimate | Why this order |
 |---|---|---|---|
 | **M0** | ~~Pyodide spike~~ **done Aug 20** — see below | — | Everything else assumed it. It holds. |
-| **M1** | Django skeleton, accounts, magic links, email | 1–1.5 weeks | Nothing is multi-user until this exists. |
+| **M1** | Next.js skeleton, accounts, magic links, email | 1–1.5 weeks | Nothing is multi-user until this exists. |
 | **M2** | Landing page + dashboard + settings | 1 week | Makes it feel like a product; needed for any real feedback. |
 | **M3** | Entitlements, daily limits, gem ledger | 1 week | Server-authoritative from day one; retrofitting metering is painful. |
 | **M4** | Stripe subscription + gem packs + webhooks | 1 week | Only after entitlements exist to grant. |
