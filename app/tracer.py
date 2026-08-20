@@ -21,7 +21,7 @@ import copy, json, os, pprint, sys
 SOL = os.path.abspath("solution.py")
 MAX_STEPS = %d
 steps = []
-state = {"truncated": False, "collapsed": False}
+state = {"truncated": False, "collapsed": False, "n": 0}
 
 
 MAX_POOL = 1200
@@ -87,20 +87,53 @@ def tracer(frame, event, arg):
         return None
     if event == "call":
         return tracer
-    if len(steps) >= MAX_STEPS:
+    if event not in ("line", "return"):
+        return tracer
+    if state["n"] >= MAX_STEPS:
         state["truncated"] = True
         return None
+    if EV is not None:
+        # Same counting as trace mode, so step indices match exactly.
+        if not ev["done"] and state["n"] == EV["step"]:
+            do_eval(frame)
+        state["n"] += 1
+        return tracer
     row = {"line": frame.f_lineno, "func": frame.f_code.co_name,
            "fid": id(frame), "locals": snap(frame.f_locals)}
     if event == "return":
         row["returned"] = short(arg)
-    if event in ("line", "return"):
-        steps.append(row)
+    steps.append(row)
+    state["n"] += 1
     return tracer
 
 
 cfg = json.load(open("cases.json"))
+EV = cfg.get("eval")            # {"step": int, "expr": str} when evaluating
+ev = {"done": False}
 result, error = None, None
+
+
+def do_eval(frame):
+    """Evaluate the user's expression in this frame, once."""
+    ev["done"] = True
+    try:
+        val = eval(compile(EV["expr"], "<expr>", "eval"),
+                   frame.f_globals, frame.f_locals)
+    except Exception as e:
+        ev["ok"] = False
+        ev["error"] = "%%s: %%s" %% (type(e).__name__, e)
+        return
+    ev["ok"] = True
+    ev["repr"] = short(val)
+    ev["type"] = type(val).__name__
+    try:
+        ev["len"] = len(val)
+    except Exception:
+        ev["len"] = None
+    try:
+        ev["pretty"] = pprint.pformat(val, width=76, sort_dicts=False)
+    except Exception:
+        ev["pretty"] = ev["repr"]
 
 if cfg["mode"] == "function":
     import solution                      # module body runs untraced
@@ -125,23 +158,25 @@ else:
         sys.settrace(None)
 
 print("---TRACE---")
-print(json.dumps({"steps": steps, "truncated": state["truncated"],
-                  "collapsed": state["collapsed"], "pool": pool,
-                  "result": short(result), "error": error}))
+if EV is not None:
+    print(json.dumps({"eval": ev}))
+else:
+    print(json.dumps({"steps": steps, "truncated": state["truncated"],
+                      "collapsed": state["collapsed"], "pool": pool,
+                      "result": short(result), "error": error}))
 ''' % MAX_STEPS
 
 
-def trace_python(problem, code, test_index=0):
-    """Run one test case under the tracer and return per-step variable state."""
+def _run_traced(problem, code, cfg_extra, test_index=0):
+    """Execute the sample case under the harness. Returns (payload, printed, err)."""
     tests = problem.get("tests", [])
     samples = [t for t in tests if t.get("sample")] or tests
     if not samples:
-        return {"error": "This problem has no test cases to trace."}
+        return None, "", "This problem has no test cases to trace."
     case = samples[min(test_index, len(samples) - 1)]
-    mode = problem.get("mode", "function")
-
-    cfg = {"mode": mode, "func": problem.get("func", ""),
+    cfg = {"mode": problem.get("mode", "function"), "func": problem.get("func", ""),
            "args": case.get("args", [])}
+    cfg.update(cfg_extra)
 
     with tempfile.TemporaryDirectory() as td:
         with open(os.path.join(td, "solution.py"), "w") as f:
@@ -151,26 +186,53 @@ def trace_python(problem, code, test_index=0):
         with open(os.path.join(td, "cases.json"), "w") as f:
             json.dump(cfg, f)
         try:
-            proc = subprocess.run(
-                [sys.executable, "trace_run.py"], cwd=td,
-                input=case.get("stdin", ""), capture_output=True,
-                text=True, timeout=20,
-            )
+            proc = subprocess.run([sys.executable, "trace_run.py"], cwd=td,
+                                  input=case.get("stdin", ""), capture_output=True,
+                                  text=True, timeout=20)
         except subprocess.TimeoutExpired:
-            return {"error": "Timed out while tracing. Tracing is slower than a "
-                             "normal run, so a near-infinite loop will hit this."}
+            return None, "", ("Timed out. Tracing is slower than a normal run, so a "
+                              "near-infinite loop will hit this.")
 
     out = proc.stdout
     if "---TRACE---" not in out:
-        return {"error": (proc.stderr.strip() or "Your code crashed before "
-                          "tracing could start.")[:2000]}
+        return None, "", (proc.stderr.strip() or
+                          "Your code crashed before tracing could start.")[:2000]
     printed, _, tail = out.partition("---TRACE---")
     try:
-        payload = json.loads(tail.strip())
+        return json.loads(tail.strip()), printed.strip(), None
     except Exception:
-        return {"error": "Could not read the trace output."}
+        return None, printed, "Could not read the trace output."
 
-    # Mark which variables changed on each step, so the UI can highlight them.
+
+def eval_at_step(problem, code, step, expr, test_index=0):
+    """Re-run to `step` and evaluate `expr` in that frame."""
+    if not expr.strip():
+        return {"error": "Type an expression."}
+    payload, _printed, err = _run_traced(
+        problem, code, {"eval": {"step": int(step), "expr": expr}}, test_index)
+    if err:
+        return {"error": err}
+    ev = (payload or {}).get("eval") or {}
+    if not ev.get("done"):
+        return {"error": "That step was never reached on this run."}
+    if not ev.get("ok"):
+        return {"error": ev.get("error", "Could not evaluate that.")}
+    return {"repr": ev["repr"], "pretty": ev["pretty"],
+            "type": ev["type"], "len": ev["len"]}
+
+
+def trace_python(problem, code, test_index=0):
+    """Run one test case under the tracer and return per-step variable state."""
+    tests = problem.get("tests", [])
+    samples = [t for t in tests if t.get("sample")] or tests
+    if not samples:
+        return {"error": "This problem has no test cases to trace."}
+    case = samples[min(test_index, len(samples) - 1)]
+
+    payload, printed, err = _run_traced(problem, code, {}, test_index)
+    if err:
+        return {"error": err}
+
     # Diff each step against its own frame's previous state. The exception is a
     # frame's FIRST step: diff that against the caller, so entering a closure
     # reports the arguments rather than every captured variable.
@@ -195,7 +257,7 @@ def trace_python(problem, code, test_index=0):
         "funcs": sorted({s["func"] for s in steps}),
         "result": payload["result"],
         "error": payload["error"],
-        "printed": printed.strip(),
+        "printed": printed,
         "case": {"args": case.get("args"), "stdin": case.get("stdin"),
                  "expected": case.get("expected")},
     }

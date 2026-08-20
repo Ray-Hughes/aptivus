@@ -52,6 +52,10 @@ an interviewer is likely to reach for next.
   Click any variable to pin it open underneath, pretty-printed in full. Pin as many as
   you like and they sit side by side, staying live as you step - so you can watch a dict
   fill up entry by entry while keeping an eye on the counter driving it.
+  There is a `>>>` console too: type any expression - `pairs[ch]`,
+  `stack.pop() != pairs[ch]`, `len(seen)` - and it is evaluated in that frame at the
+  step you are on. It runs on a fresh re-run, so side effects cannot disturb your
+  trace. On SQL problems the console runs queries against the seeded data instead.
   It traces *your* code, so it works on a half-finished attempt. Drag the panel's top
   edge to resize it, double-click to collapse it to just the controls, and it remembers
   the size. Steps inside lambdas

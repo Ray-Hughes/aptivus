@@ -441,6 +441,17 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return self._send(200, tracer.trace_python(
                 pr, body.get("code", ""), int(body.get("test", 0))))
 
+        if p == "/api/eval":
+            pid = body.get("id")
+            if pid not in PROBLEMS:
+                return self._send(404, {"error": "no such problem"})
+            pr = PROBLEMS[pid]
+            expr = body.get("expr", "")
+            if pr["kind"] == "sql":
+                return self._send(200, {"kind": "sql", **run_sql(pr, expr)})
+            return self._send(200, {"kind": "python", **tracer.eval_at_step(
+                pr, body.get("code", ""), body.get("step", 0), expr)})
+
         if p == "/api/ask":
             pid = body.get("id")
             if pid not in PROBLEMS:

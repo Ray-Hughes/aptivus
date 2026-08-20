@@ -498,6 +498,10 @@ window.addEventListener("DOMContentLoaded", () => {
   $("#t-play").onclick = togglePlay;
   $("#t-close").onclick = closeTrace;
   $("#t-range").oninput = (e) => { stopPlay(); setStep(+e.target.value); };
+  $("#t-expr").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); runRepl(); }
+    e.stopPropagation();      // arrow keys move the caret, not the trace
+  });
   $("#btn-ask").onclick = toggleAsk;
   $("#ask-close").onclick = toggleAsk;
   $("#ask-send").onclick = sendAsk;
@@ -671,6 +675,7 @@ function renderPyTrace(res) {
   TRACE = { steps: res.steps, source: res.source, idx: 0, res: res,
             pool: res.pool || [] };
   PINNED = [];
+  clearRepl();
   const c = res.case;
   const inp = c.stdin ? c.stdin : (c.args || []).map((a) => JSON.stringify(a)).join(", ");
   $("#trace-body").innerHTML =
@@ -767,6 +772,7 @@ function togglePlay() {
 
 function renderSqlTrace(res) {
   TRACE = null;
+  clearRepl();
   $("#t-range").max = 0;
   $("#t-count").textContent = "";
   let h = "";
@@ -993,4 +999,67 @@ function renderInspect() {
       setTimeout(() => { e.target.textContent = "Copy"; }, 1200);
     }
   };
+}
+
+/* ------------------------------------------------------------------ */
+/* expression console - evaluate anything at the current step          */
+/* ------------------------------------------------------------------ */
+function clearRepl() {
+  const log = $("#t-repl-log");
+  if (log) log.innerHTML = "";
+  const inp = $("#t-expr");
+  if (inp) {
+    inp.placeholder = CUR && CUR.kind === "sql"
+      ? "run any query against the seeded data, e.g. SELECT * FROM claims"
+      : "evaluate an expression at this step, e.g. pairs[ch]";
+  }
+}
+
+async function evalExpr(expr, entryEl) {
+  const step = TRACE ? TRACE.idx : 0;
+  const res = await fetch("/api/eval", { method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id: CUR.id, code: EDITOR.get(), step, expr }) })
+    .then((r) => r.json());
+
+  let body;
+  if (res.error) {
+    body = '<div class="repl-err">' + escapeHtml(res.error) + "</div>";
+  } else if (res.kind === "sql") {
+    body = '<div class="muted small">' + res.rows.length + " rows</div>" +
+           tableHtml(res.cols, res.rows);
+  } else {
+    const multi = (res.pretty || "").indexOf("\n") >= 0;
+    const unit = res.type === "str" ? "char" : "item";
+    const meta = escapeHtml(res.type) +
+      (res.len !== null && res.len !== undefined
+        ? " &middot; " + res.len + " " + unit + (res.len === 1 ? "" : "s") : "");
+    body = '<div class="repl-val"><pre>' + escapeHtml(multi ? res.pretty : res.repr) +
+           '</pre><span class="repl-type">' + meta + "</span></div>";
+  }
+  entryEl.querySelector(".repl-out").innerHTML = body;
+  if (TRACE) entryEl.querySelector(".repl-at").textContent = "step " + (step + 1);
+}
+
+function runRepl() {
+  const inp = $("#t-expr");
+  const expr = inp.value.trim();
+  if (!expr || !CUR) return;
+  const log = $("#t-repl-log");
+  const entry = document.createElement("div");
+  entry.className = "repl-entry";
+  entry.innerHTML = '<div class="repl-q"><code>' + escapeHtml(expr) + "</code>" +
+    '<span><span class="repl-at muted"></span>' +
+    '<button class="ghost repl-again" title="re-run at the current step">&#8635;</button>' +
+    "</span></div>" +
+    '<div class="repl-out muted small">evaluating...</div>';
+  log.appendChild(entry);
+  log.scrollTop = log.scrollHeight;
+  entry.querySelector(".repl-again").onclick = () => {
+    entry.querySelector(".repl-out").innerHTML =
+      '<span class="muted small">evaluating...</span>';
+    evalExpr(expr, entry);
+  };
+  evalExpr(expr, entry);
+  inp.value = "";
 }

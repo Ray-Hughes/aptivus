@@ -99,6 +99,14 @@
           <button id="t-close" class="ghost">Close</button>
         </div>
         <div id="trace-body"></div>
+        <div id="trace-repl">
+          <div id="t-repl-log"></div>
+          <div class="repl-in">
+            <span class="repl-prompt" title="Evaluated on a fresh run to this step, so calls with side effects cannot disturb your trace">&gt;&gt;&gt;</span>
+            <input id="t-expr" spellcheck="false" autocomplete="off"
+                   placeholder="evaluate an expression at this step, e.g. pairs[ch]">
+          </div>
+        </div>
       </div>
       <div class="editor-foot">
         <span id="pos">Line: 1 Col: 1</span>
