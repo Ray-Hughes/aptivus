@@ -107,6 +107,18 @@ def public_problem(p):
             {"args": t.get("args"), "stdin": t.get("stdin"), "expected": t.get("expected")}
             for t in p.get("tests", []) if t.get("sample")
         ]
+        cases = []
+        for i, t in enumerate(p.get("tests", [])):
+            if t.get("sample"):
+                label = (t.get("stdin") or "").strip().replace("\n", " ") \
+                    if p.get("mode") == "stdin" else \
+                    ", ".join(json.dumps(a) for a in t.get("args", []))
+                if len(label) > 46:
+                    label = label[:43] + "..."
+                cases.append({"i": i, "label": "Sample: " + label})
+            else:
+                cases.append({"i": i, "label": "Test %d (hidden)" % (i + 1)})
+        d["cases"] = cases
     return d
 
 
@@ -438,8 +450,13 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             pr = PROBLEMS[pid]
             if pr["kind"] == "sql":
                 return self._send(200, tracer.step_sql(pr, body.get("code", ""), run_sql))
-            return self._send(200, tracer.trace_python(
-                pr, body.get("code", ""), int(body.get("test", 0))))
+            sel = body.get("test", 0)
+            if sel != "file":
+                try:
+                    sel = int(sel)
+                except (TypeError, ValueError):
+                    sel = 0
+            return self._send(200, tracer.trace_python(pr, body.get("code", ""), sel))
 
         if p == "/api/eval":
             pid = body.get("id")
@@ -449,8 +466,14 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             expr = body.get("expr", "")
             if pr["kind"] == "sql":
                 return self._send(200, {"kind": "sql", **run_sql(pr, expr)})
+            sel = body.get("test", 0)
+            if sel != "file":
+                try:
+                    sel = int(sel)
+                except (TypeError, ValueError):
+                    sel = 0
             return self._send(200, {"kind": "python", **tracer.eval_at_step(
-                pr, body.get("code", ""), body.get("step", 0), expr)})
+                pr, body.get("code", ""), body.get("step", 0), expr, sel)})
 
         if p == "/api/ask":
             pid = body.get("id")
@@ -475,8 +498,12 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             if pr["kind"] == "sql":
                 res = grade_sql(pr, body.get("code", ""))
                 return self._send(200, {"kind": "sql", **res})
-            tests = [t for t in pr["tests"] if (t.get("sample") or not sample_only)]
+            picked = [(i, t) for i, t in enumerate(pr["tests"])
+                      if (t.get("sample") or not sample_only)]
+            tests = [t for _i, t in picked]
             results = run_python_tests(pr, body.get("code", ""), tests)
+            for (i, _t), r in zip(picked, results):
+                r["index"] = i
             return self._send(200, {
                 "kind": "python",
                 "results": results,

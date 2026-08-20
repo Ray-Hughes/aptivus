@@ -167,15 +167,29 @@ else:
 ''' % MAX_STEPS
 
 
-def _run_traced(problem, code, cfg_extra, test_index=0):
-    """Execute the sample case under the harness. Returns (payload, printed, err)."""
+def pick_case(problem, test_index):
+    """Resolve a case selector to (case, cfg). test_index may be an int index into
+    the problem's tests, or "file" to run the learner's file exactly as written."""
+    if test_index == "file":
+        return ({"label": "your file, run as written", "file": True},
+                {"mode": "stdin", "func": "", "args": []})
     tests = problem.get("tests", [])
-    samples = [t for t in tests if t.get("sample")] or tests
-    if not samples:
+    if not tests:
+        return None, None
+    try:
+        i = int(test_index)
+    except (TypeError, ValueError):
+        i = 0
+    case = tests[i] if 0 <= i < len(tests) else tests[0]
+    return case, {"mode": problem.get("mode", "function"),
+                  "func": problem.get("func", ""), "args": case.get("args", [])}
+
+
+def _run_traced(problem, code, cfg_extra, test_index=0):
+    """Execute one case under the harness. Returns (payload, printed, err)."""
+    case, cfg = pick_case(problem, test_index)
+    if case is None:
         return None, "", "This problem has no test cases to trace."
-    case = samples[min(test_index, len(samples) - 1)]
-    cfg = {"mode": problem.get("mode", "function"), "func": problem.get("func", ""),
-           "args": case.get("args", [])}
     cfg.update(cfg_extra)
 
     with tempfile.TemporaryDirectory() as td:
@@ -222,12 +236,10 @@ def eval_at_step(problem, code, step, expr, test_index=0):
 
 
 def trace_python(problem, code, test_index=0):
-    """Run one test case under the tracer and return per-step variable state."""
-    tests = problem.get("tests", [])
-    samples = [t for t in tests if t.get("sample")] or tests
-    if not samples:
+    """Run one case under the tracer and return per-step variable state."""
+    case, _cfg = pick_case(problem, test_index)
+    if case is None:
         return {"error": "This problem has no test cases to trace."}
-    case = samples[min(test_index, len(samples) - 1)]
 
     payload, printed, err = _run_traced(problem, code, {}, test_index)
     if err:
@@ -259,7 +271,8 @@ def trace_python(problem, code, test_index=0):
         "error": payload["error"],
         "printed": printed,
         "case": {"args": case.get("args"), "stdin": case.get("stdin"),
-                 "expected": case.get("expected")},
+                 "expected": case.get("expected"), "label": case.get("label"),
+                 "file": bool(case.get("file"))},
     }
 
 

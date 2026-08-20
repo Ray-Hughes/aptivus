@@ -56,6 +56,10 @@ an interviewer is likely to reach for next.
   `stack.pop() != pairs[ch]`, `len(seen)` - and it is evaluated in that frame at the
   step you are on. It runs on a fresh re-run, so side effects cannot disturb your
   trace. On SQL problems the console runs queries against the seeded data instead.
+  Pick which input to trace from the dropdown - any sample, any hidden test, or
+  **My file, run as written**, which traces the module top to bottom so your own
+  scratch calls at the bottom of the file are what gets stepped. A failing test also
+  gets a "Trace this case" button, so you go straight from a red test to stepping it.
   It traces *your* code, so it works on a half-finished attempt. Drag the panel's top
   edge to resize it, double-click to collapse it to just the controls, and it remembers
   the size. Steps inside lambdas

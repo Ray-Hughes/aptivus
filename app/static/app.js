@@ -159,7 +159,7 @@ function daysLeft() {
 async function openProblem(id) {
   const p = await fetch("/api/problem/" + id).then((r) => r.json());
   CUR = p; hintIdx = 0;
-  SOLVED_LOCK = false; setBusy(false);
+  SOLVED_LOCK = false; TEST_SEL = 0; setBusy(false);
   closeTrace();
   $("#ask-panel").classList.add("hidden");
   $("#ask-log").innerHTML = "";
@@ -292,12 +292,19 @@ function renderPy(res, label, isSubmit) {
       h += '<span class="k">Got</span>' + escapeHtml(r.error ? "-" : JSON.stringify(r.got));
       if (r.error) h += '<span class="k bad">Error</span>' + escapeHtml(r.error);
       if (r.stdout) h += '<span class="k">Your prints</span>' + escapeHtml(r.stdout);
+      if (r.index !== undefined && CUR && CUR.kind === "python") {
+        h += '<div><button class="ghost trace-case" data-i="' + r.index +
+             '">Trace this case</button></div>';
+      }
       h += "</div>";
     }
     h += "</div>";
   });
   $("#io-output").innerHTML = (all && isSubmit ? successBanner() : "") + h;
   if (all && isSubmit) markSolved();
+  $$("#io-output .trace-case").forEach((b) => {
+    b.onclick = () => runTrace(+b.dataset.i);
+  });
 }
 
 function renderSql(res, label, isSubmit) {
@@ -537,17 +544,32 @@ window.addEventListener("DOMContentLoaded", () => {
 /* ------------------------------------------------------------------ */
 /* trace - a solver you step through, under the code                   */
 /* ------------------------------------------------------------------ */
-let TRACE = null, PLAY = null, PINNED = [];
+let TRACE = null, PLAY = null, PINNED = [], TEST_SEL = 0;
 
-async function runTrace() {
+async function runTrace(sel) {
   if (!CUR) return;
+  if (sel !== undefined) TEST_SEL = sel;
   openTracePanel();
+  buildCasePicker();
   $("#trace-body").innerHTML = '<div class="muted">Tracing...</div>';
   const res = await fetch("/api/trace", { method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id: CUR.id, code: EDITOR.get() }) }).then((r) => r.json());
+    body: JSON.stringify({ id: CUR.id, code: EDITOR.get(), test: TEST_SEL }) })
+    .then((r) => r.json());
   if (res.kind === "sql") return renderSqlTrace(res);
   return renderPyTrace(res);
+}
+
+function buildCasePicker() {
+  const sel = $("#t-case");
+  if (!sel) return;
+  if (!CUR || CUR.kind === "sql") { sel.classList.add("hidden"); return; }
+  sel.classList.remove("hidden");
+  sel.innerHTML = (CUR.cases || []).map((c) =>
+      '<option value="' + c.i + '">' + escapeHtml(c.label) + "</option>").join("") +
+    '<option value="file">My file, run as written</option>';
+  sel.value = String(TEST_SEL);
+  sel.onchange = () => runTrace(sel.value === "file" ? "file" : +sel.value);
 }
 
 const TRACE_H_KEY = "aptivus.traceHeight";
@@ -677,10 +699,12 @@ function renderPyTrace(res) {
   PINNED = [];
   clearRepl();
   const c = res.case;
-  const inp = c.stdin ? c.stdin : (c.args || []).map((a) => JSON.stringify(a)).join(", ");
+  const inp = c.file ? (c.label || "your file, run as written")
+    : (c.stdin ? c.stdin : (c.args || []).map((a) => JSON.stringify(a)).join(", "));
   $("#trace-body").innerHTML =
-    '<div class="trace-note">Input <b>' + escapeHtml(inp) + "</b>" +
-    (c.expected !== undefined
+    '<div class="trace-note">' + (c.file ? "Tracing " : "Input ") + "<b>" +
+    escapeHtml(inp) + "</b>" +
+    (!c.file && c.expected !== undefined
       ? " &middot; expected <b>" + escapeHtml(JSON.stringify(c.expected)) + "</b>" : "") +
     ' &middot; use &larr; &rarr; to step' +
     (res.collapsed ? " &middot; steps inside lambdas and generator expressions are collapsed" : "") +
@@ -738,8 +762,13 @@ function setStep(i) {
     let end = "";
     if (r.truncated) end += '<div class="trace-note">Stopped at the step limit; the ' +
       "run was longer than the tracer records.</div>";
-    end += r.error ? '<div class="banner bad">' + escapeHtml(r.error) + "</div>"
-                   : '<div class="banner ok">returned ' + escapeHtml(r.result) + "</div>";
+    if (r.error) {
+      end += '<div class="banner bad">' + escapeHtml(r.error) + "</div>";
+    } else if (r.case && r.case.file) {
+      end += '<div class="banner ok">Your file finished.</div>';
+    } else {
+      end += '<div class="banner ok">returned ' + escapeHtml(r.result) + "</div>";
+    }
     if (r.printed) end += '<pre class="out">' + escapeHtml(r.printed) + "</pre>";
     $("#t-end").innerHTML = end;
     stopPlay();
@@ -1019,7 +1048,8 @@ async function evalExpr(expr, entryEl) {
   const step = TRACE ? TRACE.idx : 0;
   const res = await fetch("/api/eval", { method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id: CUR.id, code: EDITOR.get(), step, expr }) })
+    body: JSON.stringify({ id: CUR.id, code: EDITOR.get(), step, expr,
+                           test: TEST_SEL }) })
     .then((r) => r.json());
 
   let body;

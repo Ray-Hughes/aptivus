@@ -295,3 +295,7 @@ body.col-resizing .CodeMirror{pointer-events:none}
 #t-expr{flex:1;background:var(--bg);border:1px solid var(--line);color:var(--fg);
   border-radius:4px;padding:6px 9px;font-family:var(--mono);font-size:12px;outline:none}
 #t-expr:focus{border-color:var(--accent2)}
+#t-case{background:var(--bg3);border:1px solid var(--line);color:var(--fg);
+  border-radius:4px;padding:3px 6px;font-size:11px;max-width:230px}
+#t-case.hidden{display:none}
+.trace-case{margin-top:6px}
