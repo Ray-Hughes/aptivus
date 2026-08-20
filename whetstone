@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# whetstone - launch the practice environment
+set -euo pipefail
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cmd="${1:-serve}"
+case "$cmd" in
+  serve|"")
+    exec python3 "$DIR/app/server.py"
+    ;;
+  verify)
+    exec python3 "$DIR/verify.py"
+    ;;
+  *)
+    echo "usage: whetstone [serve|verify]"
+    exit 1
+    ;;
+esac

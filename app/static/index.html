@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FedPrep — HackerRank clone</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/sql/sql.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+</head>
+<body>
+
+<header id="topbar">
+  <div class="brand">H<span>R</span></div>
+  <nav id="tabs">
+    <button class="tab active" data-view="list">Problems</button>
+    <button class="tab" data-view="solve">Coding&nbsp;1</button>
+    <button class="tab" data-view="mock">Mock&nbsp;Interview</button>
+  </nav>
+  <div class="spacer"></div>
+  <div id="timer" class="timer">
+    <span id="clock">45:00</span>
+    <button id="tstart">Start</button>
+    <button id="treset">Reset</button>
+  </div>
+  <div class="candidate">Candidate</div>
+</header>
+
+<!-- ===================== PROBLEM LIST ===================== -->
+<section id="view-list" class="view">
+  <div class="list-wrap">
+    <h1>Practice set</h1>
+    <p class="sub">Federato: 45&nbsp;min = part SQL + part data structures/algorithms. Python 3. No AI in the real thing — turn this off when you drill.</p>
+    <div id="stats" class="stats"></div>
+    <div class="filters">
+      <input id="search" type="text" placeholder="filter by title, tag, pattern…">
+      <button class="filt active" data-k="all">All</button>
+      <button class="filt" data-k="python">Python</button>
+      <button class="filt" data-k="sql">SQL</button>
+    </div>
+    <table id="problem-table">
+      <thead><tr><th>Status</th><th>#</th><th>Title</th><th>Type</th><th>Pattern</th><th>Diff</th><th>Target</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ===================== SOLVE ===================== -->
+<section id="view-solve" class="view hidden">
+  <div id="solve-grid">
+    <div id="pane-problem" class="pane">
+      <div class="pane-head">
+        <span id="p-title">—</span>
+        <div>
+          <button id="btn-hint" class="ghost">Hint</button>
+          <button id="btn-solution" class="ghost">Solution</button>
+        </div>
+      </div>
+      <div id="p-body" class="pane-body"></div>
+    </div>
+    <div class="gutter" data-drag="1"></div>
+    <div id="pane-editor" class="pane">
+      <div class="pane-head">
+        <select id="lang"><option>Python 3</option><option>MySQL</option></select>
+        <div>
+          <button id="btn-reset" class="ghost">Reset code</button>
+        </div>
+      </div>
+      <div id="editor-host"></div>
+      <div class="editor-foot">
+        <span id="pos">Line: 1 Col: 1</span>
+        <div>
+          <button id="btn-run" class="secondary">Run Code</button>
+          <button id="btn-submit" class="primary">Submit</button>
+        </div>
+      </div>
+    </div>
+    <div class="gutter" data-drag="2"></div>
+    <div id="pane-io" class="pane">
+      <div class="pane-head"><span>Input / Output</span></div>
+      <div class="pane-body">
+        <div id="io-input-wrap">
+          <label>Input <small>(stdin for Run Code)</small></label>
+          <textarea id="io-input" spellcheck="false"></textarea>
+        </div>
+        <div id="io-output"><div class="muted center">Run Code to see your output here.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== MOCK ===================== -->
+<section id="view-mock" class="view hidden">
+  <div class="list-wrap">
+    <h1>Mock interview — 45 minutes</h1>
+    <p class="sub">One SQL problem + one algorithms problem, drawn the way Federato structures the round. Start the timer, no hints, talk out loud.</p>
+    <div id="mock-sets"></div>
+  </div>
+</section>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
