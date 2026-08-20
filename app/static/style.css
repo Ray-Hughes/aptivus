@@ -253,13 +253,20 @@ body.col-resizing .CodeMirror{pointer-events:none}
 .chip:hover{border-color:var(--muted)}
 .chip.picked{border-color:var(--accent2);background:#16283a}
 .chip.picked .cn{color:var(--accent2)}
-.inspect{margin-top:10px;border:1px solid var(--accent2);border-radius:5px;
-  background:var(--bg2);overflow:hidden}
+.inspect-grid{display:grid;gap:8px;margin-top:10px;
+  grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.inspect-grid.multi .inspect-body{max-height:150px}
+.inspect-all{grid-column:1/-1;text-align:right}
+.inspect{border:1px solid var(--accent2);border-radius:5px;
+  background:var(--bg2);overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.inspect.just-changed{border-color:var(--accent)}
+.inspect.just-changed .inspect-head{background:#12331f}
+.inspect.just-changed .inspect-head b{color:var(--accent)}
 .inspect-head{display:flex;align-items:center;justify-content:space-between;gap:10px;
   padding:6px 10px;background:#16283a;font-size:12px;font-family:var(--mono)}
 .inspect-head b{color:var(--accent2)}
 .inspect-head button{margin-left:6px}
 .inspect-body{margin:0;padding:10px 12px;font-family:var(--mono);font-size:12px;
-  line-height:1.5;white-space:pre;overflow:auto;max-height:230px;
+  line-height:1.5;white-space:pre;overflow:auto;max-height:230px;flex:1;
   background:var(--bg);color:var(--fg)}
-.inspect-foot{padding:5px 10px;border-top:1px solid var(--line)}
+.inspect-head button{padding:1px 7px;line-height:1.5}

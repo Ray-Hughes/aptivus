@@ -49,8 +49,9 @@ an interviewer is likely to reach for next.
   the current line highlights in the code above while the panel narrates what just
   happened - *"the condition on line 6 was false, so we skipped its block"*, *"line 11
   called dfs(), with node = 'B'"* - and shows every variable, changed ones highlighted.
-  Click any variable to pin it open underneath, pretty-printed in full - it stays
-  pinned as you step, so you can watch a dict fill up entry by entry.
+  Click any variable to pin it open underneath, pretty-printed in full. Pin as many as
+  you like and they sit side by side, staying live as you step - so you can watch a dict
+  fill up entry by entry while keeping an eye on the counter driving it.
   It traces *your* code, so it works on a half-finished attempt. Drag the panel's top
   edge to resize it, double-click to collapse it to just the controls, and it remembers
   the size. Steps inside lambdas

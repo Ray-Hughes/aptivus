@@ -533,7 +533,7 @@ window.addEventListener("DOMContentLoaded", () => {
 /* ------------------------------------------------------------------ */
 /* trace - a solver you step through, under the code                   */
 /* ------------------------------------------------------------------ */
-let TRACE = null, PLAY = null, INSPECT = null;
+let TRACE = null, PLAY = null, PINNED = [];
 
 async function runTrace() {
   if (!CUR) return;
@@ -670,7 +670,7 @@ function renderPyTrace(res) {
   }
   TRACE = { steps: res.steps, source: res.source, idx: 0, res: res,
             pool: res.pool || [] };
-  INSPECT = null;
+  PINNED = [];
   const c = res.case;
   const inp = c.stdin ? c.stdin : (c.args || []).map((a) => JSON.stringify(a)).join(", ");
   $("#trace-body").innerHTML =
@@ -686,7 +686,10 @@ function renderPyTrace(res) {
   $("#t-chips").addEventListener("click", (e) => {
     const chip = e.target.closest(".chip");
     if (!chip || !chip.dataset.var) return;
-    INSPECT = (INSPECT === chip.dataset.var) ? null : chip.dataset.var;
+    const name = chip.dataset.var;
+    const at = PINNED.indexOf(name);
+    if (at >= 0) PINNED.splice(at, 1);
+    else PINNED.push(name);          // keep pin order
     setStep(TRACE.idx);
   });
   $("#t-range").max = res.steps.length - 1;
@@ -718,7 +721,7 @@ function setStep(i) {
         const v = TRACE.pool[s.locals[nm]] || { s: "?" };
         return '<span class="chip' +
           ((s.changed || []).indexOf(nm) >= 0 ? " changed" : "") +
-          (INSPECT === nm ? " picked" : "") + '" data-var="' + escapeHtml(nm) + '">' +
+          (PINNED.indexOf(nm) >= 0 ? " picked" : "") + '" data-var="' + escapeHtml(nm) + '">' +
           '<span class="cn">' + escapeHtml(nm) + "</span>" +
           '<span class="cv">' + escapeHtml(v.s) + "</span></span>";
       }).join("")
@@ -942,38 +945,52 @@ function celebrate() {
 }
 
 /* ------------------------------------------------------------------ */
-/* variable inspector - click a chip, it stays pinned while you step   */
+/* variable inspector - pin as many as you like, all stay live          */
 /* ------------------------------------------------------------------ */
 function renderInspect() {
   const box = $("#t-inspect");
   if (!box) return;
-  if (!INSPECT || !TRACE) { box.className = "hidden"; box.innerHTML = ""; return; }
-  box.className = "inspect";
+  if (!PINNED.length || !TRACE) { box.className = "hidden"; box.innerHTML = ""; return; }
+  box.className = "inspect-grid" + (PINNED.length > 1 ? " multi" : "");
 
   const s = TRACE.steps[TRACE.idx];
-  const id = s.locals[INSPECT];
-  const head = '<div class="inspect-head"><span><b>' + escapeHtml(INSPECT) + "</b>";
+  box.innerHTML = PINNED.map((name) => {
+    const id = s.locals[name];
+    const head = '<div class="inspect-head"><span><b>' + escapeHtml(name) + "</b> ";
+    const close = '<span><button class="ghost" data-copy="' + escapeHtml(name) + '">Copy</button>' +
+                  '<button class="ghost" data-unpin="' + escapeHtml(name) + '">&times;</button></span>';
 
-  if (id === undefined) {
-    box.innerHTML = head + ' <span class="muted">is not in scope at this step</span>' +
-      '</span><button class="ghost" id="insp-close">Close</button></div>';
-    $("#insp-close").onclick = () => { INSPECT = null; renderInspect(); setStep(TRACE.idx); };
-    return;
-  }
+    if (id === undefined) {
+      return '<div class="inspect">' + head +
+        '<span class="muted">not in scope here</span></span>' + close + "</div>" +
+        '<div class="inspect-body muted">This variable does not exist at this step.</div></div>';
+    }
+    const v = TRACE.pool[id] || { p: "?", t: "?", n: null };
+    const meta = escapeHtml(v.t) + (v.n !== null && v.n !== undefined
+      ? " &middot; " + v.n + (v.n === 1 ? " item" : " items") : "");
+    return '<div class="inspect' + ((s.changed || []).indexOf(name) >= 0 ? " just-changed" : "") +
+      '">' + head + '<span class="muted">' + meta + "</span></span>" + close + "</div>" +
+      '<pre class="inspect-body">' + escapeHtml(v.p) + "</pre></div>";
+  }).join("") +
+  (PINNED.length > 1
+    ? '<div class="inspect-all"><button class="ghost" id="unpin-all">Unpin all</button></div>'
+    : "");
 
-  const v = TRACE.pool[id] || { p: "?", t: "?", n: null };
-  const meta = escapeHtml(v.t) + (v.n !== null && v.n !== undefined
-    ? " &middot; " + v.n + (v.n === 1 ? " item" : " items") : "");
-  box.innerHTML = head + ' <span class="muted">' + meta + "</span></span>" +
-    '<span><button class="ghost" id="insp-copy">Copy</button>' +
-    '<button class="ghost" id="insp-close">Close</button></span></div>' +
-    '<pre class="inspect-body">' + escapeHtml(v.p) + "</pre>" +
-    '<div class="inspect-foot muted small">Pinned - step through and this updates.</div>';
-
-  $("#insp-close").onclick = () => { INSPECT = null; setStep(TRACE.idx); };
-  $("#insp-copy").onclick = (e) => {
-    navigator.clipboard.writeText(v.p);
-    e.target.textContent = "Copied";
-    setTimeout(() => { e.target.textContent = "Copy"; }, 1200);
+  box.onclick = (e) => {
+    const un = e.target.dataset && e.target.dataset.unpin;
+    const cp = e.target.dataset && e.target.dataset.copy;
+    if (e.target.id === "unpin-all") { PINNED = []; setStep(TRACE.idx); return; }
+    if (un) {
+      PINNED.splice(PINNED.indexOf(un), 1);
+      setStep(TRACE.idx);
+      return;
+    }
+    if (cp) {
+      const id = TRACE.steps[TRACE.idx].locals[cp];
+      const v = TRACE.pool[id];
+      if (v) navigator.clipboard.writeText(v.p);
+      e.target.textContent = "Copied";
+      setTimeout(() => { e.target.textContent = "Copy"; }, 1200);
+    }
   };
 }
