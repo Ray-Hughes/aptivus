@@ -58,7 +58,7 @@ an interviewer is likely to reach for next.
 There is nothing to install. You need Python 3.8+.
 
 ```bash
-git clone git@github.com:Ray-Hughes/technical-knowhow.git whetstone
+git clone git@github.com:Ray-Hughes/whetstone.git
 cd whetstone
 ./whetstone
 ```
