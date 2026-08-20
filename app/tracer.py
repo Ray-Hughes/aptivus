@@ -21,7 +21,7 @@ import copy, json, os, sys
 SOL = os.path.abspath("solution.py")
 MAX_STEPS = %d
 steps = []
-state = {"truncated": False}
+state = {"truncated": False, "collapsed": False}
 
 
 def short(v):
@@ -33,23 +33,33 @@ def short(v):
 
 
 def snap(loc):
-    return {k: short(v) for k, v in loc.items() if not k.startswith("__")}
+    # "." names are the implicit arguments CPython gives comprehension frames.
+    return {k: short(v) for k, v in loc.items()
+            if not k.startswith("__") and not k.startswith(".")}
+
+
+# Comprehensions and lambdas get their own frames. Stepping through them
+# interleaved with the real function makes the flow unreadable, so collapse them.
+SYNTHETIC = {"<lambda>", "<genexpr>", "<listcomp>", "<dictcomp>", "<setcomp>"}
 
 
 def tracer(frame, event, arg):
     if frame.f_code.co_filename != SOL:
+        return None
+    if frame.f_code.co_name in SYNTHETIC:
+        state["collapsed"] = True
         return None
     if event == "call":
         return tracer
     if len(steps) >= MAX_STEPS:
         state["truncated"] = True
         return None
-    if event == "line":
-        steps.append({"line": frame.f_lineno, "func": frame.f_code.co_name,
-                      "locals": snap(frame.f_locals)})
-    elif event == "return":
-        steps.append({"line": frame.f_lineno, "func": frame.f_code.co_name,
-                      "locals": snap(frame.f_locals), "returned": short(arg)})
+    row = {"line": frame.f_lineno, "func": frame.f_code.co_name,
+           "fid": id(frame), "locals": snap(frame.f_locals)}
+    if event == "return":
+        row["returned"] = short(arg)
+    if event in ("line", "return"):
+        steps.append(row)
     return tracer
 
 
@@ -80,6 +90,7 @@ else:
 
 print("---TRACE---")
 print(json.dumps({"steps": steps, "truncated": state["truncated"],
+                  "collapsed": state["collapsed"],
                   "result": short(result), "error": error}))
 ''' % MAX_STEPS
 
@@ -124,11 +135,18 @@ def trace_python(problem, code, test_index=0):
         return {"error": "Could not read the trace output."}
 
     # Mark which variables changed on each step, so the UI can highlight them.
-    steps, prev = [], {}
+    # Diff each step against its own frame's previous state. The exception is a
+    # frame's FIRST step: diff that against the caller, so entering a closure
+    # reports the arguments rather than every captured variable.
+    steps, prev_by_frame, last = [], {}, {}
     for s in payload["steps"]:
         loc = s["locals"]
+        prev = prev_by_frame.get(s["fid"])
+        if prev is None:
+            prev = last
         s["changed"] = [k for k, v in loc.items() if prev.get(k) != v]
-        prev = dict(loc)
+        prev_by_frame[s["fid"]] = dict(loc)
+        last = dict(loc)
         steps.append(s)
 
     return {
@@ -136,6 +154,8 @@ def trace_python(problem, code, test_index=0):
         "source": code.split("\n"),
         "steps": steps,
         "truncated": payload["truncated"],
+        "collapsed": payload.get("collapsed", False),
+        "funcs": sorted({s["func"] for s in steps}),
         "result": payload["result"],
         "error": payload["error"],
         "printed": printed.strip(),

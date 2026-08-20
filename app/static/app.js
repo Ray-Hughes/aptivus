@@ -156,8 +156,8 @@ function daysLeft() {
 /* ------------------------------------------------------------------ */
 async function openProblem(id) {
   const p = await fetch("/api/problem/" + id).then((r) => r.json());
-  CUR = p; hintIdx = 0; TRACE = null;
-  if (EDITOR.highlight) EDITOR.highlight(null);
+  CUR = p; hintIdx = 0;
+  closeTrace();
   $("#ask-panel").classList.add("hidden");
   $("#ask-log").innerHTML = "";
   if (location.hash !== "#/p/" + id) history.replaceState(null, "", "#/p/" + id);
@@ -424,6 +424,11 @@ window.addEventListener("DOMContentLoaded", () => {
     ? scratchRun() : runCode();
   $("#btn-submit").onclick = submitCode;
   $("#btn-trace").onclick = runTrace;
+  $("#t-prev").onclick = () => stepBy(-1);
+  $("#t-next").onclick = () => stepBy(1);
+  $("#t-play").onclick = togglePlay;
+  $("#t-close").onclick = closeTrace;
+  $("#t-range").oninput = (e) => { stopPlay(); setStep(+e.target.value); };
   $("#btn-ask").onclick = toggleAsk;
   $("#ask-close").onclick = toggleAsk;
   $("#ask-send").onclick = sendAsk;
@@ -454,13 +459,14 @@ window.addEventListener("DOMContentLoaded", () => {
 });
 
 /* ------------------------------------------------------------------ */
-/* trace                                                               */
+/* trace - a solver you step through, under the code                   */
 /* ------------------------------------------------------------------ */
-let TRACE = null;
+let TRACE = null, PLAY = null;
 
 async function runTrace() {
   if (!CUR) return;
-  $("#io-output").innerHTML = '<div class="muted center">Tracing...</div>';
+  openTracePanel();
+  $("#trace-body").innerHTML = '<div class="muted">Tracing...</div>';
   const res = await fetch("/api/trace", { method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ id: CUR.id, code: EDITOR.get() }) }).then((r) => r.json());
@@ -468,80 +474,166 @@ async function runTrace() {
   return renderPyTrace(res);
 }
 
-function renderPyTrace(res) {
-  if (res.error && !res.steps) {
-    $("#io-output").innerHTML = '<div class="banner bad">' + escapeHtml(res.error) + "</div>";
-    return;
+function openTracePanel() {
+  $("#trace-panel").classList.remove("hidden");
+  if (EDITOR.refresh) setTimeout(() => EDITOR.refresh(), 30);
+}
+
+function closeTrace() {
+  stopPlay();
+  $("#trace-panel").classList.add("hidden");
+  TRACE = null;
+  if (EDITOR.highlight) EDITOR.highlight(null);
+  if (EDITOR.refresh) setTimeout(() => EDITOR.refresh(), 30);
+}
+
+function indentOf(line) { return ((line || "").match(/^\s*/) || [""])[0].length; }
+
+/* Turn one transition into a sentence: what just happened, and why we moved here. */
+function narrate(steps, i, source, funcs) {
+  const s = steps[i];
+  const prev = i > 0 ? steps[i - 1] : null;
+  const changed = s.changed || [];
+  const vals = changed.map((n) =>
+    "<code>" + escapeHtml(n) + " = " + escapeHtml(s.locals[n]) + "</code>").join(", ");
+  const where = (funcs && funcs.length > 1)
+    ? ' <span class="muted">(in ' + escapeHtml(s.func) + ")</span>" : "";
+
+  if (!prev) return "The function was called. Its arguments are set up and nothing " +
+                    "else has run yet." + where;
+
+  const praw = source[prev.line - 1] || "";
+  const psrc = praw.trim();
+  const pl = "<b>line " + prev.line + "</b>";
+
+  // a call returned, and we are back in the caller
+  if (prev.returned !== undefined && prev.fid !== s.fid)
+    return "<b>" + escapeHtml(prev.func) + "()</b> returned <code>" +
+           escapeHtml(prev.returned) + "</code>, so we are back in " +
+           escapeHtml(s.func) + "().";
+
+  // we stepped into a call
+  if (prev.fid !== s.fid)
+    return pl + " called <b>" + escapeHtml(s.func) + "()</b>" +
+           (changed.length ? ", with " + vals : "") + ".";
+
+  // the same line running again: a loop body on one line, or an inlined comprehension
+  if (prev.line === s.line)
+    return changed.length
+      ? pl + " is iterating: " + vals + "." + where
+      : pl + " ran again." + where;
+
+  if (/^for\b/.test(psrc))
+    return changed.length
+      ? "The loop on " + pl + " handed out the next values: " + vals + "." + where
+      : "The loop on " + pl + " had nothing left, so it ended." + where;
+
+  if (/^(if|elif|while)\b/.test(psrc)) {
+    const took = indentOf(source[s.line - 1]) > indentOf(praw);
+    return "The condition on " + pl + " was <b>" + (took ? "true" : "false") +
+           "</b>, so we " + (took ? "stepped into" : "skipped") + " its block." + where;
   }
-  if (!res.steps || !res.steps.length) {
-    $("#io-output").innerHTML = '<div class="banner bad">Nothing was traced. ' +
-      'Did you write the function yet?</div>';
+
+  if (changed.length) return pl + " set " + vals + "." + where;
+  return pl + " ran without changing any variable." + where;
+}
+
+function renderPyTrace(res) {
+  stopPlay();
+  if ((!res.steps || !res.steps.length)) {
+    $("#trace-body").innerHTML = '<div class="banner bad">' +
+      escapeHtml(res.error || "Nothing was traced. Have you written the function yet?") +
+      "</div>";
     return;
   }
   TRACE = { steps: res.steps, source: res.source, idx: 0, res: res };
   const c = res.case;
   const inp = c.stdin ? c.stdin : (c.args || []).map((a) => JSON.stringify(a)).join(", ");
-  $("#io-output").innerHTML =
-    '<div class="trace-note">Tracing with input <b>' + escapeHtml(inp) + "</b>" +
-    (c.expected !== undefined ? " &middot; expected " + escapeHtml(JSON.stringify(c.expected)) : "") +
+  $("#trace-body").innerHTML =
+    '<div class="trace-note">Input <b>' + escapeHtml(inp) + "</b>" +
+    (c.expected !== undefined
+      ? " &middot; expected <b>" + escapeHtml(JSON.stringify(c.expected)) + "</b>" : "") +
+    ' &middot; use &larr; &rarr; to step' +
+    (res.collapsed ? " &middot; steps inside lambdas and generator expressions are collapsed" : "") +
     "</div>" +
-    '<div class="trace-bar">' +
-    '<button id="t-prev">&larr;</button>' +
-    '<input id="t-range" type="range" min="0" max="' + (res.steps.length - 1) + '" value="0">' +
-    '<button id="t-next">&rarr;</button>' +
-    '<span class="step-count" id="t-count"></span></div>' +
-    '<div class="trace-line" id="t-line"></div>' +
-    '<table class="vars"><thead><tr><th>variable</th><th>value</th></tr></thead>' +
-    '<tbody id="t-vars"></tbody></table>' +
-    '<div id="t-end"></div>';
-  $("#t-prev").onclick = () => setStep(TRACE.idx - 1);
-  $("#t-next").onclick = () => setStep(TRACE.idx + 1);
-  $("#t-range").oninput = (e) => setStep(+e.target.value);
+    '<p class="narr" id="t-narr"></p><div class="chips" id="t-chips"></div>' +
+    '<div class="trace-end" id="t-end"></div>';
+  $("#t-range").max = res.steps.length - 1;
   setStep(0);
 }
 
 function setStep(i) {
   if (!TRACE) return;
-  i = Math.max(0, Math.min(TRACE.steps.length - 1, i));
+  const n = TRACE.steps.length;
+  i = Math.max(0, Math.min(n - 1, i));
   TRACE.idx = i;
   const s = TRACE.steps[i];
   const src = (TRACE.source[s.line - 1] || "").trim();
+
   $("#t-range").value = i;
-  $("#t-count").textContent = (i + 1) + " / " + TRACE.steps.length;
+  $("#t-count").textContent = (i + 1) + " / " + n;
   $("#t-prev").disabled = i === 0;
-  $("#t-next").disabled = i === TRACE.steps.length - 1;
-  $("#t-line").innerHTML = "<b>line " + s.line + "</b>  " + escapeHtml(src) +
-    (s.returned !== undefined
-      ? '<br><span class="ok">returns ' + escapeHtml(s.returned) + "</span>" : "") +
-    '<br><span class="muted small">' +
-    (s.returned !== undefined ? "this line has just finished"
-                              : "about to run this line") + "</span>";
+  $("#t-next").disabled = i === n - 1;
+
+  const next = s.returned !== undefined
+    ? '<span class="next">This line has just finished.</span>'
+    : '<span class="next">Next to run: <code>' + escapeHtml(src) + "</code></span>";
+  $("#t-narr").innerHTML = '<span class="did">' + narrate(TRACE.steps, i, TRACE.source, TRACE.res.funcs) +
+                           "</span><br>" + next;
+
   const names = Object.keys(s.locals).sort();
-  $("#t-vars").innerHTML = names.length
-    ? names.map((n) =>
-        '<tr class="' + (s.changed.indexOf(n) >= 0 ? "changed" : "") + '">' +
-        '<td class="name">' + escapeHtml(n) + "</td><td>" +
-        escapeHtml(s.locals[n]) + "</td></tr>").join("")
-    : '<tr><td colspan="2" class="muted">no local variables yet</td></tr>';
-  if (i === TRACE.steps.length - 1) {
+  $("#t-chips").innerHTML = names.length
+    ? names.map((nm) => '<span class="chip ' +
+        ((s.changed || []).indexOf(nm) >= 0 ? "changed" : "") + '">' +
+        '<span class="cn">' + escapeHtml(nm) + '</span>' +
+        '<span class="cv">' + escapeHtml(s.locals[nm]) + "</span></span>").join("")
+    : '<span class="muted">no local variables yet</span>';
+
+  if (i === n - 1) {
     const r = TRACE.res;
     let end = "";
-    if (r.truncated) end += '<div class="trace-note">Trace stopped at the step limit ' +
-      "(the run was longer than the tracer records).</div>";
-    if (r.error) end += '<div class="banner bad">' + escapeHtml(r.error) + "</div>";
-    else end += '<div class="banner ok">returned ' + escapeHtml(r.result) + "</div>";
-    if (r.printed) end += '<p class="muted small">your prints</p><pre class="out">' +
-      escapeHtml(r.printed) + "</pre>";
+    if (r.truncated) end += '<div class="trace-note">Stopped at the step limit; the ' +
+      "run was longer than the tracer records.</div>";
+    end += r.error ? '<div class="banner bad">' + escapeHtml(r.error) + "</div>"
+                   : '<div class="banner ok">returned ' + escapeHtml(r.result) + "</div>";
+    if (r.printed) end += '<pre class="out">' + escapeHtml(r.printed) + "</pre>";
     $("#t-end").innerHTML = end;
+    stopPlay();
   } else {
     $("#t-end").innerHTML = "";
   }
   if (EDITOR.highlight) EDITOR.highlight(s.line);
 }
 
+function stepBy(d) { if (TRACE) setStep(TRACE.idx + d); }
+
+function stopPlay() {
+  if (PLAY) clearInterval(PLAY);
+  PLAY = null;
+  const b = $("#t-play");
+  if (b) { b.classList.remove("on"); b.innerHTML = "&#9654;"; }
+}
+
+function togglePlay() {
+  if (!TRACE) return;
+  if (PLAY) return stopPlay();
+  if (TRACE.idx >= TRACE.steps.length - 1) setStep(0);
+  const b = $("#t-play");
+  b.classList.add("on"); b.innerHTML = "&#10073;&#10073;";
+  PLAY = setInterval(() => {
+    if (!TRACE || TRACE.idx >= TRACE.steps.length - 1) return stopPlay();
+    setStep(TRACE.idx + 1);
+  }, 850);
+}
+
 function renderSqlTrace(res) {
+  TRACE = null;
+  $("#t-range").max = 0;
+  $("#t-count").textContent = "";
   let h = "";
   if (res.note) h += '<div class="trace-note">' + escapeHtml(res.note) + "</div>";
+  else h += '<div class="trace-note">Each CTE run on its own, in order. This is how ' +
+            "to debug a query under pressure: check each step before trusting the whole.</div>";
   res.steps.forEach((st, i) => {
     const rows = st.error
       ? '<pre class="out bad">' + escapeHtml(st.error) + "</pre>"
@@ -560,7 +652,7 @@ function renderSqlTrace(res) {
     h += '<details class="cte-step"><summary>query plan</summary><div class="inner">' +
       tableHtml(res.plan.cols, res.plan.rows) + "</div></details>";
   }
-  $("#io-output").innerHTML = h;
+  $("#trace-body").innerHTML = h;
 }
 
 /* ------------------------------------------------------------------ */

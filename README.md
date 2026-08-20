@@ -40,10 +40,13 @@ an interviewer is likely to reach for next.
   - *SQL:* every problem seeds a fresh in-memory SQLite database. Your query is graded by
     executing it and diffing the result set against the reference query, so you can see
     your rows next to the expected rows.
-- **Trace mode.** Step through your own code line by line and watch the variables
-  change, with the current line highlighted in the editor. It traces *your* code, not a
-  canned animation, so it works on a half-finished attempt. For SQL it splits your WITH
-  clause and runs each CTE on its own, which is how you debug a query in real life.
+- **Trace mode.** A debugger-shaped panel under the editor: step (or press play) and
+  the current line highlights in the code above while the panel narrates what just
+  happened - *"the condition on line 6 was false, so we skipped its block"*, *"line 11
+  called dfs(), with node = 'B'"* - and shows every variable, changed ones highlighted.
+  It traces *your* code, so it works on a half-finished attempt. Steps inside lambdas
+  and generator expressions are collapsed so the flow stays readable. For SQL it splits
+  your WITH clause and runs each CTE on its own, which is how you debug a query for real.
 - **Ask.** Stuck on *why* rather than *what*? Ask a question in the app and get an
   answer grounded in the problem, your current code, and your last test run. See
   [Using an AI assistant](#using-an-ai-assistant-with-it) — it works with or without an
