@@ -16,12 +16,19 @@ import tempfile
 MAX_STEPS = 600
 
 TRACE_HARNESS = r'''
-import copy, json, os, sys
+import copy, json, os, pprint, sys
 
 SOL = os.path.abspath("solution.py")
 MAX_STEPS = %d
 steps = []
 state = {"truncated": False, "collapsed": False}
+
+
+MAX_POOL = 1200
+PRETTY_LIMIT = 20000
+
+pool = []
+pool_ix = {}
 
 
 def short(v):
@@ -32,9 +39,38 @@ def short(v):
     return r if len(r) <= 160 else r[:157] + "..."
 
 
+def val_id(v):
+    """Intern one value and return its index. Identical values across steps
+    share an entry, which is what makes a full pretty copy affordable."""
+    try:
+        r = repr(v)
+    except Exception:
+        r = "<unrepr-able>"
+    if len(r) > PRETTY_LIMIT:
+        pretty = r[:PRETTY_LIMIT] + "\n... (truncated)"
+    else:
+        try:
+            pretty = pprint.pformat(v, width=76, sort_dicts=False)
+        except Exception:
+            pretty = r
+    if pretty in pool_ix:
+        return pool_ix[pretty]
+    if len(pool) >= MAX_POOL:
+        return -1
+    try:
+        n = len(v)
+    except Exception:
+        n = None
+    i = len(pool)
+    pool.append({"s": r if len(r) <= 160 else r[:157] + "...",
+                 "p": pretty, "t": type(v).__name__, "n": n})
+    pool_ix[pretty] = i
+    return i
+
+
 def snap(loc):
     # "." names are the implicit arguments CPython gives comprehension frames.
-    return {k: short(v) for k, v in loc.items()
+    return {k: val_id(v) for k, v in loc.items()
             if not k.startswith("__") and not k.startswith(".")}
 
 
@@ -90,7 +126,7 @@ else:
 
 print("---TRACE---")
 print(json.dumps({"steps": steps, "truncated": state["truncated"],
-                  "collapsed": state["collapsed"],
+                  "collapsed": state["collapsed"], "pool": pool,
                   "result": short(result), "error": error}))
 ''' % MAX_STEPS
 
@@ -153,6 +189,7 @@ def trace_python(problem, code, test_index=0):
         "kind": "python",
         "source": code.split("\n"),
         "steps": steps,
+        "pool": payload.get("pool", []),
         "truncated": payload["truncated"],
         "collapsed": payload.get("collapsed", False),
         "funcs": sorted({s["func"] for s in steps}),

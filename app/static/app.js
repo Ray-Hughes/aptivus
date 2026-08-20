@@ -533,7 +533,7 @@ window.addEventListener("DOMContentLoaded", () => {
 /* ------------------------------------------------------------------ */
 /* trace - a solver you step through, under the code                   */
 /* ------------------------------------------------------------------ */
-let TRACE = null, PLAY = null;
+let TRACE = null, PLAY = null, INSPECT = null;
 
 async function runTrace() {
   if (!CUR) return;
@@ -603,6 +603,12 @@ function closeTrace() {
   if (EDITOR.refresh) setTimeout(() => EDITOR.refresh(), 30);
 }
 
+/* locals hold pool indices, not strings - resolve one to its short form */
+function valOf(step, name) {
+  const v = TRACE && TRACE.pool[step.locals[name]];
+  return v ? v.s : "?";
+}
+
 function indentOf(line) { return ((line || "").match(/^\s*/) || [""])[0].length; }
 
 /* Turn one transition into a sentence: what just happened, and why we moved here. */
@@ -611,7 +617,7 @@ function narrate(steps, i, source, funcs) {
   const prev = i > 0 ? steps[i - 1] : null;
   const changed = s.changed || [];
   const vals = changed.map((n) =>
-    "<code>" + escapeHtml(n) + " = " + escapeHtml(s.locals[n]) + "</code>").join(", ");
+    "<code>" + escapeHtml(n) + " = " + escapeHtml(valOf(s, n)) + "</code>").join(", ");
   const where = (funcs && funcs.length > 1)
     ? ' <span class="muted">(in ' + escapeHtml(s.func) + ")</span>" : "";
 
@@ -662,7 +668,9 @@ function renderPyTrace(res) {
       "</div>";
     return;
   }
-  TRACE = { steps: res.steps, source: res.source, idx: 0, res: res };
+  TRACE = { steps: res.steps, source: res.source, idx: 0, res: res,
+            pool: res.pool || [] };
+  INSPECT = null;
   const c = res.case;
   const inp = c.stdin ? c.stdin : (c.args || []).map((a) => JSON.stringify(a)).join(", ");
   $("#trace-body").innerHTML =
@@ -673,7 +681,14 @@ function renderPyTrace(res) {
     (res.collapsed ? " &middot; steps inside lambdas and generator expressions are collapsed" : "") +
     "</div>" +
     '<p class="narr" id="t-narr"></p><div class="chips" id="t-chips"></div>' +
+    '<div id="t-inspect" class="hidden"></div>' +
     '<div class="trace-end" id="t-end"></div>';
+  $("#t-chips").addEventListener("click", (e) => {
+    const chip = e.target.closest(".chip");
+    if (!chip || !chip.dataset.var) return;
+    INSPECT = (INSPECT === chip.dataset.var) ? null : chip.dataset.var;
+    setStep(TRACE.idx);
+  });
   $("#t-range").max = res.steps.length - 1;
   setStep(0);
 }
@@ -699,11 +714,16 @@ function setStep(i) {
 
   const names = Object.keys(s.locals).sort();
   $("#t-chips").innerHTML = names.length
-    ? names.map((nm) => '<span class="chip ' +
-        ((s.changed || []).indexOf(nm) >= 0 ? "changed" : "") + '">' +
-        '<span class="cn">' + escapeHtml(nm) + '</span>' +
-        '<span class="cv">' + escapeHtml(s.locals[nm]) + "</span></span>").join("")
+    ? names.map((nm) => {
+        const v = TRACE.pool[s.locals[nm]] || { s: "?" };
+        return '<span class="chip' +
+          ((s.changed || []).indexOf(nm) >= 0 ? " changed" : "") +
+          (INSPECT === nm ? " picked" : "") + '" data-var="' + escapeHtml(nm) + '">' +
+          '<span class="cn">' + escapeHtml(nm) + "</span>" +
+          '<span class="cv">' + escapeHtml(v.s) + "</span></span>";
+      }).join("")
     : '<span class="muted">no local variables yet</span>';
+  renderInspect();
 
   if (i === n - 1) {
     const r = TRACE.res;
@@ -919,4 +939,41 @@ function celebrate() {
     if (f < 145) requestAnimationFrame(tick);
     else cv.remove();
   })();
+}
+
+/* ------------------------------------------------------------------ */
+/* variable inspector - click a chip, it stays pinned while you step   */
+/* ------------------------------------------------------------------ */
+function renderInspect() {
+  const box = $("#t-inspect");
+  if (!box) return;
+  if (!INSPECT || !TRACE) { box.className = "hidden"; box.innerHTML = ""; return; }
+  box.className = "inspect";
+
+  const s = TRACE.steps[TRACE.idx];
+  const id = s.locals[INSPECT];
+  const head = '<div class="inspect-head"><span><b>' + escapeHtml(INSPECT) + "</b>";
+
+  if (id === undefined) {
+    box.innerHTML = head + ' <span class="muted">is not in scope at this step</span>' +
+      '</span><button class="ghost" id="insp-close">Close</button></div>';
+    $("#insp-close").onclick = () => { INSPECT = null; renderInspect(); setStep(TRACE.idx); };
+    return;
+  }
+
+  const v = TRACE.pool[id] || { p: "?", t: "?", n: null };
+  const meta = escapeHtml(v.t) + (v.n !== null && v.n !== undefined
+    ? " &middot; " + v.n + (v.n === 1 ? " item" : " items") : "");
+  box.innerHTML = head + ' <span class="muted">' + meta + "</span></span>" +
+    '<span><button class="ghost" id="insp-copy">Copy</button>' +
+    '<button class="ghost" id="insp-close">Close</button></span></div>' +
+    '<pre class="inspect-body">' + escapeHtml(v.p) + "</pre>" +
+    '<div class="inspect-foot muted small">Pinned - step through and this updates.</div>';
+
+  $("#insp-close").onclick = () => { INSPECT = null; setStep(TRACE.idx); };
+  $("#insp-copy").onclick = (e) => {
+    navigator.clipboard.writeText(v.p);
+    e.target.textContent = "Copied";
+    setTimeout(() => { e.target.textContent = "Copy"; }, 1200);
+  };
 }

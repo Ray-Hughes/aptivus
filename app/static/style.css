@@ -246,3 +246,19 @@ body.row-resizing{cursor:row-resize;user-select:none}
   margin-top:-15px;background:rgba(255,255,255,.4);pointer-events:none}
 body.col-resizing{cursor:col-resize;user-select:none}
 body.col-resizing .CodeMirror{pointer-events:none}
+
+/* ---------- variable inspector ---------- */
+.chip{cursor:pointer}
+.chip:hover{border-color:var(--muted)}
+.chip.picked{border-color:var(--accent2);background:#16283a}
+.chip.picked .cn{color:var(--accent2)}
+.inspect{margin-top:10px;border:1px solid var(--accent2);border-radius:5px;
+  background:var(--bg2);overflow:hidden}
+.inspect-head{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:6px 10px;background:#16283a;font-size:12px;font-family:var(--mono)}
+.inspect-head b{color:var(--accent2)}
+.inspect-head button{margin-left:6px}
+.inspect-body{margin:0;padding:10px 12px;font-family:var(--mono);font-size:12px;
+  line-height:1.5;white-space:pre;overflow:auto;max-height:230px;
+  background:var(--bg);color:var(--fg)}
+.inspect-foot{padding:5px 10px;border-top:1px solid var(--line)}
