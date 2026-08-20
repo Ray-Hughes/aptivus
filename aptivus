@@ -2,16 +2,74 @@
 # aptivus - launch the practice environment
 set -euo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cmd="${1:-serve}"
-case "$cmd" in
+
+# `python3` is ambiguous on a typical dev machine: a version manager shim, conda,
+# homebrew and the system python can each win depending on the shell, and a shim
+# may resolve to nothing at all. So do not trust the name - try candidates in
+# order and actually run each one.
+#
+# 3.12 first on purpose: Pyodide 0.26 is CPython 3.12, and the browser engine and
+# this one must agree. They genuinely differ - list comprehensions were inlined in
+# 3.12 (PEP 709), so the same code traces to 6 steps on 3.12 and 4 on 3.9.
+PY_PREFERRED="3.12"
+find_python() {
+  local candidates=()
+  [ -n "${APTIVUS_PYTHON:-}" ] && candidates+=("$APTIVUS_PYTHON")
+  candidates+=(python3.12 python3.13 python3.11 python3 python)
+  local c path
+  for c in "${candidates[@]}"; do
+    path="$(command -v "$c" 2>/dev/null)" || continue
+    "$path" -c 'import sys; sys.exit(0 if sys.version_info[:2] >= (3, 11) else 1)' \
+      >/dev/null 2>&1 || continue
+    echo "$path"
+    return 0
+  done
+  return 1
+}
+
+if ! PY="$(find_python)"; then
+  cat >&2 <<'MSG'
+aptivus: could not find a usable Python (3.11 or newer).
+
+Tried: $APTIVUS_PYTHON, python3.12, python3.13, python3.11, python3, python.
+Each was run, not just looked up, so a broken version-manager shim is skipped
+rather than picked.
+
+Fix it either way:
+  brew install python@3.12
+  APTIVUS_PYTHON=/full/path/to/python3.12 ./aptivus
+MSG
+  exit 1
+fi
+
+PY_VERSION="$("$PY" -c 'import sys; print("%d.%d" % sys.version_info[:2])')"
+
+case "${1:-serve}" in
   serve|"")
-    exec python3 "$DIR/app/server.py"
+    echo "aptivus: using $PY (Python $PY_VERSION)"
+    if [ "$PY_VERSION" != "$PY_PREFERRED" ]; then
+      echo "aptivus: note - the browser engine is CPython $PY_PREFERRED, so traces" >&2
+      echo "         here may differ slightly. Fine for practice, worth knowing." >&2
+    fi
+    exec "$PY" "$DIR/app/server.py"
     ;;
   verify)
-    exec python3 "$DIR/verify.py"
+    exec "$PY" "$DIR/verify.py"
+    ;;
+  doctor)
+    echo "chosen      : $PY (Python $PY_VERSION)"
+    echo "preferred   : Python $PY_PREFERRED (matches Pyodide in the browser)"
+    echo
+    echo "candidates found on PATH:"
+    for c in python3.13 python3.12 python3.11 python3 python; do
+      p="$(command -v "$c" 2>/dev/null)" || continue
+      v="$("$p" -c 'import sys; print("%d.%d.%d" % sys.version_info[:3])' 2>/dev/null)" \
+        || v="BROKEN (shim with no version set?)"
+      printf '  %-12s %-52s %s\n' "$c" "$p" "$v"
+    done
     ;;
   *)
-    echo "usage: aptivus [serve|verify]"
+    echo "usage: aptivus [serve|verify|doctor]" >&2
     exit 1
     ;;
 esac

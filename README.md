@@ -80,7 +80,7 @@ an interviewer is likely to reach for next.
 There is nothing to install. You need Python 3.8+.
 
 ```bash
-git clone git@github.com:Ray-Hughes/whetstone.git aptivus
+git clone git@github.com:Ray-Hughes/aptivus.git
 cd aptivus
 ./aptivus
 ```
@@ -88,7 +88,13 @@ cd aptivus
 Then open <http://localhost:8777>.
 
 `./aptivus verify` runs every reference solution against its own test cases - useful
-after you add problems.
+after you add problems. `./aptivus doctor` shows which interpreter it picked and why.
+
+**On Python versions:** the launcher looks for 3.12 first and needs 3.11 at minimum. It
+runs each candidate rather than trusting the name, so a version-manager shim with no
+version set gets skipped instead of picked. 3.12 is preferred because the browser engine
+is Pyodide, which is CPython 3.12 - and tracing genuinely differs between versions, since
+list comprehensions were inlined in 3.12 (PEP 709). Override with `APTIVUS_PYTHON=/path/to/python3.12`.
 
 The editor uses CodeMirror from a CDN for syntax highlighting; if you are offline it
 falls back to a plain textarea and everything else still works.
