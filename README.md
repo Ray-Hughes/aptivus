@@ -1,19 +1,24 @@
-# whetstone
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/aptivus-logo.svg">
+  <img src="docs/aptivus-logo-light.svg" alt="Aptivus" width="150">
+</picture>
 
-**Sharpen before you go in.**
+# Aptivus
+
+**Prepare. Perform.**
 
 A self-hosted technical-interview practice environment that looks and behaves like the
 HackerRank pad you will actually be sitting in. Runs on your machine, uses only the
 Python standard library, and needs no accounts, no network, and no signup.
 
 ```
-$ ./whetstone
+$ ./aptivus
 Loaded 27 problems (15 python, 12 sql)
 
   ==>  http://localhost:8777
 ```
 
-![whetstone](docs/screenshot.png)
+![Aptivus](docs/screenshot.png)
 
 ---
 
@@ -23,7 +28,7 @@ Most interview prep is a wall of problems with no opinion about what you are wea
 That is fine if you have three months. It is useless if you have five days and a
 specific company on the calendar.
 
-whetstone is built around **packs**: a curated problem set for one company or one kind
+Aptivus is built around **packs**: a curated problem set for one company or one kind
 of round, written in that domain's vocabulary, each problem carrying its hints, a
 reference solution, an explanation of *why the problem is asked*, and the follow-ups
 an interviewer is likely to reach for next.
@@ -66,14 +71,14 @@ an interviewer is likely to reach for next.
 There is nothing to install. You need Python 3.8+.
 
 ```bash
-git clone git@github.com:Ray-Hughes/whetstone.git
-cd whetstone
-./whetstone
+git clone git@github.com:Ray-Hughes/whetstone.git aptivus
+cd aptivus
+./aptivus
 ```
 
 Then open <http://localhost:8777>.
 
-`./whetstone verify` runs every reference solution against its own test cases - useful
+`./aptivus verify` runs every reference solution against its own test cases - useful
 after you add problems.
 
 The editor uses CodeMirror from a CDN for syntax highlighting; if you are offline it
@@ -130,7 +135,7 @@ PROBLEM = {
 SQL problems swap `tests` for `schema`, `seed`, and a reference `solution` query; the
 grader runs both and diffs the rows.
 
-Run `./whetstone verify` before opening a PR. It fails if any reference solution does not
+Run `./aptivus verify` before opening a PR. It fails if any reference solution does not
 pass its own tests, which catches most authoring mistakes.
 
 ## Using an AI assistant with it
@@ -154,9 +159,9 @@ that is tedious to do by hand.
 
 ### Generating packs
 
-whetstone runs locally, so a coding agent working in the same directory can read `packs/`
+Aptivus runs locally, so a coding agent working in the same directory can read `packs/`
 and write to it. Point it at a company and the round description you were given, and have
-it produce problems in the pack format. Tell it to run `./whetstone verify` and fix
+it produce problems in the pack format. Tell it to run `./aptivus verify` and fix
 whatever fails - the verifier is the quality gate, and it specifically catches wrong
 expected values, which is the failure mode LLM-generated problems actually have. Every
 problem in the shipped pack went through exactly that loop.

@@ -7,7 +7,7 @@ Two modes, chosen automatically:
 - **prompt** - otherwise, we assemble the full context and hand it back for you to
                paste into whatever AI tool you already use. No key, no install.
 
-The core app never imports `anthropic` at module load, so whetstone stays
+The core app never imports `anthropic` at module load, so aptivus stays
 zero-install; only this optional panel needs `pip install anthropic`.
 """
 import os

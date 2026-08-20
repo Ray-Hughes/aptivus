@@ -418,7 +418,7 @@ function show(v) {
   if (v === "solve" && EDITOR) setTimeout(() => EDITOR.refresh(), 30);
 }
 
-const COLS_KEY = "whetstone.cols";
+const COLS_KEY = "aptivus.cols";
 let COLS = [0.33, 0.42, 0.25];        // problem | editor | output, as fractions
 
 function applyCols() {
@@ -546,7 +546,7 @@ async function runTrace() {
   return renderPyTrace(res);
 }
 
-const TRACE_H_KEY = "whetstone.traceHeight";
+const TRACE_H_KEY = "aptivus.traceHeight";
 const TRACE_H_DEFAULT = 265;
 
 function traceHeight(h) {

@@ -135,8 +135,9 @@ details{margin:8px 0} summary{cursor:pointer;color:var(--accent2)}
 .mockcard .row{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
 
 /* ---------- brand ---------- */
-.brand{display:flex;align-items:center;gap:7px;font-weight:700;letter-spacing:-.2px}
-.brand .wordmark{font-size:14px;color:var(--fg)}
+.brand{display:flex;align-items:center;gap:8px;font-weight:650;letter-spacing:.2px}
+.brand img{display:block;flex:0 0 auto}
+.brand .wordmark{font-size:14.5px;color:var(--fg)}
 
 /* ---------- editor: make the selection and cursor actually visible ---------- */
 .CodeMirror-selected{background:#2c4a6b!important}

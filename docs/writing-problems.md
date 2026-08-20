@@ -9,7 +9,7 @@ problems safely.
 **Problem ids must be unique across all packs.** The id defaults to the filename without
 `.py`. The loader warns and skips duplicates.
 
-Run `./whetstone verify` after adding anything. It executes every reference solution
+Run `./aptivus verify` after adding anything. It executes every reference solution
 against its own tests and fails loudly if one does not pass.
 
 ---

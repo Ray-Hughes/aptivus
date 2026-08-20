@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# whetstone - launch the practice environment
+# aptivus - launch the practice environment
 set -euo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cmd="${1:-serve}"
@@ -11,7 +11,7 @@ case "$cmd" in
     exec python3 "$DIR/verify.py"
     ;;
   *)
-    echo "usage: whetstone [serve|verify]"
+    echo "usage: aptivus [serve|verify]"
     exit 1
     ;;
 esac

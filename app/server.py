@@ -392,6 +392,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return self._file(os.path.join(STATIC, "app.js"), "application/javascript")
         if p == "/static/style.css":
             return self._file(os.path.join(STATIC, "style.css"), "text/css")
+        if p == "/static/logo.svg":
+            return self._file(os.path.join(STATIC, "logo.svg"), "image/svg+xml")
         if p == "/api/problems":
             return self._send(200, {
                 "problems": [public_meta(x) for x in PROBLEMS.values()],

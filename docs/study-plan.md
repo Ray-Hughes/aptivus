@@ -47,7 +47,7 @@ solution, close it, retype it from memory, move on.
 
 Setup and orientation. Low intensity.
 
-- [ ] Get the app running: `./whetstone` then open http://localhost:8777
+- [ ] Get the app running: `./aptivus` then open http://localhost:8777
 - [ ] Read `docs/ruby-to-python.md` section 1 (**Gotchas**) properly. Skim the rest.
 - [ ] Open the real HackerRank sample pad they sent: https://hr.gs/sampleint
       Type in it. Find the Run Code button, the Input box, the language dropdown,
