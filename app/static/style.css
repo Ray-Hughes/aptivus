@@ -237,3 +237,12 @@ body.row-resizing{cursor:row-resize;user-select:none}
 .solved-box .small{display:block;margin-top:7px}
 .primary:disabled,.secondary:disabled{opacity:.4;cursor:default}
 .primary:disabled{background:#2f6b45;color:#9fd8b6}
+
+/* ---------- pane splitters ---------- */
+.gutter{background:var(--line);cursor:col-resize;transition:background .12s;
+  position:relative}
+.gutter:hover,.gutter.dragging{background:var(--accent)}
+.gutter::after{content:"";position:absolute;top:50%;left:2px;width:1px;height:30px;
+  margin-top:-15px;background:rgba(255,255,255,.4);pointer-events:none}
+body.col-resizing{cursor:col-resize;user-select:none}
+body.col-resizing .CodeMirror{pointer-events:none}

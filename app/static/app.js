@@ -418,29 +418,64 @@ function show(v) {
   if (v === "solve" && EDITOR) setTimeout(() => EDITOR.refresh(), 30);
 }
 
+const COLS_KEY = "whetstone.cols";
+let COLS = [0.33, 0.42, 0.25];        // problem | editor | output, as fractions
+
+function applyCols() {
+  const g = $("#solve-grid");
+  if (!g) return;
+  g.style.gridTemplateColumns =
+    COLS[0] + "fr 5px " + COLS[1] + "fr 5px " + COLS[2] + "fr";
+  if (EDITOR && EDITOR.refresh) EDITOR.refresh();
+}
+
+/* Each gutter moves only the two panes it sits between; the third keeps its
+   width. Fractions, so the layout survives a window resize. */
 function initDrag() {
+  const saved = localStorage.getItem(COLS_KEY);
+  if (saved) {
+    try {
+      const c = JSON.parse(saved);
+      if (Array.isArray(c) && c.length === 3 && c.every((n) => n > 0.05)) COLS = c;
+    } catch (e) { /* ignore a corrupt value */ }
+  }
+  applyCols();
+
   $$(".gutter").forEach((g) => {
+    const which = g.dataset.drag === "1" ? 0 : 1;   // index of the pane on its left
     g.addEventListener("mousedown", (e) => {
       e.preventDefault();
       const grid = $("#solve-grid");
+      const width = grid.clientWidth;
+      const startX = e.clientX;
+      const a0 = COLS[which], b0 = COLS[which + 1];
+      const MIN = 0.12;
+      g.classList.add("dragging");
+      document.body.classList.add("col-resizing");
+
       const move = (ev) => {
-        const w = grid.clientWidth;
-        const x = ev.clientX / w;
-        if (g.dataset.drag === "1") {
-          const a = Math.max(0.15, Math.min(0.6, x));
-          grid.style.gridTemplateColumns = a + "fr 5px " + (1 - a - 0.25) + "fr 5px 0.25fr";
-        } else {
-          const cols = (grid.style.gridTemplateColumns || "0.33fr").split(" ");
-          const a = parseFloat(cols[0]) || 0.33;
-          const b = Math.max(0.12, Math.min(0.5, 1 - x));
-          grid.style.gridTemplateColumns = a + "fr 5px " + (1 - a - b) + "fr 5px " + b + "fr";
-        }
-        if (EDITOR) EDITOR.refresh();
+        let d = (ev.clientX - startX) / width;
+        d = Math.max(MIN - a0, Math.min(b0 - MIN, d));   // clamp both neighbours
+        COLS[which] = a0 + d;
+        COLS[which + 1] = b0 - d;
+        applyCols();
       };
-      const up = () => { document.removeEventListener("mousemove", move);
-                         document.removeEventListener("mouseup", up); };
+      const up = () => {
+        g.classList.remove("dragging");
+        document.body.classList.remove("col-resizing");
+        localStorage.setItem(COLS_KEY, JSON.stringify(COLS));
+        document.removeEventListener("mousemove", move);
+        document.removeEventListener("mouseup", up);
+      };
       document.addEventListener("mousemove", move);
       document.addEventListener("mouseup", up);
+    });
+
+    // double-click a gutter to restore the default layout
+    g.addEventListener("dblclick", () => {
+      COLS = [0.33, 0.42, 0.25];
+      applyCols();
+      localStorage.setItem(COLS_KEY, JSON.stringify(COLS));
     });
   });
 }
