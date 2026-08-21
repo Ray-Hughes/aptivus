@@ -1,0 +1,229 @@
+{
+  "id": "py_09_broker_hierarchy",
+  "pack": "federato",
+  "kind": "code",
+  "title": "Roll up premium through a broker hierarchy",
+  "difficulty": "medium",
+  "pattern": "graph / BFS-DFS",
+  "tags": [
+    "graph",
+    "bfs",
+    "dfs",
+    "tree"
+  ],
+  "minutes": 18,
+  "mode": "function",
+  "prompt": "Brokers form a tree. You get:\n\n- `edges`: list of `[parent, child]` pairs\n- `premiums`: dict of `{broker: premium_written_directly}`\n- `root`: the top broker\n\nReturn a dict mapping **every** broker to its total rolled-up premium: its own\npremium plus everything written anywhere beneath it.\n\n```\nedges    = [[\"A\",\"B\"],[\"A\",\"C\"],[\"B\",\"D\"]]\npremiums = {\"A\":10, \"B\":5, \"C\":7, \"D\":3}\n-> {\"A\": 25, \"B\": 8, \"C\": 7, \"D\": 3}\n```\n\nA broker with no entry in `premiums` wrote 0.\n\n### Why this one\nPortfolio roll-ups are Federato's whole product. And a hierarchy traversal is the\ncleanest way for an interviewer to see whether you can write a recursion or a BFS\nwithout flailing.",
+  "hints": [
+    "First build an adjacency list: defaultdict(list) mapping parent -> [children]. Never work off the raw edge list inside a traversal, it makes everything O(n^2).",
+    "Post-order DFS: a node's total is its own premium plus the totals of its children, so you must finish the children first.",
+    "Recursion is fine here and reads best. Mention that a 100k-deep chain would blow Python's 1000-frame recursion limit, and that the iterative fix is a stack with a two-pass (visit, then process) marker."
+  ],
+  "explanation": "",
+  "followups": [
+    "What if the input is a DAG, not a tree, so a broker can have two parents? (Premium gets double counted -- you need to decide the business rule, then memoise per node.)",
+    "What if there is a cycle in the data because the customer's export is broken? (Track a visiting set; this is the next problem.)",
+    "How would you do this roll-up in SQL? (Recursive CTE.)"
+  ],
+  "signature": {
+    "name": {
+      "python": "rollup",
+      "ruby": "rollup",
+      "javascript": "rollup"
+    },
+    "params": [
+      {
+        "name": "edges",
+        "type": "string[][]"
+      },
+      {
+        "name": "premiums",
+        "type": "map<string, int>"
+      },
+      {
+        "name": "root",
+        "type": "string"
+      }
+    ],
+    "returns": "map<string, int>"
+  },
+  "tests": [
+    {
+      "args": [
+        [
+          [
+            "A",
+            "B"
+          ],
+          [
+            "A",
+            "C"
+          ],
+          [
+            "B",
+            "D"
+          ]
+        ],
+        {
+          "A": 10,
+          "B": 5,
+          "C": 7,
+          "D": 3
+        },
+        "A"
+      ],
+      "expected": {
+        "A": 25,
+        "B": 8,
+        "C": 7,
+        "D": 3
+      },
+      "sample": true
+    },
+    {
+      "args": [
+        [],
+        {
+          "A": 10
+        },
+        "A"
+      ],
+      "expected": {
+        "A": 10
+      },
+      "sample": true
+    },
+    {
+      "args": [
+        [
+          [
+            "A",
+            "B"
+          ]
+        ],
+        {
+          "A": 1
+        },
+        "A"
+      ],
+      "expected": {
+        "A": 1,
+        "B": 0
+      }
+    },
+    {
+      "args": [
+        [
+          [
+            "R",
+            "X"
+          ],
+          [
+            "X",
+            "Y"
+          ],
+          [
+            "Y",
+            "Z"
+          ]
+        ],
+        {
+          "Z": 100
+        },
+        "R"
+      ],
+      "expected": {
+        "R": 100,
+        "X": 100,
+        "Y": 100,
+        "Z": 100
+      }
+    },
+    {
+      "args": [
+        [
+          [
+            "A",
+            "B"
+          ],
+          [
+            "A",
+            "C"
+          ],
+          [
+            "A",
+            "D"
+          ]
+        ],
+        {
+          "B": 1,
+          "C": 2,
+          "D": 3
+        },
+        "A"
+      ],
+      "expected": {
+        "A": 6,
+        "B": 1,
+        "C": 2,
+        "D": 3
+      }
+    },
+    {
+      "args": [
+        [
+          [
+            "A",
+            "B"
+          ],
+          [
+            "B",
+            "C"
+          ],
+          [
+            "A",
+            "D"
+          ],
+          [
+            "D",
+            "E"
+          ],
+          [
+            "D",
+            "F"
+          ]
+        ],
+        {
+          "A": 1,
+          "B": 2,
+          "C": 4,
+          "D": 8,
+          "E": 16,
+          "F": 32
+        },
+        "A"
+      ],
+      "expected": {
+        "A": 63,
+        "B": 6,
+        "C": 4,
+        "D": 56,
+        "E": 16,
+        "F": 32
+      }
+    }
+  ],
+  "languages": {
+    "python": {
+      "starter": "def rollup(edges, premiums, root):\n    # edges: list[[str,str]], premiums: dict[str,int], root: str -> dict[str,int]\n    pass\n",
+      "solution": "from collections import defaultdict\n\ndef rollup(edges, premiums, root):\n    children = defaultdict(list)\n    for parent, child in edges:\n        children[parent].append(child)\n\n    totals = {}\n\n    def dfs(node):\n        total = premiums.get(node, 0)\n        for c in children[node]:\n            total += dfs(c)\n        totals[node] = total\n        return total\n\n    dfs(root)\n    return totals\n",
+      "notes": "### Ruby to Python notes\n- `premiums.get(node, 0)` is `premiums.fetch(node, 0)`. Bare `premiums[node]` raises `KeyError` -- unlike Ruby, which returns `nil`. Get comfortable with `.get()`; it prevents most beginner crashes.\n- Nested `def dfs` closes over `children` and `totals` from the enclosing scope. **Reading** an outer variable works freely; **rebinding** one needs `nonlocal`. Mutating a dict or list in place counts as reading, which is why `totals[node] = ...` works without `nonlocal`.\n- `children[node]` on a defaultdict returns `[]` for an unknown leaf instead of raising. Watch out: that also silently inserts the key. Use `children.get(node, [])` if you care.\n\n### The iterative version, if they push\n```\nstack = [(root, False)]\nwhile stack:\n    node, processed = stack.pop()\n    if processed:\n        totals[node] = premiums.get(node, 0) + sum(totals[c] for c in children[node])\n    else:\n        stack.append((node, True))\n        for c in children[node]:\n            stack.append((c, False))\n```"
+    },
+    "javascript": {
+      "starter": "function rollup(edges, premiums, root) {\n  // edges: [string, string][], premiums: Record<string, number>, root: string\n  // -> Record<string, number>\n}\n",
+      "solution": "function rollup(edges, premiums, root) {\n  const children = new Map();               // parent -> [children]\n  for (const [parent, child] of edges) {\n    if (!children.has(parent)) children.set(parent, []);\n    children.get(parent).push(child);\n  }\n\n  const totals = {};\n  const dfs = (node) => {\n    let total = premiums[node] ?? 0;\n    for (const c of children.get(node) ?? []) total += dfs(c);\n    totals[node] = total;\n    return total;\n  };\n\n  dfs(root);\n  return totals;\n}\n",
+      "notes": "### Ruby to JavaScript notes\n- `premiums[node] ?? 0` is `premiums.fetch(node, 0)`. A missing key gives `undefined`, not an error -- closer to Ruby's `nil` than to Python's `KeyError` -- so the danger is not a crash but `undefined + 5` quietly becoming `NaN`. Default at the point of read, every time.\n- `children.get(node) ?? []` is the `defaultdict` replacement, and it is better behaved: it does not insert the key as a side effect the way `defaultdict` does.\n- An arrow function assigned to a `const` is the idiomatic nested helper. It closes over `children` and `totals` and, unlike Python, needs no `nonlocal` to reassign an outer variable -- closures in JavaScript capture bindings, not values, exactly as Ruby blocks do.\n- Arrow functions also inherit `this` from the enclosing scope, which is why they are preferred over `function` for callbacks. `this` in JavaScript is decided by the *call site*, not the definition, and that is the deepest difference from Ruby's `self`.\n- Recursion depth is limited (~10k frames), so the same \"a 100k-deep chain needs an explicit stack\" caveat applies as in Python.\n\n### The iterative version, if they push\n```js\nconst stack = [[root, false]];\nwhile (stack.length) {\n  const [node, processed] = stack.pop();\n  if (processed) {\n    const kids = children.get(node) ?? [];\n    totals[node] = (premiums[node] ?? 0) + kids.reduce((n, c) => n + totals[c], 0);\n  } else {\n    stack.push([node, true]);\n    for (const c of children.get(node) ?? []) stack.push([c, false]);\n  }\n}\n```\n"
+    }
+  },
+  "complexity": "O(V + E) time and space."
+}

@@ -1,0 +1,200 @@
+{
+  "id": "py_02_top_k_brokers",
+  "pack": "federato",
+  "kind": "code",
+  "title": "Top K brokers by submission volume",
+  "difficulty": "easy",
+  "pattern": "counting + heap",
+  "tags": [
+    "hash map",
+    "heap",
+    "sorting"
+  ],
+  "minutes": 12,
+  "mode": "function",
+  "prompt": "You are given a list of submission records. Each record is `[broker_name, premium]`.\n\nReturn the names of the **k brokers with the most submissions**, ordered from most\nto fewest. Break ties alphabetically by broker name.\n\n### Why this one\nCounting then ranking is the most common \"real data\" question there is, and the\ntie-break rule is where most candidates lose the point. Handle it explicitly.",
+  "hints": [
+    "Step 1 is a frequency count. collections.Counter does it in one line.",
+    "For the ranking, sort by a tuple key. Python sorts tuples left to right.",
+    "You want descending count but ascending name. Use key=lambda kv: (-kv[1], kv[0]) so the negation flips only the count."
+  ],
+  "explanation": "### The tie-break trick\nYou cannot write `reverse=True` here, because that would reverse the name order too.\nNegating the numeric part of the tuple gives you \"descending count, ascending name\"\nin one key. Interviewers watch for exactly this.",
+  "followups": [
+    "n is 10 million records and k is 10. What changes? (Heap of size k, O(n log k), constant memory in k.)",
+    "What if ties should be broken by total premium instead of name?",
+    "How would you do this in SQL? (This is the same thing as a GROUP BY with ORDER BY count DESC LIMIT k.)"
+  ],
+  "signature": {
+    "name": {
+      "python": "top_k_brokers",
+      "ruby": "top_k_brokers",
+      "javascript": "topKBrokers"
+    },
+    "params": [
+      {
+        "name": "records",
+        "type": "any[][]"
+      },
+      {
+        "name": "k",
+        "type": "int"
+      }
+    ],
+    "returns": "string[]"
+  },
+  "tests": [
+    {
+      "args": [
+        [
+          [
+            "Marsh",
+            100
+          ],
+          [
+            "Aon",
+            50
+          ],
+          [
+            "Marsh",
+            200
+          ],
+          [
+            "Gallagher",
+            75
+          ],
+          [
+            "Aon",
+            10
+          ]
+        ],
+        2
+      ],
+      "expected": [
+        "Aon",
+        "Marsh"
+      ],
+      "sample": true
+    },
+    {
+      "args": [
+        [
+          [
+            "Aon",
+            1
+          ],
+          [
+            "Marsh",
+            1
+          ]
+        ],
+        2
+      ],
+      "expected": [
+        "Aon",
+        "Marsh"
+      ],
+      "sample": true
+    },
+    {
+      "args": [
+        [
+          [
+            "Zurich",
+            1
+          ],
+          [
+            "Aon",
+            1
+          ],
+          [
+            "Marsh",
+            1
+          ]
+        ],
+        2
+      ],
+      "expected": [
+        "Aon",
+        "Marsh"
+      ]
+    },
+    {
+      "args": [
+        [],
+        3
+      ],
+      "expected": []
+    },
+    {
+      "args": [
+        [
+          [
+            "Aon",
+            5
+          ]
+        ],
+        5
+      ],
+      "expected": [
+        "Aon"
+      ]
+    },
+    {
+      "args": [
+        [
+          [
+            "A",
+            1
+          ],
+          [
+            "B",
+            1
+          ],
+          [
+            "A",
+            1
+          ],
+          [
+            "B",
+            1
+          ],
+          [
+            "C",
+            1
+          ]
+        ],
+        3
+      ],
+      "expected": [
+        "A",
+        "B",
+        "C"
+      ]
+    },
+    {
+      "args": [
+        [
+          [
+            "x",
+            0
+          ]
+        ],
+        0
+      ],
+      "expected": []
+    }
+  ],
+  "languages": {
+    "python": {
+      "starter": "def top_k_brokers(records, k):\n    # records: list[[str, int]], k: int -> list[str]\n    pass\n",
+      "solution": "from collections import Counter\n\ndef top_k_brokers(records, k):\n    counts = Counter(name for name, _premium in records)\n    ranked = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))\n    return [name for name, _c in ranked[:k]]\n\n# Heap variant, better when k is much smaller than n:\n# import heapq\n# return [n for n, _ in heapq.nsmallest(k, counts.items(), key=lambda kv: (-kv[1], kv[0]))]\n",
+      "notes": "### Ruby to Python notes\n- `Counter` is `records.group_by(&:first).transform_values(&:size)` in one call.\n- `for name, _premium in records` is destructuring, same as Ruby block args `|name, _premium|`.\n- Leading underscore means \"I am deliberately ignoring this\". Python has no `_` warning, it is convention only.\n- Python's `sorted` is stable, like Ruby's `sort_by`."
+    },
+    "javascript": {
+      "starter": "function topKBrokers(records, k) {\n  // records: [string, number][], k: number -> string[]\n}\n",
+      "solution": "function topKBrokers(records, k) {\n  const counts = new Map();\n  for (const [name] of records) counts.set(name, (counts.get(name) ?? 0) + 1);\n\n  const ranked = [...counts].sort(\n    (a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0),\n  );\n  return ranked.slice(0, k).map(([name]) => name);\n}\n",
+      "notes": "### Ruby to JavaScript notes\n- `for (const [name] of records)` destructures each pair and ignores the premium, the same as Ruby's `|name, _premium|`. Spare positions are simply left out.\n- `??` is \"if null or undefined\", which is what you want for a counter. `||` is \"if falsy\", and in JavaScript `0` and `\"\"` are falsy -- unlike Ruby, where only `nil` and `false` are. Reaching for `||` on a count is a real bug waiting for the first zero.\n- `sort` mutates the array in place and returns it, so it behaves like Ruby's `sort!`. Spread into a fresh array first (`[...counts]`) when the input is not yours to reorder.\n- **The default comparator sorts by string.** `[10, 9].sort()` gives `[10, 9]`. Always pass a comparator for numbers.\n- JavaScript strings have no `<=>`. Write `a < b ? -1 : a > b ? 1 : 0` for code-point order. `localeCompare` looks tidier but is locale-dependent, which is not what a test expects.\n\n### The tie-break, done the JavaScript way\nA comparator returns a number, so chain them with `||`: `b[1] - a[1] || nameCompare`.\nThe count comparison returns `0` when the counts tie, `0` is falsy, and the name\ncomparison takes over. That is the idiomatic equivalent of Python's negated tuple key.\n"
+    }
+  },
+  "complexity": "Sort version: O(n + m log m) where m is distinct brokers. Heap version: O(n + m log k)."
+}

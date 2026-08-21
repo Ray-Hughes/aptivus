@@ -1,0 +1,159 @@
+{
+  "id": "py_01_two_sum_premium",
+  "pack": "federato",
+  "kind": "code",
+  "title": "Two accounts hitting a premium target",
+  "difficulty": "easy",
+  "pattern": "hash map",
+  "tags": [
+    "hash map",
+    "array"
+  ],
+  "minutes": 10,
+  "mode": "function",
+  "prompt": "An underwriter wants to bind exactly two accounts whose premiums add up to a target.\n\nGiven a list of premiums and a target, return the **indices** of the two accounts\nas a list `[i, j]` with `i < j`. Exactly one valid pair exists. Return `[]` if none.\n\nDo it in one pass.\n\n### Why this one\nThis is Two Sum. It is the canonical \"can you reach for a dict instead of a nested\nloop\" question, and it is the single most likely warm-up in a 45 minute round.",
+  "hints": [
+    "The brute force is two nested loops, O(n^2). What would let you ask 'have I already seen the number I need?' in O(1)?",
+    "As you walk the list, store {value: index} for everything you have already passed.",
+    "For each premium p, the number you need is target - p. Check the dict BEFORE inserting p, so you never pair an element with itself."
+  ],
+  "explanation": "### Say this out loud\n\"Brute force is O(n squared). I will trade space for time with a dict of value to index,\nchecking for the complement before I insert so an element never pairs with itself.\"",
+  "followups": [
+    "What if there can be many valid pairs and you must return all of them, without duplicates?",
+    "What if the input is already sorted? (Two pointers, O(1) extra space.)",
+    "What if the list does not fit in memory?"
+  ],
+  "signature": {
+    "name": {
+      "python": "find_pair",
+      "ruby": "find_pair",
+      "javascript": "findPair"
+    },
+    "params": [
+      {
+        "name": "premiums",
+        "type": "int[]"
+      },
+      {
+        "name": "target",
+        "type": "int"
+      }
+    ],
+    "returns": "int[]"
+  },
+  "tests": [
+    {
+      "args": [
+        [
+          2500,
+          7500,
+          11000,
+          4000
+        ],
+        6500
+      ],
+      "expected": [
+        0,
+        3
+      ],
+      "sample": true
+    },
+    {
+      "args": [
+        [
+          3000,
+          3000
+        ],
+        6000
+      ],
+      "expected": [
+        0,
+        1
+      ],
+      "sample": true
+    },
+    {
+      "args": [
+        [
+          1000,
+          2000,
+          3000
+        ],
+        10000
+      ],
+      "expected": []
+    },
+    {
+      "args": [
+        [
+          5,
+          -2,
+          7,
+          1
+        ],
+        5
+      ],
+      "expected": [
+        1,
+        2
+      ]
+    },
+    {
+      "args": [
+        [
+          0,
+          0,
+          4
+        ],
+        0
+      ],
+      "expected": [
+        0,
+        1
+      ]
+    },
+    {
+      "args": [
+        [
+          100000,
+          250,
+          99750
+        ],
+        100000
+      ],
+      "expected": [
+        1,
+        2
+      ]
+    },
+    {
+      "args": [
+        [
+          42
+        ],
+        42
+      ],
+      "expected": []
+    },
+    {
+      "args": [
+        [],
+        0
+      ],
+      "expected": []
+    }
+  ],
+  "languages": {
+    "python": {
+      "starter": "def find_pair(premiums, target):\n    # premiums: list[int], target: int -> list[int]\n    pass\n",
+      "solution": "def find_pair(premiums, target):\n    seen = {}                       # value -> index we saw it at\n    for i, p in enumerate(premiums):\n        need = target - p\n        if need in seen:\n            return [seen[need], i]\n        seen[p] = i                 # insert AFTER the check\n    return []\n",
+      "notes": "### Ruby to Python notes\n- `enumerate(xs)` is Ruby's `each_with_index`, but the pair order is `(index, value)` -- the reverse of Ruby's `|value, index|`. This bites Rails people constantly.\n- `need in seen` is `seen.key?(need)`. On a dict, `in` checks **keys**, not values.\n- `seen[p] = i` needs no initialization. There is no `Hash.new(0)` ceremony unless you want a default; then use `collections.defaultdict`."
+    },
+    "javascript": {
+      "starter": "function findPair(premiums, target) {\n  // premiums: number[], target: number -> number[]\n}\n",
+      "solution": "function findPair(premiums, target) {\n  const seen = new Map();                 // value -> index we saw it at\n  for (let i = 0; i < premiums.length; i++) {\n    const need = target - premiums[i];\n    if (seen.has(need)) return [seen.get(need), i];\n    seen.set(premiums[i], i);             // insert AFTER the check\n  }\n  return [];\n}\n",
+      "notes": "### Ruby to JavaScript notes\n- Use `Map`, not `{}`. A plain object turns every key into a string, so `obj[2500]` and `obj[\"2500\"]` are the same entry and a numeric key silently changes type. Ruby's Hash never does that to you; `Map` is the type-preserving equivalent.\n- `seen.has(k)` is `hash.key?(k)`, `seen.get(k)` is `hash[k]`, `seen.set(k, v)` is `hash[k] = v`. `get` on a missing key returns `undefined`, not `nil` -- close enough in practice, but `undefined` and `null` are two different things in JavaScript and you will meet both.\n- There is no `each_with_index`. The nearest thing is `for (const [i, p] of premiums.entries())`, and like Python's `enumerate` it yields `(index, value)` -- the reverse of Ruby's `|value, index|`.\n- **Nothing is returned implicitly.** A function that falls off the end returns `undefined`, not the last expression. Every branch that produces an answer needs its own `return`.\n\n### Say this out loud\n\"Brute force is O(n squared). I will trade space for time with a Map of value to index,\nchecking for the complement before I insert so an element never pairs with itself.\"\n"
+    }
+  },
+  "complexity": "O(n) time, O(n) space."
+}

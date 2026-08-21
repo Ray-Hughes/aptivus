@@ -1,0 +1,230 @@
+{
+  "id": "py_11_accumulation_window",
+  "pack": "federato",
+  "kind": "code",
+  "title": "Peak accumulation in any 30-day window",
+  "difficulty": "medium",
+  "pattern": "sliding window on sorted events",
+  "tags": [
+    "sliding window",
+    "two pointers",
+    "sorting"
+  ],
+  "minutes": 18,
+  "mode": "function",
+  "prompt": "Catastrophe accumulation: you have bound policies, each `[day, tiv]`, where `day` is an\ninteger day number and `tiv` is total insured value. Events are **not sorted**.\n\nGiven a window size `w`, return the largest total TIV falling inside any window of `w`\nconsecutive days. A window starting at day `d` covers days `d` through `d + w - 1`\ninclusive. Several policies can land on the same day.\n\n```\nevents = [[1,100],[2,200],[5,50],[6,400]], w = 2\n-> 450    (days 5-6: 50 + 400)\n```\n\nReturn 0 for no events.\n\n### Why this one\nIt is a sliding window where the window is measured in a **key**, not in element count.\nThat is the version people fumble, and it is also literally what Federato's Control\nTower computes.",
+  "hints": [
+    "Sort by day. Then a window is a contiguous slice of the sorted list, so two pointers work.",
+    "Only windows that START at an event day can be optimal -- sliding further right can only drop events. So anchor the left pointer on each event in turn.",
+    "Advance right while events[right][0] <= events[left][0] + w - 1, keeping a running sum. Both pointers only move forward, so it is O(n) after the sort, not O(n^2)."
+  ],
+  "explanation": "### The insight worth stating\nAn optimal window can always be slid left until its first day is an event day, without\nlosing anything. So you only need to try `n` candidate windows, not every day on the\ncalendar. Say that before you write code -- it is the actual answer to the question.\n\n### Watch the ordering\n`total -= events[left][1]` must come AFTER `best = max(...)`, otherwise you drop the\nleft event before scoring the window it belongs to. Trace `[[1,5],[4,5]]` with w=4 by hand.",
+  "followups": [
+    "Now report the window start day too, not just the value.",
+    "Events arrive as a live stream and you need the current trailing-30-day total at all times. (Deque: append on arrival, popleft while the oldest is out of range.)",
+    "Add a geographic dimension: peak accumulation per CAT zone. (Group by zone first, then run this per group.)"
+  ],
+  "signature": {
+    "name": {
+      "python": "peak_accumulation",
+      "ruby": "peak_accumulation",
+      "javascript": "peakAccumulation"
+    },
+    "params": [
+      {
+        "name": "events",
+        "type": "int[][]"
+      },
+      {
+        "name": "w",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "tests": [
+    {
+      "args": [
+        [
+          [
+            1,
+            100
+          ],
+          [
+            2,
+            200
+          ],
+          [
+            5,
+            50
+          ],
+          [
+            6,
+            400
+          ]
+        ],
+        2
+      ],
+      "expected": 450,
+      "sample": true
+    },
+    {
+      "args": [
+        [
+          [
+            1,
+            100
+          ],
+          [
+            2,
+            200
+          ],
+          [
+            5,
+            50
+          ],
+          [
+            6,
+            400
+          ]
+        ],
+        30
+      ],
+      "expected": 750,
+      "sample": true
+    },
+    {
+      "args": [
+        [],
+        30
+      ],
+      "expected": 0,
+      "sample": true
+    },
+    {
+      "args": [
+        [
+          [
+            10,
+            5
+          ]
+        ],
+        1
+      ],
+      "expected": 5
+    },
+    {
+      "args": [
+        [
+          [
+            1,
+            10
+          ],
+          [
+            1,
+            20
+          ],
+          [
+            1,
+            30
+          ]
+        ],
+        1
+      ],
+      "expected": 60
+    },
+    {
+      "args": [
+        [
+          [
+            1,
+            10
+          ],
+          [
+            100,
+            999
+          ],
+          [
+            101,
+            1
+          ]
+        ],
+        2
+      ],
+      "expected": 1000
+    },
+    {
+      "args": [
+        [
+          [
+            5,
+            1
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            3,
+            1
+          ],
+          [
+            2,
+            1
+          ],
+          [
+            4,
+            1
+          ]
+        ],
+        3
+      ],
+      "expected": 3
+    },
+    {
+      "args": [
+        [
+          [
+            1,
+            5
+          ],
+          [
+            4,
+            5
+          ]
+        ],
+        3
+      ],
+      "expected": 5
+    },
+    {
+      "args": [
+        [
+          [
+            1,
+            5
+          ],
+          [
+            4,
+            5
+          ]
+        ],
+        4
+      ],
+      "expected": 10
+    }
+  ],
+  "languages": {
+    "python": {
+      "starter": "def peak_accumulation(events, w):\n    # events: list[[int,int]], w: int -> int\n    pass\n",
+      "solution": "def peak_accumulation(events, w):\n    if not events:\n        return 0\n    events = sorted(events)          # by day, then tiv\n    best = 0\n    total = 0\n    right = 0\n    for left in range(len(events)):\n        # extend the right edge as far as this window allows\n        limit = events[left][0] + w - 1\n        while right < len(events) and events[right][0] <= limit:\n            total += events[right][1]\n            right += 1\n        best = max(best, total)\n        total -= events[left][1]     # left is about to leave the window\n    return best\n",
+      "notes": "### Ruby to Python notes\n- `for left in range(len(events))` with a `right` that lives OUTSIDE the loop is the two-pointer idiom. Ruby devs tend to write a nested `each` here, which is O(n^2). The whole trick is that `right` never resets.\n- `sorted(events)` on `[day, tiv]` pairs sorts by day first, then tiv. Free, because list comparison is lexicographic.\n- There is no `do...while` in Python, so the inner `while` with its guard is the standard shape."
+    },
+    "javascript": {
+      "starter": "function peakAccumulation(events, w) {\n  // events: [number, number][], w: number -> number\n}\n",
+      "solution": "function peakAccumulation(events, w) {\n  if (events.length === 0) return 0;\n\n  const sorted = [...events].sort((a, b) => a[0] - b[0] || a[1] - b[1]);\n  let best = 0;\n  let total = 0;\n  let right = 0;\n\n  for (let left = 0; left < sorted.length; left++) {\n    // extend the right edge as far as this window allows\n    const limit = sorted[left][0] + w - 1;\n    while (right < sorted.length && sorted[right][0] <= limit) {\n      total += sorted[right][1];\n      right += 1;\n    }\n    best = Math.max(best, total);\n    total -= sorted[left][1];       // left is about to leave the window\n  }\n  return best;\n}\n",
+      "notes": "### Ruby to JavaScript notes\n- The two-pointer idiom is a `for` over `left` with `right` declared **outside** it. Ruby developers reach for a nested `each` here, which is O(n^2); the whole trick is that `right` never resets.\n- `[...events].sort(...)` again -- copy first, and always pass a numeric comparator for numbers.\n- `total` and `best` are `let` because they are reassigned. If you find yourself wanting `const` for a running total, that is a hint you could write it as a `reduce` -- but not here, where the sliding window needs mutable state.\n- Every number is a double, so a running total of large TIVs is exact only up to 2^53. Say that if the numbers in the question look like real money; `BigInt` exists for when they are.\n\n### Watch the ordering\n`total -= sorted[left][1]` must come AFTER `best = Math.max(...)`, otherwise you drop the\nleft event before scoring the window it belongs to. Trace `[[1, 5], [4, 5]]` with w=4 by hand.\n"
+    }
+  },
+  "complexity": "O(n log n) for the sort, O(n) for the scan. O(1) extra space beyond the sort."
+}

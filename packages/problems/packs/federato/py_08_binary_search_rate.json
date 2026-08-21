@@ -1,0 +1,245 @@
+{
+  "id": "py_08_binary_search_rate",
+  "pack": "federato",
+  "kind": "code",
+  "title": "Find the rate band for a TIV",
+  "difficulty": "medium",
+  "pattern": "binary search",
+  "tags": [
+    "binary search",
+    "array"
+  ],
+  "minutes": 12,
+  "mode": "function",
+  "prompt": "A rate table is a sorted list of ascending thresholds and their rates:\n`[[threshold, rate], ...]`. A total insured value (TIV) uses the rate of the\n**highest threshold that is less than or equal to it**.\n\nReturn that rate, or `-1` if the TIV is below every threshold.\n\n```\ntable = [[0, 1.0], [100000, 1.25], [500000, 1.6], [1000000, 2.1]]\nrate_for(table, 250000) -> 1.25\nrate_for(table, 100000) -> 1.25   (exact match takes that band)\nrate_for(table, 0)      -> 1.0\n```\n\nThe table can hold a million bands and you will be called on every quote, so scanning\nlinearly is not acceptable.\n\n### Why this one\nBinary search on \"rightmost value <= x\" is the variant people get wrong. Off-by-one\nhere is the single most common way to fail a coding round.",
+  "hints": [
+    "Standard binary search finds an exact match. You want the rightmost element <= target, which needs a slightly different loop.",
+    "Keep an 'answer' variable. When table[mid][0] <= tiv, that mid is a candidate: record it and search RIGHT for a better one. Otherwise search left.",
+    "Python has bisect built in: bisect.bisect_right(keys, tiv) - 1 gives the index directly. Write it by hand first, then mention bisect."
+  ],
+  "explanation": "### Getting the loop right every time\nUse the `while lo <= hi` form with `mid+1` / `mid-1` and a saved `ans`. It terminates\nby construction because the range strictly shrinks every iteration. If you find\nyourself writing `while lo < hi` and then debugging an infinite loop live on Zoom,\nyou have chosen the harder template.",
+  "followups": [
+    "Return the band index rather than the rate.",
+    "The table is not sorted when you get it. Does that change the complexity? (Sort once at load, O(n log n) amortised over many lookups.)",
+    "Thresholds have duplicates. Which one wins? (bisect_right handles 'last matching' correctly; bisect_left does not.)"
+  ],
+  "signature": {
+    "name": {
+      "python": "rate_for",
+      "ruby": "rate_for",
+      "javascript": "rateFor"
+    },
+    "params": [
+      {
+        "name": "table",
+        "type": "any[][]"
+      },
+      {
+        "name": "tiv",
+        "type": "int"
+      }
+    ],
+    "returns": "float"
+  },
+  "tests": [
+    {
+      "args": [
+        [
+          [
+            0,
+            1
+          ],
+          [
+            100000,
+            1.25
+          ],
+          [
+            500000,
+            1.6
+          ],
+          [
+            1000000,
+            2.1
+          ]
+        ],
+        250000
+      ],
+      "expected": 1.25,
+      "sample": true
+    },
+    {
+      "args": [
+        [
+          [
+            0,
+            1
+          ],
+          [
+            100000,
+            1.25
+          ],
+          [
+            500000,
+            1.6
+          ],
+          [
+            1000000,
+            2.1
+          ]
+        ],
+        100000
+      ],
+      "expected": 1.25,
+      "sample": true
+    },
+    {
+      "args": [
+        [
+          [
+            100000,
+            1.25
+          ]
+        ],
+        5
+      ],
+      "expected": -1,
+      "sample": true
+    },
+    {
+      "args": [
+        [],
+        500
+      ],
+      "expected": -1
+    },
+    {
+      "args": [
+        [
+          [
+            0,
+            1
+          ]
+        ],
+        0
+      ],
+      "expected": 1
+    },
+    {
+      "args": [
+        [
+          [
+            0,
+            1
+          ],
+          [
+            100000,
+            1.25
+          ],
+          [
+            500000,
+            1.6
+          ],
+          [
+            1000000,
+            2.1
+          ]
+        ],
+        99999999
+      ],
+      "expected": 2.1
+    },
+    {
+      "args": [
+        [
+          [
+            0,
+            1
+          ],
+          [
+            100000,
+            1.25
+          ],
+          [
+            500000,
+            1.6
+          ],
+          [
+            1000000,
+            2.1
+          ]
+        ],
+        499999
+      ],
+      "expected": 1.25
+    },
+    {
+      "args": [
+        [
+          [
+            10,
+            0.5
+          ],
+          [
+            20,
+            0.6
+          ],
+          [
+            30,
+            0.7
+          ],
+          [
+            40,
+            0.8
+          ],
+          [
+            50,
+            0.9
+          ]
+        ],
+        30
+      ],
+      "expected": 0.7
+    },
+    {
+      "args": [
+        [
+          [
+            10,
+            0.5
+          ],
+          [
+            20,
+            0.6
+          ],
+          [
+            30,
+            0.7
+          ],
+          [
+            40,
+            0.8
+          ],
+          [
+            50,
+            0.9
+          ]
+        ],
+        9
+      ],
+      "expected": -1
+    }
+  ],
+  "languages": {
+    "python": {
+      "starter": "def rate_for(table, tiv):\n    # table: list[[int, float]] sorted ascending by threshold\n    # tiv: int -> float\n    pass\n",
+      "solution": "def rate_for(table, tiv):\n    lo, hi = 0, len(table) - 1\n    ans = -1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        if table[mid][0] <= tiv:\n            ans = table[mid][1]     # candidate; maybe a higher band also fits\n            lo = mid + 1\n        else:\n            hi = mid - 1\n    return ans\n\n# Library version once you have shown the manual one:\n# import bisect\n# i = bisect.bisect_right([t for t, _ in table], tiv) - 1\n# return table[i][1] if i >= 0 else -1\n",
+      "notes": "### Ruby to Python notes\n- `//` is integer division. Plain `/` returns a **float** in Python 3, so `(lo+hi)/2` gives `2.5` and then `table[2.5]` raises `TypeError`. In Ruby `/` on two ints already floors. This is the number one Ruby-to-Python arithmetic trap.\n- `lo, hi = 0, len(table) - 1` is tuple unpacking, same as Ruby's parallel assignment.\n- `bisect` is Python's stdlib binary search: `bisect_left` finds the first index >= x, `bisect_right` finds the first index > x. Learn which is which now; you will reach for it."
+    },
+    "javascript": {
+      "starter": "function rateFor(table, tiv) {\n  // table: [number, number][] sorted ascending by threshold\n  // tiv: number -> number\n}\n",
+      "solution": "function rateFor(table, tiv) {\n  let lo = 0;\n  let hi = table.length - 1;\n  let ans = -1;\n  while (lo <= hi) {\n    const mid = Math.floor((lo + hi) / 2);\n    if (table[mid][0] <= tiv) {\n      ans = table[mid][1];     // candidate; maybe a higher band also fits\n      lo = mid + 1;\n    } else {\n      hi = mid - 1;\n    }\n  }\n  return ans;\n}\n",
+      "notes": "### Ruby to JavaScript notes\n- **There is one number type and it is a double.** `(lo + hi) / 2` gives `2.5`, so you need `Math.floor`. Ruby's `/` on two integers already floors, which is the trap in the opposite direction -- and unlike Python, indexing with `2.5` does not raise, it quietly returns `undefined`. A silent wrong answer is worse than a crash, so floor deliberately.\n- `(lo + hi) >> 1` is the shorter form and is what you will see in other people's code. It is a 32-bit operation, so it breaks above 2^31 elements; `Math.floor` does not.\n- There is no `bisect`. JavaScript's standard library is small: no binary search, no counter, no heap. Writing them out is normal here, not a sign you have missed a helper.\n- `let` for anything you reassign, `const` for anything you do not. The compiler enforces `const`, which catches the \"I meant to update `lo`\" class of bug at parse time.\n\n### Getting the loop right every time\nUse the `while (lo <= hi)` form with `mid + 1` / `mid - 1` and a saved `ans`. It terminates\nby construction because the range strictly shrinks every iteration. If you find\nyourself writing `while (lo < hi)` and then debugging an infinite loop live on Zoom,\nyou have chosen the harder template.\n"
+    }
+  },
+  "complexity": "O(log n) time, O(1) space."
+}

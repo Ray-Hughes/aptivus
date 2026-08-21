@@ -1,0 +1,168 @@
+{
+  "id": "py_13_min_layers",
+  "pack": "federato",
+  "kind": "code",
+  "title": "Fewest reinsurance layers to cover a limit",
+  "difficulty": "medium",
+  "pattern": "dynamic programming",
+  "tags": [
+    "dp",
+    "memoization"
+  ],
+  "minutes": 18,
+  "mode": "function",
+  "prompt": "You can buy reinsurance in fixed layer sizes, and you may buy each size any number of\ntimes. Return the **fewest layers** whose sizes add up to exactly `limit`, or `-1` if\nno combination hits it exactly.\n\n```\nmin_layers([1, 5, 10, 25], 30)  -> 2    (25 + 5)\nmin_layers([5, 10], 3)          -> -1\nmin_layers([7], 0)              -> 0\n```\n\n### Why this one\nCoin Change. It is the standard \"do you know DP exists\" checkpoint, and the greedy\nanswer (take the biggest layer first) is **wrong** -- `[1, 15, 25]` with limit 30 is\n`15+15 = 2`, not `25+1+1+1+1+1 = 6`. Say that out loud; interviewers love it.",
+  "hints": [
+    "Greedy fails. Build up an answer for every amount from 0 to limit.",
+    "best[a] = 1 + min(best[a - s] for every size s that fits). best[0] = 0.",
+    "Use a big sentinel (float('inf')) for 'unreachable', then convert it to -1 at the end."
+  ],
+  "explanation": "### How to talk about DP without sounding lost\nThree sentences, in this order:\n1. \"The state is: fewest layers to reach exactly amount `a`.\"\n2. \"The transition is: from `a - s` for each layer size `s`, costing one more layer.\"\n3. \"The base case is `best[0] = 0`, and I fill amounts in increasing order so every\n   subproblem is already solved when I need it.\"\n\nThat is the whole ritual. It works for every DP question you will get.",
+  "followups": [
+    "Return the actual combination of layers, not just the count. (Keep a parent pointer per amount.)",
+    "Now each size may be used at most once. (0/1 knapsack -- the loop order flips.)",
+    "Count the number of distinct combinations rather than the minimum. (Same table, sum instead of min, and swap the loop nesting to avoid counting permutations.)"
+  ],
+  "signature": {
+    "name": {
+      "python": "min_layers",
+      "ruby": "min_layers",
+      "javascript": "minLayers"
+    },
+    "params": [
+      {
+        "name": "sizes",
+        "type": "int[]"
+      },
+      {
+        "name": "limit",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "tests": [
+    {
+      "args": [
+        [
+          1,
+          5,
+          10,
+          25
+        ],
+        30
+      ],
+      "expected": 2,
+      "sample": true
+    },
+    {
+      "args": [
+        [
+          5,
+          10
+        ],
+        3
+      ],
+      "expected": -1,
+      "sample": true
+    },
+    {
+      "args": [
+        [
+          7
+        ],
+        0
+      ],
+      "expected": 0,
+      "sample": true
+    },
+    {
+      "args": [
+        [
+          1,
+          15,
+          25
+        ],
+        30
+      ],
+      "expected": 2
+    },
+    {
+      "args": [
+        [
+          2
+        ],
+        3
+      ],
+      "expected": -1
+    },
+    {
+      "args": [
+        [
+          1
+        ],
+        100
+      ],
+      "expected": 100
+    },
+    {
+      "args": [
+        [],
+        5
+      ],
+      "expected": -1
+    },
+    {
+      "args": [
+        [],
+        0
+      ],
+      "expected": 0
+    },
+    {
+      "args": [
+        [
+          186,
+          419,
+          83,
+          408
+        ],
+        6249
+      ],
+      "expected": 20
+    },
+    {
+      "args": [
+        [
+          3,
+          7
+        ],
+        11
+      ],
+      "expected": -1
+    },
+    {
+      "args": [
+        [
+          3,
+          7
+        ],
+        13
+      ],
+      "expected": 3
+    }
+  ],
+  "languages": {
+    "python": {
+      "starter": "def min_layers(sizes, limit):\n    # sizes: list[int], limit: int -> int\n    pass\n",
+      "solution": "def min_layers(sizes, limit):\n    INF = float(\"inf\")\n    best = [0] + [INF] * limit          # best[a] = fewest layers summing to a\n    for amount in range(1, limit + 1):\n        for s in sizes:\n            if s <= amount and best[amount - s] + 1 < best[amount]:\n                best[amount] = best[amount - s] + 1\n    return best[limit] if best[limit] != INF else -1\n",
+      "notes": "### Ruby to Python notes\n- `[0] + [INF] * limit` builds the array. `[x] * n` repeats -- but careful: `[[]] * 3` gives three references to the **same** list. For a grid you need `[[0]*cols for _ in range(rows)]`. This is the mutable-default trap's cousin and it will bite you.\n- `float('inf')` compares greater than every int. Ruby has `Float::INFINITY`.\n- `range(1, limit + 1)` is `1..limit` -- the top is exclusive, so you need the `+1`.\n\n### Recursive alternative, if you prefer it\n```\nfrom functools import lru_cache\n@lru_cache(maxsize=None)\ndef go(amount):\n    if amount == 0: return 0\n    if amount < 0:  return float('inf')\n    return min((go(amount - s) + 1 for s in sizes), default=float('inf'))\n```\n`lru_cache` is a one-line memoiser and it impresses people. Watch the recursion depth\nfor large limits."
+    },
+    "javascript": {
+      "starter": "function minLayers(sizes, limit) {\n  // sizes: number[], limit: number -> number\n}\n",
+      "solution": "function minLayers(sizes, limit) {\n  // best[a] = fewest layers summing to exactly a\n  const best = new Array(limit + 1).fill(Infinity);\n  best[0] = 0;\n\n  for (let amount = 1; amount <= limit; amount++) {\n    for (const s of sizes) {\n      if (s <= amount && best[amount - s] + 1 < best[amount]) {\n        best[amount] = best[amount - s] + 1;\n      }\n    }\n  }\n  return Number.isFinite(best[limit]) ? best[limit] : -1;\n}\n",
+      "notes": "### Ruby to JavaScript notes\n- `new Array(n).fill(x)` is `Array.new(n, x)`. The `.fill` is not optional: `new Array(n)` on its own creates *holes*, and `map` and `forEach` skip holes entirely, so a table built without `fill` looks right in the debugger and silently does nothing.\n- `Array.new(3) { [] }` has a direct equivalent for grids: `Array.from({ length: rows }, () => new Array(cols).fill(0))`. Do not write `new Array(rows).fill([])` -- every row would be the *same* array, the same trap as Python's `[[]] * 3`.\n- `Infinity` is a normal number here: it compares greater than everything, arithmetic on it stays `Infinity`, and `Number.isFinite` is how you test for it. Ruby spells it `Float::INFINITY`.\n- `for (const s of sizes)` is `each`; `for (const i in sizes)` gives you **string** indices and is almost never what you want.\n\n### Memoised recursion, if you prefer it\n```js\nfunction minLayers(sizes, limit) {\n  const memo = new Map();\n  const go = (amount) => {\n    if (amount === 0) return 0;\n    if (amount < 0) return Infinity;\n    if (memo.has(amount)) return memo.get(amount);\n    let best = Infinity;\n    for (const s of sizes) best = Math.min(best, go(amount - s) + 1);\n    memo.set(amount, best);\n    return best;\n  };\n  const answer = go(limit);\n  return Number.isFinite(answer) ? answer : -1;\n}\n```\nThere is no `lru_cache` decorator to lean on, so the memo is explicit. Watch the\nrecursion depth: the engine gives you roughly ten thousand frames.\n"
+    }
+  },
+  "complexity": "O(limit * len(sizes)) time, O(limit) space."
+}

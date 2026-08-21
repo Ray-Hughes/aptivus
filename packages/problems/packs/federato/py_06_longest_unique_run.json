@@ -1,0 +1,113 @@
+{
+  "id": "py_06_longest_unique_run",
+  "pack": "federato",
+  "kind": "code",
+  "title": "Longest run of distinct risk codes",
+  "difficulty": "medium",
+  "pattern": "sliding window",
+  "tags": [
+    "sliding window",
+    "hash map",
+    "string"
+  ],
+  "minutes": 15,
+  "mode": "function",
+  "prompt": "A submission carries an ordered list of risk codes (a string, one char per code).\nReturn the **length of the longest contiguous stretch with no repeated code**.\n\n```\n\"abcabcbb\" -> 3   (\"abc\")\n\"bbbbb\"    -> 1\n\"pwwkew\"   -> 3   (\"wke\")\n\"\"     -> 0\n```\n\n### Why this one\nLongest Substring Without Repeating Characters. If you only drill one sliding-window\nproblem, drill this one -- it is the template for every \"longest/shortest window that\nsatisfies X\" question.",
+  "hints": [
+    "Two pointers, left and right, defining a window. Move right one step at a time and only ever move left forward -- never backwards. That is what makes it O(n) instead of O(n^2).",
+    "Keep a dict {char: last index seen}. When you see a repeat, you know exactly where to jump left to.",
+    "Careful: only jump left FORWARD. left = max(left, last[ch] + 1). Without the max, a stale entry from before the window drags left backwards and you overcount."
+  ],
+  "explanation": "### The template worth memorising\n```\nleft = 0\nfor right in range(len(arr)):\n    add arr[right] to the window\n    while window is invalid:\n        remove arr[left] from the window\n        left += 1\n    best = max(best, right - left + 1)\n```\nEvery sliding-window problem is that shape. The only thing that changes is what\n\"window state\" and \"invalid\" mean.",
+  "followups": [
+    "Return the substring itself, not just the length.",
+    "Allow at most K repeats of any code. (Same template, different invalid condition.)",
+    "Now it is a stream you cannot re-read. Does your solution still work? (Yes -- one pass, forward-only pointers.)"
+  ],
+  "signature": {
+    "name": {
+      "python": "longest_unique",
+      "ruby": "longest_unique",
+      "javascript": "longestUnique"
+    },
+    "params": [
+      {
+        "name": "codes",
+        "type": "string"
+      }
+    ],
+    "returns": "int"
+  },
+  "tests": [
+    {
+      "args": [
+        "abcabcbb"
+      ],
+      "expected": 3,
+      "sample": true
+    },
+    {
+      "args": [
+        "bbbbb"
+      ],
+      "expected": 1,
+      "sample": true
+    },
+    {
+      "args": [
+        "pwwkew"
+      ],
+      "expected": 3,
+      "sample": true
+    },
+    {
+      "args": [
+        ""
+      ],
+      "expected": 0
+    },
+    {
+      "args": [
+        "a"
+      ],
+      "expected": 1
+    },
+    {
+      "args": [
+        "abba"
+      ],
+      "expected": 2
+    },
+    {
+      "args": [
+        "tmmzuxt"
+      ],
+      "expected": 5
+    },
+    {
+      "args": [
+        "abcdefghijklmnopqrstuvwxyz"
+      ],
+      "expected": 26
+    },
+    {
+      "args": [
+        "aab"
+      ],
+      "expected": 2
+    }
+  ],
+  "languages": {
+    "python": {
+      "starter": "def longest_unique(codes):\n    # codes: str -> int\n    pass\n",
+      "solution": "def longest_unique(codes):\n    last = {}          # char -> most recent index\n    left = 0\n    best = 0\n    for right, ch in enumerate(codes):\n        if ch in last and last[ch] >= left:\n            left = last[ch] + 1\n        last[ch] = right\n        best = max(best, right - left + 1)\n    return best\n",
+      "notes": "### Ruby to Python notes\n- `range(len(arr))` is `0...arr.length`. Ranges in Python are always exclusive at the top -- there is no `..` vs `...` distinction.\n- `max(best, x)` is a builtin taking varargs; there is no `[a, b].max` need.\n- The `last[ch] >= left` guard is the whole problem. Draw \"abba\" on paper by hand before you code it -- that is the case that separates a pass from a fail."
+    },
+    "javascript": {
+      "starter": "function longestUnique(codes) {\n  // codes: string -> number\n}\n",
+      "solution": "function longestUnique(codes) {\n  const last = new Map();          // char -> most recent index\n  let left = 0;\n  let best = 0;\n  for (let right = 0; right < codes.length; right++) {\n    const ch = codes[right];\n    if (last.has(ch) && last.get(ch) >= left) left = last.get(ch) + 1;\n    last.set(ch, right);\n    best = Math.max(best, right - left + 1);\n  }\n  return best;\n}\n",
+      "notes": "### Ruby to JavaScript notes\n- `codes[right]` on a string gives a one-character string. There is no character type, and unlike Ruby there is no `String#[]=` -- strings are immutable.\n- A plain indexed `for` loop is the right tool when you need the index for arithmetic. `forEach` cannot `break`, and `for...of` over a string gives you characters but not positions.\n- `let`, never `var`. `var` is function-scoped and hoisted, which means a loop variable leaks out of the loop and closures capture the wrong thing. `let` and `const` are block-scoped like Ruby's locals.\n- `Math.max(a, b)` takes varargs. For a whole array it is `Math.max(...xs)`, which blows the stack somewhere around 100k elements -- `reduce` for anything large.\n\n### The guard is the whole problem\n`last.get(ch) >= left` is what stops a stale index from before the window dragging\n`left` backwards. Trace `\"abba\"` by hand before you code it; that is the case that\nseparates a pass from a fail, in any language.\n"
+    }
+  },
+  "complexity": "O(n) time, O(min(n, alphabet)) space."
+}

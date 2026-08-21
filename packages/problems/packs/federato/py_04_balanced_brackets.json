@@ -1,0 +1,110 @@
+{
+  "id": "py_04_balanced_brackets",
+  "pack": "federato",
+  "kind": "code",
+  "title": "Validate a nested rule expression (balanced brackets)",
+  "difficulty": "easy",
+  "pattern": "stack",
+  "tags": [
+    "stack",
+    "string"
+  ],
+  "minutes": 10,
+  "mode": "function",
+  "prompt": "Underwriting rules are stored as nested expressions using `()`, `[]` and `{}`.\nGiven the bracket skeleton of one, return `True` if every bracket is closed by the\nmatching type in the right order, else `False`.\n\n```\n\"([]{})\"  -> True\n\"([)]\"    -> False\n\"(\"       -> False\n```",
+  "hints": [
+    "Whenever a problem says 'most recently opened', reach for a stack. In Python a plain list IS the stack: .append() and .pop().",
+    "Push opening brackets. On a closing bracket, pop and check the pair matches.",
+    "Two ways to fail: popping an empty stack, and a non-empty stack at the end."
+  ],
+  "explanation": "### Say this out loud\n\"Matching pairs with a most-recent-first rule is a stack. One pass, and I check both\nfailure modes: a close with nothing open, and opens left over at the end.\"",
+  "followups": [
+    "Now return the index of the first offending character instead of a bool.",
+    "Extend it to also validate quoted strings, where brackets inside quotes are literal."
+  ],
+  "signature": {
+    "name": {
+      "python": "is_valid",
+      "ruby": "is_valid",
+      "javascript": "isValid"
+    },
+    "params": [
+      {
+        "name": "s",
+        "type": "string"
+      }
+    ],
+    "returns": "bool"
+  },
+  "tests": [
+    {
+      "args": [
+        "([]{})"
+      ],
+      "expected": true,
+      "sample": true
+    },
+    {
+      "args": [
+        "([)]"
+      ],
+      "expected": false,
+      "sample": true
+    },
+    {
+      "args": [
+        ""
+      ],
+      "expected": true
+    },
+    {
+      "args": [
+        "("
+      ],
+      "expected": false
+    },
+    {
+      "args": [
+        ")"
+      ],
+      "expected": false
+    },
+    {
+      "args": [
+        "{[()]}"
+      ],
+      "expected": true
+    },
+    {
+      "args": [
+        "{[(])}"
+      ],
+      "expected": false
+    },
+    {
+      "args": [
+        "(((((((((())))))))))"
+      ],
+      "expected": true
+    },
+    {
+      "args": [
+        "]["
+      ],
+      "expected": false
+    }
+  ],
+  "languages": {
+    "python": {
+      "starter": "def is_valid(s):\n    # s: str -> bool\n    pass\n",
+      "solution": "def is_valid(s):\n    pairs = {\")\": \"(\", \"]\": \"[\", \"}\": \"{\"}\n    stack = []\n    for ch in s:\n        if ch in \"([{\":\n            stack.append(ch)\n        elif ch in pairs:\n            if not stack or stack.pop() != pairs[ch]:\n                return False\n    return not stack\n",
+      "notes": "### Ruby to Python notes\n- A Python `list` is Ruby's Array. `append` is `push`, `pop` is `pop`. There is no `Stack` class and you do not want one.\n- `if not stack` is the idiomatic empty check. Empty list, empty string, empty dict, `0` and `None` are all falsy -- same instinct as Ruby except **`0` and `\"\"` are falsy in Python** and truthy in Ruby. That difference will burn you at least once.\n- `stack.pop()` on an empty list raises `IndexError`, which is why the `not stack or` guard comes first. `or` short-circuits exactly like Ruby."
+    },
+    "javascript": {
+      "starter": "function isValid(s) {\n  // s: string -> boolean\n}\n",
+      "solution": "function isValid(s) {\n  const closers = new Map([[\")\", \"(\"], [\"]\", \"[\"], [\"}\", \"{\"]]);\n  const stack = [];\n  for (const ch of s) {\n    if (ch === \"(\" || ch === \"[\" || ch === \"{\") stack.push(ch);\n    else if (closers.has(ch) && stack.pop() !== closers.get(ch)) return false;\n  }\n  return stack.length === 0;\n}\n",
+      "notes": "### Ruby to JavaScript notes\n- An Array *is* the stack: `push` and `pop`, exactly as in Ruby. There is no Stack class and you do not want one.\n- **`pop()` on an empty array returns `undefined` rather than raising.** Python raises `IndexError` and needs a guard first; here `undefined !== \"(\"` is already false, so the empty case falls out. Know which one you are writing in.\n- `===`, not `==`. `==` coerces types before comparing (`\"\" == 0` is true) and is the single most notorious thing about the language. Use `===` everywhere and the surprise disappears.\n- `for (const ch of s)` iterates characters. `for...in` would give you the *indices* -- it is Ruby's `each_key`, not `each`, and mixing them up is a rite of passage.\n- A `Map` is used for the pairs rather than an object literal because `\"toString\" in obj` is `true` on any plain object -- prototype keys leak into `in` checks. `Map` has no prototype keys.\n\n### Say this out loud\n\"Matching pairs with a most-recent-first rule is a stack. One pass, and I check both\nfailure modes: a close with nothing open, and opens left over at the end.\"\n"
+    }
+  },
+  "complexity": "O(n) time, O(n) space."
+}

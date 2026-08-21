@@ -36,7 +36,7 @@ export const DIFFICULTIES = ["easy", "medium", "hard"];
  * a call site without it - and adding it now costs a few lines per problem
  * where retrofitting it across a large library would not.
  */
-const TYPE_RE = /^(?:int|float|number|string|bool|any|map<\s*string\s*,\s*[^<>]+>)(?:\[\])*$/;
+const TYPE_RE = /^(?:int|float|number|string|bool|any|void|map<\s*string\s*,\s*[^<>]+>)(?:\[\])*$/;
 export const TypeName = z.string().regex(TYPE_RE, "not a valid v2 type expression");
 
 export const ParamSchema = z.object({

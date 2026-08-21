@@ -1,0 +1,256 @@
+{
+  "id": "py_07_merge_intervals",
+  "pack": "federato",
+  "kind": "code",
+  "title": "Merge overlapping coverage periods",
+  "difficulty": "medium",
+  "pattern": "intervals / sort",
+  "tags": [
+    "sorting",
+    "intervals",
+    "greedy"
+  ],
+  "minutes": 15,
+  "mode": "function",
+  "prompt": "An insured has several policies. Each is `[start_day, end_day]`, inclusive of start\nand exclusive of end. Overlapping or touching periods represent continuous coverage.\n\nMerge them and return the consolidated periods, sorted by start.\n\n```\n[[1,3],[2,6],[8,10],[15,18]] -> [[1,6],[8,10],[15,18]]\n[[1,4],[4,5]]                -> [[1,5]]     (touching counts as continuous)\n```\n\n### Why this one\nInterval merging is the second most common medium after Two Sum, and in insurance it\nis a real question: gaps in coverage are a compliance problem.",
+  "hints": [
+    "Sort by start first. Almost every interval problem opens with a sort -- once sorted, you only ever compare against the interval you just emitted.",
+    "Walk the sorted list keeping a 'current' interval. If the next start is <= current end, they overlap.",
+    "When they overlap, extend: current_end = max(current_end, next_end). The max matters -- [1,10] followed by [2,3] must stay [1,10], not shrink to [1,3]."
+  ],
+  "explanation": "### The variants you should expect as a follow-up\nInsert-and-merge one new interval, count the max overlap at any point (sweep line with\n+1/-1 events), and find the gaps. All three are the same sort-first idea.",
+  "followups": [
+    "Return the gaps in coverage between the first start and the last end.",
+    "What is the maximum number of policies in force at once? (Sweep line: sort +1 at start and -1 at end, take a running max.)",
+    "Intervals are dates, not ints. What changes? (Nothing -- datetime.date compares and maxes the same way.)"
+  ],
+  "signature": {
+    "name": {
+      "python": "merge_coverage",
+      "ruby": "merge_coverage",
+      "javascript": "mergeCoverage"
+    },
+    "params": [
+      {
+        "name": "periods",
+        "type": "int[][]"
+      }
+    ],
+    "returns": "int[][]"
+  },
+  "tests": [
+    {
+      "args": [
+        [
+          [
+            1,
+            3
+          ],
+          [
+            2,
+            6
+          ],
+          [
+            8,
+            10
+          ],
+          [
+            15,
+            18
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          6
+        ],
+        [
+          8,
+          10
+        ],
+        [
+          15,
+          18
+        ]
+      ],
+      "sample": true
+    },
+    {
+      "args": [
+        [
+          [
+            1,
+            4
+          ],
+          [
+            4,
+            5
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          5
+        ]
+      ],
+      "sample": true
+    },
+    {
+      "args": [
+        []
+      ],
+      "expected": []
+    },
+    {
+      "args": [
+        [
+          [
+            5,
+            7
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          5,
+          7
+        ]
+      ]
+    },
+    {
+      "args": [
+        [
+          [
+            1,
+            10
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            4,
+            5
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          10
+        ]
+      ]
+    },
+    {
+      "args": [
+        [
+          [
+            8,
+            10
+          ],
+          [
+            1,
+            3
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          3
+        ],
+        [
+          8,
+          10
+        ]
+      ]
+    },
+    {
+      "args": [
+        [
+          [
+            1,
+            2
+          ],
+          [
+            3,
+            4
+          ],
+          [
+            5,
+            6
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          5,
+          6
+        ]
+      ]
+    },
+    {
+      "args": [
+        [
+          [
+            1,
+            4
+          ],
+          [
+            0,
+            4
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          0,
+          4
+        ]
+      ]
+    },
+    {
+      "args": [
+        [
+          [
+            1,
+            4
+          ],
+          [
+            2,
+            3
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          4
+        ]
+      ]
+    }
+  ],
+  "languages": {
+    "python": {
+      "starter": "def merge_coverage(periods):\n    # periods: list[[int,int]] -> list[[int,int]]\n    pass\n",
+      "solution": "def merge_coverage(periods):\n    if not periods:\n        return []\n    periods = sorted(periods)          # sorts by start, then end\n    out = [list(periods[0])]\n    for start, end in periods[1:]:\n        if start <= out[-1][1]:        # overlaps or touches the last merged one\n            out[-1][1] = max(out[-1][1], end)\n        else:\n            out.append([start, end])\n    return out\n",
+      "notes": "### Ruby to Python notes\n- `sorted(periods)` on a list of lists compares element by element -- `[1,3] < [2,6]` is True. Ruby's `<=>` on arrays does the same. So plain `sorted()` already sorts by start then end, no key needed.\n- `out[-1]` is the last element. Negative indexing is a Python thing Rails devs love once they find it. `out[-1][1]` is \"end of the last merged interval\".\n- `list(periods[0])` makes a **copy**. Without it you would mutate the caller's input, which the interviewer may or may not care about, but saying \"I am copying so I do not mutate the input\" is free credit."
+    },
+    "javascript": {
+      "starter": "function mergeCoverage(periods) {\n  // periods: number[][] -> number[][]\n}\n",
+      "solution": "function mergeCoverage(periods) {\n  if (periods.length === 0) return [];\n\n  // Copy before sorting: sort mutates, and the caller's array is not ours.\n  const sorted = [...periods].sort((a, b) => a[0] - b[0] || a[1] - b[1]);\n\n  const out = [[...sorted[0]]];\n  for (const [start, end] of sorted.slice(1)) {\n    const last = out[out.length - 1];\n    if (start <= last[1]) last[1] = Math.max(last[1], end);  // overlaps or touches\n    else out.push([start, end]);\n  }\n  return out;\n}\n",
+      "notes": "### Ruby to JavaScript notes\n- **Sorting arrays of arrays does not work by default.** Ruby's `sort` uses `<=>`, which compares arrays element by element; JavaScript's default comparator calls `toString()` on each element, so `[[10, 1], [9, 1]]` sorts as the strings `\"10,1\"` and `\"9,1\"`. Pass `(a, b) => a[0] - b[0] || a[1] - b[1]`.\n- There is no negative indexing. `out[-1]` is not the last element, it is `undefined` -- `-1` is just another property name on an object. Use `out[out.length - 1]`, or `out.at(-1)` in modern runtimes.\n- `[...sorted[0]]` is a shallow copy, the equivalent of `Array#dup`. Saying \"I am copying so I do not mutate the input\" is free credit in an interview, and in JavaScript it is not optional: `sort` and `reverse` both mutate.\n- `slice` copies, `splice` mutates. The names are one letter apart and do opposite things; this is the JavaScript equivalent of Ruby's `sort` versus `sort!`, minus the helpful bang.\n\n### The variants you should expect as a follow-up\nInsert-and-merge one new interval, count the max overlap at any point (sweep line with\n+1/-1 events), and find the gaps. All three are the same sort-first idea.\n"
+    }
+  },
+  "complexity": "O(n log n) for the sort, O(n) after. O(n) output space."
+}

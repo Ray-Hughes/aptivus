@@ -25,6 +25,9 @@
   --brand-violet: #7C4DFF;
   --brand-grad:   linear-gradient(135deg, #00E5FF 0%, #7C4DFF 100%);
   --brand-grad-soft: linear-gradient(135deg, rgba(0,229,255,.16), rgba(124,77,255,.16));
+  /* CTA sweep: the violet stop is lifted to #9E7BFF so ink text clears AA
+     across the whole gradient. #7C4DFF only reaches 4.2:1 against ink. */
+  --brand-grad-cta: linear-gradient(135deg, #00E5FF 0%, #9E7BFF 100%);
 
   /* surfaces, darkest → lightest */
   --bg:         #08090C;
@@ -134,34 +137,34 @@
   --text:   #0B0E15;
   --text-2: #4B5468;
   --text-3: #6B7486;
-  --text-on-brand: #FFFFFF;
+  --text-on-brand: #04070E;   /* ink on the brand sweep in BOTH themes */
 
-  --accent:       #0B84A8;
-  --accent-hover: #096A87;
-  --accent-quiet: rgba(11,132,168,.10);
-  --accent-line:  rgba(11,132,168,.28);
+  --accent:       #0A7490;
+  --accent-hover: #065E77;
+  --accent-quiet: rgba(10,116,144,.10);
+  --accent-line:  rgba(10,116,144,.30);
   --violet:       #6234D8;
   --violet-quiet: rgba(98,52,216,.10);
   --violet-line:  rgba(98,52,216,.28);
 
-  --success:       #0A8F5F;
-  --success-quiet: rgba(10,143,95,.11);
-  --success-line:  rgba(10,143,95,.28);
+  --success:       #0A7A50;
+  --success-quiet: rgba(10,122,80,.11);
+  --success-line:  rgba(10,122,80,.28);
   --warning:       #9A5B00;
   --warning-quiet: rgba(154,91,0,.11);
   --warning-line:  rgba(154,91,0,.28);
   --danger:        #C22A3A;
   --danger-quiet:  rgba(194,42,58,.10);
   --danger-line:   rgba(194,42,58,.28);
-  --gem:           #0B6FB8;
+  --gem:           #0A66AA;
   --flame:         #C1470E;
 
-  --ring: #0B84A8;
+  --ring: #0A7490;
 
   --shadow-1: 0 1px 2px rgba(13,20,34,.06);
   --shadow-2: 0 6px 18px -6px rgba(13,20,34,.14), 0 1px 2px rgba(13,20,34,.06);
   --shadow-3: 0 28px 60px -24px rgba(13,20,34,.24), 0 2px 8px rgba(13,20,34,.08);
-  --glow-brand: 0 0 0 1px rgba(11,132,168,.22), 0 10px 30px -14px rgba(124,77,255,.35);
+  --glow-brand: 0 0 0 1px rgba(10,116,144,.28), 0 10px 30px -14px rgba(124,77,255,.4);
 
   --c-kw:   #6B2FD6;
   --c-str:  #0A7A52;
@@ -258,7 +261,7 @@ code, pre, kbd { font-family: var(--font-mono); font-variant-ligatures: none; }
 .btn-lg { --btn-pad-y: 13px; --btn-pad-x: 24px; --btn-fs: var(--t-lg); border-radius: var(--r-md); }
 
 .btn-primary {
-  background: var(--brand-grad); color: var(--text-on-brand);
+  background: var(--brand-grad-cta); color: var(--text-on-brand);
   font-weight: 650; box-shadow: 0 1px 0 rgba(255,255,255,.18) inset, var(--shadow-1);
 }
 .btn-primary:hover:not(:disabled) { filter: brightness(1.09); box-shadow: var(--glow-brand); }
@@ -851,7 +854,8 @@ body { background: var(--bg); }
         </div>
         <ul class="rules">
           <li>The gradient angle is always <strong>135deg</strong>, top-left cyan to bottom-right violet. Never re-angled per component.</li>
-          <li>Text on the gradient is <strong>ink</strong> (<code class="inline">--text-on-brand</code>, #04070E), never white — white on #00E5FF is 1.7:1.</li>
+          <li>Text on the gradient is <strong>ink</strong> (<code class="inline">--text-on-brand</code>, #04070E) in <em>both</em> themes, never white — white on #00E5FF is 1.7:1.</li>
+          <li>Buttons use <code class="inline">--brand-grad-cta</code>, the same sweep with the violet stop lifted to <span class="mono">#9E7BFF</span>. Ink on the true #7C4DFF is 4.2:1 — close, and still a fail. The lift is 0.3 of a step and nobody can see it; the contrast table below can.</li>
           <li>Use it for: the mark, the primary button, level/XP fills, and one hero word. Nothing else.</li>
         </ul>
       </div>
@@ -1332,14 +1336,14 @@ body { background: var(--bg); }
     ["--text",         "#E9ECF3", "#0B0E15", "primary copy"],
     ["--text-2",       "#A7AEBF", "#4B5468", "secondary copy"],
     ["--text-3",       "#7C8494", "#6B7486", "meta — the quiet floor"],
-    ["--accent",       "#2ED8F0", "#0B84A8", "links, active tab, trace line"],
+    ["--accent",       "#2ED8F0", "#0A7490", "links, active tab, trace line"],
     ["--violet",       "#A38BFF", "#6234D8", "SQL, generated content"],
-    ["--success",      "#3FDD9A", "#0A8F5F", "passing tests, easy, solved"],
+    ["--success",      "#3FDD9A", "#0A7A50", "passing tests, easy, solved"],
     ["--warning",      "#FFC15E", "#9A5B00", "medium, allowance running out"],
     ["--danger",       "#FF7A85", "#C22A3A", "failing tests, hard"],
-    ["--gem",          "#59C7FF", "#0B6FB8", "gem balance"],
+    ["--gem",          "#59C7FF", "#0A66AA", "gem balance"],
     ["--flame",        "#FF9153", "#C1470E", "streak"],
-    ["--ring",         "#4FD1F0", "#0B84A8", "focus ring"]
+    ["--ring",         "#4FD1F0", "#0A7490", "focus ring"]
   ];
   function paint(el, idx) {
     el.innerHTML = PAL.map(function (p) {
@@ -1381,11 +1385,13 @@ body { background: var(--bg); }
     ["--text on --bg",        "#E9ECF3", "#08090C", "#0B0E15", "#F7F8FB", 4.5],
     ["--text-2 on --surface", "#A7AEBF", "#111319", "#4B5468", "#FFFFFF", 4.5],
     ["--text-3 on --surface", "#7C8494", "#111319", "#6B7486", "#FFFFFF", 4.5],
-    ["--accent on --surface", "#2ED8F0", "#111319", "#0B84A8", "#FFFFFF", 4.5],
-    ["--success on --surface","#3FDD9A", "#111319", "#0A8F5F", "#FFFFFF", 4.5],
+    ["--accent on --surface", "#2ED8F0", "#111319", "#0A7490", "#FFFFFF", 4.5],
+    ["--success on --surface","#3FDD9A", "#111319", "#0A7A50", "#FFFFFF", 4.5],
     ["--warning on --surface","#FFC15E", "#111319", "#9A5B00", "#FFFFFF", 4.5],
     ["--danger on --surface", "#FF7A85", "#111319", "#C22A3A", "#FFFFFF", 4.5],
-    ["ink on brand gradient", "#04070E", "#00E5FF", "#04070E", "#7C4DFF", 4.5]
+    ["ink on CTA sweep · cyan end",   "#04070E", "#00E5FF", "#04070E", "#00E5FF", 4.5],
+    ["ink on CTA sweep · violet end", "#04070E", "#9E7BFF", "#04070E", "#9E7BFF", 4.5],
+    ["ink on raw #7C4DFF (why the CTA stop is lifted)", "#04070E", "#7C4DFF", "#04070E", "#7C4DFF", 4.5]
   ];
   $("#contrastBody").innerHTML = PAIRS.map(function (p) {
     const d = ratio(p[1], p[2]), l = ratio(p[3], p[4]);

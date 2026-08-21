@@ -1,0 +1,250 @@
+{
+  "id": "py_10_workflow_order",
+  "pack": "federato",
+  "kind": "code",
+  "title": "Order the workflow steps (topological sort)",
+  "difficulty": "hard",
+  "pattern": "topological sort",
+  "tags": [
+    "graph",
+    "bfs",
+    "cycle detection"
+  ],
+  "minutes": 20,
+  "mode": "function",
+  "prompt": "A submission workflow is a set of steps with dependencies. `deps` is a list of\n`[step, requires]` pairs meaning `step` cannot run until `requires` has finished.\n\nReturn a valid execution order for all `steps`. If several orders are valid, return the\n**alphabetically smallest** one. If the dependencies contain a cycle, return `[]`.\n\n```\nsteps = [\"clear\",\"quote\",\"rate\",\"intake\"]\ndeps  = [[\"rate\",\"clear\"],[\"quote\",\"rate\"],[\"clear\",\"intake\"]]\n-> [\"intake\",\"clear\",\"rate\",\"quote\"]\n```\n\n### Why this one\nThis is Course Schedule II, and it is the single problem that overlaps hardest with\nyour system design round on **workflow orchestration**. If they ask you to design a\npipeline the next day, this is the data structure underneath it.",
+  "hints": [
+    "Kahn's algorithm: count how many unmet dependencies each step has (its in-degree), start with everything at zero, and peel.",
+    "For the alphabetically smallest order, the ready set must be a MIN-HEAP, not a queue. heapq.heappush / heappop.",
+    "Cycle detection falls out for free: if you emit fewer steps than you started with, the leftovers are in a cycle. Return []."
+  ],
+  "explanation": "### Say this out loud\n\"Dependencies plus 'valid order' means topological sort. I will use Kahn's algorithm\nbecause cycle detection is free -- if I cannot drain every node, the remainder is a cycle.\nAnd because they asked for the lexicographically smallest order, my ready set is a\nmin-heap rather than a FIFO queue.\"\n\n### The tie to your system design round\nReal orchestrators (Airflow, Temporal, Step Functions) topologically sort a DAG exactly\nlike this, then schedule the zero-in-degree frontier in parallel. If you say \"the ready\nset is my parallelism frontier -- everything in the heap at one time can run concurrently\",\nyou have just connected both interviews.",
+  "followups": [
+    "Which steps could run in parallel? (Everything popped in the same 'level' -- process the ready set a full layer at a time.)",
+    "How would you report WHICH steps form the cycle, so the customer can fix their config?",
+    "Steps can fail and need retry. Where does that live in this model? (Not here -- that is durable execution state, which is your Temporal answer tomorrow.)"
+  ],
+  "signature": {
+    "name": {
+      "python": "order_steps",
+      "ruby": "order_steps",
+      "javascript": "orderSteps"
+    },
+    "params": [
+      {
+        "name": "steps",
+        "type": "string[]"
+      },
+      {
+        "name": "deps",
+        "type": "string[][]"
+      }
+    ],
+    "returns": "string[]"
+  },
+  "tests": [
+    {
+      "args": [
+        [
+          "clear",
+          "quote",
+          "rate",
+          "intake"
+        ],
+        [
+          [
+            "rate",
+            "clear"
+          ],
+          [
+            "quote",
+            "rate"
+          ],
+          [
+            "clear",
+            "intake"
+          ]
+        ]
+      ],
+      "expected": [
+        "intake",
+        "clear",
+        "rate",
+        "quote"
+      ],
+      "sample": true
+    },
+    {
+      "args": [
+        [
+          "a",
+          "b"
+        ],
+        [
+          [
+            "a",
+            "b"
+          ],
+          [
+            "b",
+            "a"
+          ]
+        ]
+      ],
+      "expected": [],
+      "sample": true
+    },
+    {
+      "args": [
+        [
+          "c",
+          "b",
+          "a"
+        ],
+        []
+      ],
+      "expected": [
+        "a",
+        "b",
+        "c"
+      ],
+      "sample": true
+    },
+    {
+      "args": [
+        [],
+        []
+      ],
+      "expected": []
+    },
+    {
+      "args": [
+        [
+          "x"
+        ],
+        []
+      ],
+      "expected": [
+        "x"
+      ]
+    },
+    {
+      "args": [
+        [
+          "x"
+        ],
+        [
+          [
+            "x",
+            "x"
+          ]
+        ]
+      ],
+      "expected": []
+    },
+    {
+      "args": [
+        [
+          "d",
+          "c",
+          "b",
+          "a"
+        ],
+        [
+          [
+            "d",
+            "a"
+          ],
+          [
+            "c",
+            "a"
+          ],
+          [
+            "b",
+            "a"
+          ]
+        ]
+      ],
+      "expected": [
+        "a",
+        "b",
+        "c",
+        "d"
+      ]
+    },
+    {
+      "args": [
+        [
+          "intake",
+          "rate",
+          "quote",
+          "bind",
+          "issue"
+        ],
+        [
+          [
+            "rate",
+            "intake"
+          ],
+          [
+            "quote",
+            "rate"
+          ],
+          [
+            "bind",
+            "quote"
+          ],
+          [
+            "issue",
+            "bind"
+          ]
+        ]
+      ],
+      "expected": [
+        "intake",
+        "rate",
+        "quote",
+        "bind",
+        "issue"
+      ]
+    },
+    {
+      "args": [
+        [
+          "a",
+          "b",
+          "c",
+          "d"
+        ],
+        [
+          [
+            "b",
+            "a"
+          ],
+          [
+            "c",
+            "b"
+          ],
+          [
+            "a",
+            "c"
+          ]
+        ]
+      ],
+      "expected": []
+    }
+  ],
+  "languages": {
+    "python": {
+      "starter": "def order_steps(steps, deps):\n    # steps: list[str], deps: list[[str,str]] -> list[str]\n    pass\n",
+      "solution": "import heapq\nfrom collections import defaultdict\n\ndef order_steps(steps, deps):\n    unlocks = defaultdict(list)          # requires -> [steps waiting on it]\n    indeg = {s: 0 for s in steps}\n    for step, requires in deps:\n        unlocks[requires].append(step)\n        indeg[step] += 1\n\n    ready = [s for s in steps if indeg[s] == 0]\n    heapq.heapify(ready)                 # min-heap gives the lexicographic order\n\n    out = []\n    while ready:\n        s = heapq.heappop(ready)\n        out.append(s)\n        for nxt in unlocks[s]:\n            indeg[nxt] -= 1\n            if indeg[nxt] == 0:\n                heapq.heappush(ready, nxt)\n\n    return out if len(out) == len(steps) else []\n",
+      "notes": "### Ruby to Python notes\n- `heapq` operates **on a plain list** rather than giving you a Heap object: `heapq.heappush(lst, x)`, `heapq.heappop(lst)`, `heapq.heapify(lst)`. It is always a MIN-heap. For a max-heap, push `-value` (or a tuple with a negated first element).\n- `{s: 0 for s in steps}` is a dict comprehension -- Ruby's `steps.to_h { |s| [s, 0] }`.\n- `defaultdict(list)` again. Notice that `unlocks[s]` for a step nothing depends on returns `[]` rather than raising."
+    },
+    "javascript": {
+      "starter": "function orderSteps(steps, deps) {\n  // steps: string[], deps: [string, string][] -> string[]\n}\n",
+      "solution": "// JavaScript has no heap in its standard library, so here is the whole thing.\n// It is about fifteen lines and worth being able to write from memory.\nclass MinHeap {\n  constructor() {\n    this.a = [];\n  }\n\n  get size() {\n    return this.a.length;\n  }\n\n  push(v) {\n    const a = this.a;\n    a.push(v);\n    let i = a.length - 1;\n    while (i > 0) {\n      const parent = (i - 1) >> 1;\n      if (a[parent] <= a[i]) break;\n      [a[parent], a[i]] = [a[i], a[parent]];\n      i = parent;\n    }\n  }\n\n  pop() {\n    const a = this.a;\n    const top = a[0];\n    const last = a.pop();\n    if (a.length > 0) {\n      a[0] = last;\n      let i = 0;\n      for (;;) {\n        const l = 2 * i + 1;\n        const r = l + 1;\n        let smallest = i;\n        if (l < a.length && a[l] < a[smallest]) smallest = l;\n        if (r < a.length && a[r] < a[smallest]) smallest = r;\n        if (smallest === i) break;\n        [a[smallest], a[i]] = [a[i], a[smallest]];\n        i = smallest;\n      }\n    }\n    return top;\n  }\n}\n\nfunction orderSteps(steps, deps) {\n  const unlocks = new Map();                       // requires -> [steps waiting on it]\n  const indeg = new Map(steps.map((s) => [s, 0]));\n  for (const [step, requires] of deps) {\n    if (!unlocks.has(requires)) unlocks.set(requires, []);\n    unlocks.get(requires).push(step);\n    indeg.set(step, indeg.get(step) + 1);\n  }\n\n  const ready = new MinHeap();                     // min-heap => lexicographic order\n  for (const s of steps) if (indeg.get(s) === 0) ready.push(s);\n\n  const out = [];\n  while (ready.size > 0) {\n    const s = ready.pop();\n    out.push(s);\n    for (const next of unlocks.get(s) ?? []) {\n      indeg.set(next, indeg.get(next) - 1);\n      if (indeg.get(next) === 0) ready.push(next);\n    }\n  }\n\n  return out.length === steps.length ? out : [];\n}\n",
+      "notes": "### Ruby to JavaScript notes\n- **There is no heap and no priority queue.** Python hands you `heapq`; here you write the sift-up and sift-down yourself, or you re-sort a plain array on every pop and accept O(n log n) per step. Interviewers know this, and writing the heap cleanly is a plus rather than an imposition.\n- `[a[i], a[j]] = [a[j], a[i]]` is destructuring assignment, and it is exactly Ruby's `a[i], a[j] = a[j], a[i]`.\n- `<` on strings compares by UTF-16 code unit, which gives the same alphabetical order as Python and Ruby for plain ASCII step names. For anything non-ASCII you need `Intl.Collator`, and you should say so.\n- `get size()` defines a getter, so `ready.size` reads like a property while running code -- the same shape as a Ruby attribute method, minus the parentheses. `class` syntax in general maps closely onto Ruby's, right down to `constructor` being `initialize`.\n- `for (;;)` is the idiomatic infinite loop. There is no `loop do`.\n\n### Say this out loud\n\"Dependencies plus 'valid order' means topological sort. I will use Kahn's algorithm\nbecause cycle detection is free -- if I cannot drain every node, the remainder is a cycle.\nAnd because they asked for the lexicographically smallest order, my ready set is a\nmin-heap rather than a FIFO queue.\"\n"
+    }
+  },
+  "complexity": "O(V log V + E). The log factor is the heap; a plain deque would be O(V + E) but loses the alphabetical guarantee."
+}

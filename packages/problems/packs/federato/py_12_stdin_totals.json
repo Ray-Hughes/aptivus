@@ -1,0 +1,64 @@
+{
+  "id": "py_12_stdin_totals",
+  "pack": "federato",
+  "kind": "code",
+  "title": "Read from stdin: premium totals per broker",
+  "difficulty": "easy",
+  "pattern": "stdin parsing",
+  "tags": [
+    "io",
+    "hash map",
+    "hackerrank"
+  ],
+  "minutes": 12,
+  "mode": "stdin",
+  "prompt": "**This problem uses stdin/stdout**, exactly like the HackerRank pad Federato will\nshare with you. Read the input, print the answer. No function to fill in.\n\nInput:\n```\n4\nMarsh 1500\nAon 900\nMarsh 600\nGallagher 250\n```\nThe first line is `n`, the number of records. Each of the next `n` lines is\n`broker premium`.\n\nPrint one line per broker, `broker total`, sorted by **total descending**, then by\nbroker name ascending:\n```\nMarsh 2100\nAon 900\nGallagher 250\n```\n\n### Why this one\nThe HackerRank interview pad defaults to a `input()` / `print()` skeleton (look at the\nsample link they sent you -- it is literally `num1 = int(input())`). If the interviewer\nhands you a stdin problem and you spend three minutes fighting the parsing, you have\nburned 7% of the round. Make this reflexive.",
+  "hints": [
+    "sys.stdin.read().split() gives you every whitespace-separated token at once. Usually easier than line-by-line.",
+    "For line-oriented input: n = int(input()) then loop n times with input().split().",
+    "print('%s %d' % (name, total)) or an f-string, f'{name} {total}'. print adds the newline for you."
+  ],
+  "explanation": "### In the real interview\n`print` statements you leave in a stdin problem ARE the answer, so debug prints will\nbreak your output. Send debug output to `sys.stderr` instead: `print(x, file=sys.stderr)`.",
+  "followups": [
+    "The input has no leading count -- just read until EOF. (for line in sys.stdin.)",
+    "Broker names contain spaces. How do you parse now? (split with maxsplit, or rsplit(' ', 1).)",
+    "The file is 5 GB. (Iterate line by line, never .read() it all.)"
+  ],
+  "signature": {
+    "name": {},
+    "params": [],
+    "returns": "void"
+  },
+  "tests": [
+    {
+      "stdin": "4\nMarsh 1500\nAon 900\nMarsh 600\nGallagher 250\n",
+      "expected": "Marsh 2100\nAon 900\nGallagher 250",
+      "sample": true
+    },
+    {
+      "stdin": "1\nAon 5\n",
+      "expected": "Aon 5",
+      "sample": true
+    },
+    {
+      "stdin": "0\n",
+      "expected": ""
+    },
+    {
+      "stdin": "3\nB 10\nA 10\nC 5\n",
+      "expected": "A 10\nB 10\nC 5"
+    },
+    {
+      "stdin": "5\nx 1\nx 1\nx 1\ny 2\nz 3\n",
+      "expected": "x 3\nz 3\ny 2"
+    }
+  ],
+  "languages": {
+    "python": {
+      "starter": "import sys\n\ndef main():\n    data = sys.stdin.read().split()\n    # ...\n\nmain()\n",
+      "solution": "import sys\nfrom collections import defaultdict\n\ndef main():\n    data = sys.stdin.read().split()\n    if not data:\n        return\n    n = int(data[0])\n    totals = defaultdict(int)\n    for i in range(n):\n        name = data[1 + 2 * i]\n        premium = int(data[2 + 2 * i])\n        totals[name] += premium\n    for name, total in sorted(totals.items(), key=lambda kv: (-kv[1], kv[0])):\n        print(name, total)\n\nmain()\n\n# Line-oriented alternative:\n# n = int(input())\n# for _ in range(n):\n#     name, premium = input().split()\n",
+      "notes": "### The four stdin patterns to have in muscle memory\n```\nn = int(input())                      # one integer\na, b = map(int, input().split())      # two ints on one line\nnums = list(map(int, input().split()))# a whole row of ints\nrows = sys.stdin.read().split()       # everything, whitespace-separated\nlines = sys.stdin.read().splitlines() # everything, one string per line\n```\n\n### Ruby to Python notes\n- `input()` is Ruby's `gets.chomp` -- it strips the trailing newline for you. `sys.stdin.readline()` does NOT strip it, which is a classic mismatch.\n- There is no implicit `to_i`. `input()` always gives a `str`; `\"2\" + 2` raises `TypeError` rather than coercing. In Ruby you would get a similar error, but Ruby people reach for `.to_i` -- in Python it is `int(x)`.\n- `map(int, ...)` returns a lazy iterator, not a list. `list(map(...))` when you need to index or reuse it. This lazy-by-default behaviour is the biggest single difference from Ruby's eager `Enumerable`.\n- `print(name, total)` inserts a space between arguments automatically. That is a Python nicety with no Ruby equivalent."
+    }
+  },
+  "complexity": "O(n log n) because of the final sort."
+}

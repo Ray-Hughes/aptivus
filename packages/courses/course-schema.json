@@ -1,0 +1,223 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aptivus.dev/schemas/course-schema.json",
+  "title": "Aptivus course",
+  "description": "A sequenced learning path: teaching, problems, and a checkpoint per module. Courses may reference problems that have not been authored yet, as long as those references are marked planned and optional.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["slug", "title", "subtitle", "audience", "estimatedHours", "prerequisites", "outcomes", "modules"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Relative path to this schema. Editor convenience only."
+    },
+    "slug": {
+      "$ref": "#/$defs/slug",
+      "description": "Stable identifier. Used in URLs and as the top-level progress key. Never rename."
+    },
+    "title": { "type": "string", "minLength": 3, "maxLength": 60 },
+    "subtitle": { "type": "string", "minLength": 10, "maxLength": 160 },
+    "audience": {
+      "type": "string",
+      "minLength": 20,
+      "description": "Who this is for, in one or two sentences. Be exclusive: say who should not take it."
+    },
+    "level": { "enum": ["foundational", "intermediate", "advanced"] },
+    "estimatedHours": {
+      "type": "number",
+      "minimum": 0.5,
+      "maximum": 200,
+      "description": "Honest total. Must agree with the sum of module estimatedMinutes; the validator enforces this."
+    },
+    "timeNote": {
+      "type": "string",
+      "description": "Where the estimate comes from and what makes it longer or shorter."
+    },
+    "prerequisites": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 5 },
+      "description": "Plain-English prerequisites. An empty array means none."
+    },
+    "prerequisiteCourses": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/slug" },
+      "description": "Slugs of other courses that should be done first. Validated to exist."
+    },
+    "outcomes": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 10 },
+      "description": "What the learner can do afterwards. Observable behaviours, not feelings."
+    },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "version": { "type": "integer", "minimum": 1 },
+    "modules": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/module" }
+    }
+  },
+  "$defs": {
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "problemSlug": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_]*$",
+      "description": "A problem id as the loader derives it: the filename stem under packs/<pack>/{python,sql}/."
+    },
+    "module": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "summary", "estimatedMinutes", "teaching", "problems", "checkpoint", "completion"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/slug",
+          "description": "Stable within the course. This is the per-module progress key. Never rename; add a new module instead."
+        },
+        "title": { "type": "string", "minLength": 3, "maxLength": 80 },
+        "summary": { "type": "string", "minLength": 20, "maxLength": 400 },
+        "estimatedMinutes": { "type": "integer", "minimum": 5, "maximum": 600 },
+        "objectives": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 10 }
+        },
+        "teaching": {
+          "type": "string",
+          "minLength": 400,
+          "description": "Markdown. The actual lesson. Concrete and opinionated: name the trap, show the line, say what an interviewer is listening for. The minimum length is deliberate - it exists to make placeholders fail validation."
+        },
+        "problems": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/problemRef" }
+        },
+        "checkpoint": { "$ref": "#/$defs/checkpoint" },
+        "completion": { "$ref": "#/$defs/completion" },
+        "recap": {
+          "type": "string",
+          "description": "Markdown shown after the checkpoint. What to carry into the next module."
+        }
+      }
+    },
+    "problemRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["slug"],
+      "properties": {
+        "slug": { "$ref": "#/$defs/problemSlug" },
+        "note": {
+          "type": "string",
+          "description": "Why this problem is here, and what to watch for while solving it."
+        },
+        "optional": {
+          "type": "boolean",
+          "default": false,
+          "description": "Not needed for module completion. Planned problems must be optional."
+        },
+        "planned": {
+          "type": "boolean",
+          "default": false,
+          "description": "The problem has not been written yet. The validator expects it to be missing from packs/ and requires optional: true, so the course stays completable today."
+        },
+        "plannedSpec": { "$ref": "#/$defs/plannedSpec" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "planned": { "const": true } }, "required": ["planned"] },
+          "then": { "required": ["plannedSpec", "optional"] }
+        }
+      ]
+    },
+    "plannedSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "pattern", "difficulty", "minutes"],
+      "description": "Enough of a brief that someone can author the problem without asking the course author what they meant.",
+      "properties": {
+        "title": { "type": "string", "minLength": 5 },
+        "pattern": { "type": "string", "minLength": 3 },
+        "difficulty": { "enum": ["easy", "medium", "hard"] },
+        "minutes": { "type": "integer", "minimum": 3, "maximum": 60 },
+        "brief": { "type": "string" }
+      }
+    },
+    "checkpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "questions"],
+      "properties": {
+        "id": { "$ref": "#/$defs/slug" },
+        "title": { "type": "string", "minLength": 3 },
+        "intro": { "type": "string" },
+        "questions": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/question" }
+        }
+      }
+    },
+    "question": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "prompt"],
+      "properties": {
+        "id": { "$ref": "#/$defs/slug" },
+        "kind": {
+          "enum": ["choice", "recall", "explain"],
+          "description": "choice: multiple choice, auto-graded. recall: type it from memory, self-graded against modelAnswer. explain: say it out loud, self-graded against modelAnswer."
+        },
+        "prompt": { "type": "string", "minLength": 10 },
+        "options": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "answer": { "type": "integer", "minimum": 0 },
+        "modelAnswer": { "type": "string", "minLength": 10 },
+        "explanation": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "choice" } }, "required": ["kind"] },
+          "then": { "required": ["options", "answer", "explanation"] }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "recall" } }, "required": ["kind"] },
+          "then": { "required": ["modelAnswer"] }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "explain" } }, "required": ["kind"] },
+          "then": { "required": ["modelAnswer"] }
+        }
+      ]
+    },
+    "completion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rule"],
+      "properties": {
+        "rule": {
+          "enum": ["all-required-problems", "min-problems", "checkpoint-only", "self-attested"],
+          "description": "all-required-problems: every non-optional problem solved. min-problems: any minProblemsSolved of the module's problems. checkpoint-only: no problems needed. self-attested: the learner ticks it off (reading, drawing, speaking practice)."
+        },
+        "minProblemsSolved": { "type": "integer", "minimum": 1 },
+        "requireCheckpoint": { "type": "boolean", "default": true },
+        "checkpointPassScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0.8,
+          "description": "Fraction of checkpoint questions that must be correct or self-marked correct."
+        },
+        "notes": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "rule": { "const": "min-problems" } }, "required": ["rule"] },
+          "then": { "required": ["minProblemsSolved"] }
+        }
+      ]
+    }
+  }
+}

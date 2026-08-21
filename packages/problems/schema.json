@@ -189,7 +189,7 @@
                   },
                   "type": {
                     "type": "string",
-                    "pattern": "^(?:int|float|number|string|bool|any|map<\\s*string\\s*,\\s*[^<>]+>)(?:\\[\\])*$"
+                    "pattern": "^(?:int|float|number|string|bool|any|void|map<\\s*string\\s*,\\s*[^<>]+>)(?:\\[\\])*$"
                   },
                   "description": {
                     "type": "string"
@@ -203,7 +203,7 @@
             },
             "returns": {
               "type": "string",
-              "pattern": "^(?:int|float|number|string|bool|any|map<\\s*string\\s*,\\s*[^<>]+>)(?:\\[\\])*$"
+              "pattern": "^(?:int|float|number|string|bool|any|void|map<\\s*string\\s*,\\s*[^<>]+>)(?:\\[\\])*$"
             }
           },
           "required": [

@@ -1,0 +1,260 @@
+{
+  "id": "py_05_reconcile_feeds",
+  "pack": "federato",
+  "kind": "code",
+  "title": "Reconcile two policy feeds",
+  "difficulty": "medium",
+  "pattern": "dict diff",
+  "tags": [
+    "hash map",
+    "sets",
+    "real world"
+  ],
+  "minutes": 15,
+  "mode": "function",
+  "prompt": "A customer sends you a nightly extract from their legacy policy admin system, and\nyou have the same policies in your platform. You must produce a reconciliation report.\n\nEach feed is a list of records `[policy_id, premium]`. Policy ids are unique within a feed.\n\nReturn a dict with exactly these three keys:\n\n- `\"missing\"`: ids present in `legacy` but not in `platform`, sorted\n- `\"extra\"`: ids present in `platform` but not in `legacy`, sorted\n- `\"mismatched\"`: `[id, legacy_premium, platform_premium]` for ids in both whose\n  premium differs, sorted by id\n\n### Why this one\nThis is the Forward Deployed Engineer job in miniature. It is not hard -- it is a test\nof whether you structure data cleanly and handle the three-way split without\ntangling yourself in loops.",
+  "hints": [
+    "Turn each list into a dict {id: premium} first. Everything else becomes set arithmetic.",
+    "Python sets support - and & directly: legacy_keys - platform_keys is the difference.",
+    "dict(list_of_pairs) builds a dict from [key, value] pairs in one call."
+  ],
+  "explanation": "### What the interviewer is watching for\nDo you ask about duplicate ids within a feed? Do you ask whether float premiums need\na tolerance instead of `!=`? Asking those two questions is worth more than the code.",
+  "followups": [
+    "Premiums are floats coming from two different systems. How do you compare them? (Round to cents, or abs(a-b) < 0.005 -- never ==.)",
+    "The legacy feed can contain the same policy id twice with different premiums. What now?",
+    "The feeds are 40 million rows each. How would you do this without loading both into memory? (Sort both by id, merge-scan -- or just do it in SQL.)"
+  ],
+  "signature": {
+    "name": {
+      "python": "reconcile",
+      "ruby": "reconcile",
+      "javascript": "reconcile"
+    },
+    "params": [
+      {
+        "name": "legacy",
+        "type": "any[][]"
+      },
+      {
+        "name": "platform",
+        "type": "any[][]"
+      }
+    ],
+    "returns": "map<string, any>"
+  },
+  "tests": [
+    {
+      "args": [
+        [
+          [
+            "P1",
+            100
+          ],
+          [
+            "P2",
+            200
+          ],
+          [
+            "P3",
+            300
+          ]
+        ],
+        [
+          [
+            "P2",
+            250
+          ],
+          [
+            "P3",
+            300
+          ],
+          [
+            "P4",
+            400
+          ]
+        ]
+      ],
+      "expected": {
+        "missing": [
+          "P1"
+        ],
+        "extra": [
+          "P4"
+        ],
+        "mismatched": [
+          [
+            "P2",
+            200,
+            250
+          ]
+        ]
+      },
+      "sample": true
+    },
+    {
+      "args": [
+        [],
+        []
+      ],
+      "expected": {
+        "missing": [],
+        "extra": [],
+        "mismatched": []
+      },
+      "sample": true
+    },
+    {
+      "args": [
+        [
+          [
+            "A",
+            1
+          ]
+        ],
+        []
+      ],
+      "expected": {
+        "missing": [
+          "A"
+        ],
+        "extra": [],
+        "mismatched": []
+      }
+    },
+    {
+      "args": [
+        [],
+        [
+          [
+            "A",
+            1
+          ]
+        ]
+      ],
+      "expected": {
+        "missing": [],
+        "extra": [
+          "A"
+        ],
+        "mismatched": []
+      }
+    },
+    {
+      "args": [
+        [
+          [
+            "A",
+            1
+          ],
+          [
+            "B",
+            2
+          ]
+        ],
+        [
+          [
+            "B",
+            2
+          ],
+          [
+            "A",
+            1
+          ]
+        ]
+      ],
+      "expected": {
+        "missing": [],
+        "extra": [],
+        "mismatched": []
+      }
+    },
+    {
+      "args": [
+        [
+          [
+            "B",
+            5
+          ],
+          [
+            "A",
+            9
+          ]
+        ],
+        [
+          [
+            "A",
+            1
+          ],
+          [
+            "B",
+            5
+          ]
+        ]
+      ],
+      "expected": {
+        "missing": [],
+        "extra": [],
+        "mismatched": [
+          [
+            "A",
+            9,
+            1
+          ]
+        ]
+      }
+    },
+    {
+      "args": [
+        [
+          [
+            "P10",
+            1
+          ],
+          [
+            "P2",
+            1
+          ]
+        ],
+        [
+          [
+            "P10",
+            2
+          ],
+          [
+            "P2",
+            2
+          ]
+        ]
+      ],
+      "expected": {
+        "missing": [],
+        "extra": [],
+        "mismatched": [
+          [
+            "P10",
+            1,
+            2
+          ],
+          [
+            "P2",
+            1,
+            2
+          ]
+        ]
+      }
+    }
+  ],
+  "languages": {
+    "python": {
+      "starter": "def reconcile(legacy, platform):\n    # legacy, platform: list[[str, int]] -> dict\n    pass\n",
+      "solution": "def reconcile(legacy, platform):\n    L = dict(legacy)\n    P = dict(platform)\n    lk, pk = set(L), set(P)\n\n    return {\n        \"missing\": sorted(lk - pk),\n        \"extra\": sorted(pk - lk),\n        \"mismatched\": sorted(\n            [k, L[k], P[k]] for k in (lk & pk) if L[k] != P[k]\n        ),\n    }\n",
+      "notes": "### Ruby to Python notes\n- `set(L)` on a dict gives the **keys** as a set. Iterating a dict iterates keys too -- `for k in mydict` is `mydict.each_key`.\n- Set operators: `-` difference, `&` intersection, `|` union, `^` symmetric difference. Ruby's Set needs `require 'set'`; Python's is built in and has a literal `{1, 2}`.\n- `sorted(...)` returns a new list. `.sort()` mutates in place and returns `None` -- assigning `x = y.sort()` gives you `None` and is the classic Python-beginner bug. Ruby's `sort!` at least returns the array.\n- `dict(list_of_pairs)` is `Hash[pairs]`."
+    },
+    "javascript": {
+      "starter": "function reconcile(legacy, platform) {\n  // legacy, platform: [string, number][] -> { missing, extra, mismatched }\n}\n",
+      "solution": "const byString = (a, b) => (a < b ? -1 : a > b ? 1 : 0);\n\nfunction reconcile(legacy, platform) {\n  const L = new Map(legacy);      // new Map(pairs) is Ruby's Hash[pairs]\n  const P = new Map(platform);\n\n  const missing = [];\n  const mismatched = [];\n  for (const [id, premium] of L) {\n    if (!P.has(id)) missing.push(id);\n    else if (P.get(id) !== premium) mismatched.push([id, premium, P.get(id)]);\n  }\n  const extra = [...P.keys()].filter((id) => !L.has(id));\n\n  return {\n    missing: missing.sort(byString),\n    extra: extra.sort(byString),\n    mismatched: mismatched.sort((a, b) => byString(a[0], b[0])),\n  };\n}\n",
+      "notes": "### Ruby to JavaScript notes\n- `new Map(pairs)` builds a map from `[key, value]` pairs in one call -- `Hash[pairs]`.\n- **There is no Set arithmetic.** JavaScript's `Set` has no `-`, `&` or `|`, so the difference is a `filter` over the keys and the intersection is a loop with a `has` check. Ruby's `Set` and Python's `set` both spoil you here; write the filter and move on.\n- Iterating a `Map` yields `[key, value]` pairs, so `for (const [id, premium] of L)` is `each_pair`. `L.keys()`, `L.values()` and `L.entries()` return iterators, not arrays -- spread them with `[...]` when you need to `filter` or `sort`.\n- `sort` returns the same array it mutated, so `missing.sort(...)` inside the object literal is safe and reads well. It is Ruby's `sort!` in a place that looks like `sort`.\n- Ordinary object literals are the natural return type for a fixed set of named fields, and they serialise straight to JSON. Use `Map` for lookup tables, `{}` for records.\n\n### What the interviewer is watching for\nDo you ask about duplicate ids within a feed? Do you ask whether float premiums need\na tolerance instead of `!==`? In JavaScript every number is a double, so the float\nquestion is not optional -- `0.1 + 0.2 !== 0.3` here just as it does in Ruby.\n"
+    }
+  },
+  "complexity": "O(n + m) time and space."
+}
