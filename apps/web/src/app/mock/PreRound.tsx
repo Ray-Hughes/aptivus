@@ -117,7 +117,7 @@ export function PreRound({
           <section className={`${card} p-6`} aria-labelledby="s1h">
             <div className="mb-4 flex items-baseline justify-between gap-4">
               <h2 id="s1h" className="text-[16px] font-semibold">
-                <span className="mr-2 text-[#4c525d]">1</span> Who are you practising for?
+                <span className="mr-2 text-[#4c525d]">1</span> Who are you practicing for?
               </h2>
               <span className="text-[12px] text-[#7f8794]">
                 {source?.kind === "company" ? "Sets the split, the difficulty and the clock." : "The pack's own spread, no company calibration."}

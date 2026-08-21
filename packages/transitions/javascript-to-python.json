@@ -1,7 +1,7 @@
 {
   "from": "javascript",
   "to": "python",
-  "summary": "Most of what you fought in JavaScript is gone: one number type becomes two honest ones, `==` stops coercing, there is no `this` to lose, and the standard library is finally worth reading. The cost is that Python's defaults are the opposite of JavaScript's in three places that matter - emptiness is falsy, mutable state in a def line or a class body is created once and shared, and coroutines do nothing until awaited. None of those raise; they produce a program that runs and reports the wrong number. The `for` loop is the other one to watch, because `for x in xs` is the syntax of `for...in` and the behaviour of `for...of`.",
+  "summary": "Most of what you fought in JavaScript is gone: one number type becomes two honest ones, `==` stops coercing, there is no `this` to lose, and the standard library is finally worth reading. The cost is that Python's defaults are the opposite of JavaScript's in three places that matter - emptiness is falsy, mutable state in a def line or a class body is created once and shared, and coroutines do nothing until awaited. None of those raise; they produce a program that runs and reports the wrong number. The `for` loop is the other one to watch, because `for x in xs` is the syntax of `for...in` and the behavior of `for...of`.",
   "verification": {
     "level": "executed",
     "note": "Snippets run against CPython 3.12.7 and Node 23.1.0."
@@ -34,7 +34,7 @@
     {
       "id": "class-attributes-are-shared",
       "title": "A class body is not a field declaration",
-      "theirs": "`class Bag { items = []; }` is a class field: the initialiser runs per construction, so every instance gets its own array.",
+      "theirs": "`class Bag { items = []; }` is a class field: the initializer runs per construction, so every instance gets its own array.",
       "yours": "`class Bag: items = []` creates one attribute on the class itself. Every instance reads through to that single object. Per-instance state is created in `__init__` with `self.items = []`.",
       "trap": "Reads and mutations go to the shared object while assignment does not: `b.items.append(x)` is visible from every other instance, but `b.items = [x]` quietly creates an instance attribute that shadows the class one. So the same field appears shared in some code paths and private in others. Dataclasses reject the obvious version of this at class-creation time and make you write `field(default_factory=list)`, which is a good reason to use them.",
       "severity": "high",
@@ -59,7 +59,7 @@
       "id": "for-in-yields-values",
       "title": "`for x in xs` behaves like `for...of`",
       "theirs": "`for (const i in arr)` yields the indices, and as strings. `for (const v of arr)` yields the values. `in` on an array tests whether an index exists, so `0 in [5, 6]` is true.",
-      "yours": "`for x in xs` yields the values - the `for...of` behaviour under the `for...in` spelling. Indices come from `enumerate(xs)`. The `in` operator is a membership test: `0 in [5, 6]` is False and `5 in [5, 6]` is True.",
+      "yours": "`for x in xs` yields the values - the `for...of` behavior under the `for...in` spelling. Indices come from `enumerate(xs)`. The `in` operator is a membership test: `0 in [5, 6]` is False and `5 in [5, 6]` is True.",
       "trap": "Translating `for (const i in arr) total += arr[i]` line for line gives `for i in nums: total += nums[i]`, which on a list of integers is now indexing by value. On [3, 1, 2] that is an IndexError; on a list whose values all happen to be valid indices it runs and returns a plausible wrong total. The `in` operator is the quieter half: `if key in data` reads identically in both languages but tests keys on a dict and values on a list, so `0 in [5, 6]` flips from true to False.",
       "severity": "high",
       "tags": [
@@ -143,7 +143,7 @@
       "id": "equality-is-structural",
       "title": "`==` on containers compares contents",
       "theirs": "`===` on objects and arrays is reference identity - `[1, 2] === [1, 2]` is false - so everyone reaches for a deepEqual helper or JSON.stringify.",
-      "yours": "`==` on lists, tuples, dicts and sets compares element by element, recursively. `[1, 2] == [1, 2]` is True. Dataclasses get the same behaviour for free with `eq=True`, which is the default.",
+      "yours": "`==` on lists, tuples, dicts and sets compares element by element, recursively. `[1, 2] == [1, 2]` is True. Dataclasses get the same behavior for free with `eq=True`, which is the default.",
       "trap": "Mostly a relief, with two edges. Structural equality is O(n) and recursive, so an equality check inside a hot loop over large structures is a real cost that `===` never had. And identity has not disappeared - if you translate a `===` reference check into `is`, you get a comparison that is False for equal-but-distinct objects and that no test with literal fixtures will catch.",
       "severity": "medium",
       "tags": [
@@ -160,7 +160,7 @@
       "severity": "medium",
       "tags": [
         "collections",
-        "serialisation"
+        "serialization"
       ]
     },
     {

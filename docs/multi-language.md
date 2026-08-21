@@ -171,7 +171,7 @@ paying customers is the worse sequence.
 
 ## 6. The honest trade
 
-Stepping will never cover every language. A candidate practising C++ gets run-and-grade,
+Stepping will never cover every language. A candidate practicing C++ gets run-and-grade,
 the same as any other site, and does not get the feature that makes Aptivus worth paying
 for. Two ways to live with that:
 

@@ -82,7 +82,7 @@ def pretty(v, fallback):
 
 
 def norm(v):
-    """Normalise a return value so it survives a JSON round trip."""
+    """Normalize a return value so it survives a JSON round trip."""
     if isinstance(v, set):
         return sorted(norm(x) for x in v)
     if isinstance(v, (list, tuple)):

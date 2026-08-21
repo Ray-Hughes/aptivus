@@ -8,7 +8,7 @@ import { companies, mockRoundProblems, mockRounds, problems } from "@/db/schema"
 import { patternHistory } from "@/lib/mock";
 import {
   ACTIVITIES, ACTIVITY_LABEL, buildCallouts, buildNext, buildVerdict, dur, eyebrow,
-  mmss, patternRows, problemNote, standing, summarise,
+  mmss, patternRows, problemNote, standing, summarize,
   type Block, type RoundEvent, type SlotInput,
 } from "@/lib/mock-scorecard";
 import { userStats } from "@/lib/stats";
@@ -95,7 +95,7 @@ export default async function ScorecardPage({ params }: { params: Promise<{ id: 
   });
 
   const activity = round.activity ?? { blocks: [], events: [] };
-  const S = summarise(
+  const S = summarize(
     {
       startedAt: round.startedAt,
       endedAt: round.endedAt ?? round.startedAt,

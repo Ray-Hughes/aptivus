@@ -16,7 +16,7 @@
       "severity": "high",
       "tags": [
         "types",
-        "serialisation"
+        "serialization"
       ]
     },
     {
@@ -34,7 +34,7 @@
     {
       "id": "out-of-range-index-is-undefined",
       "title": "Indexing past the end returns undefined, and `-1` is not the last element",
-      "theirs": "`lst[10]` on a short list raises IndexError immediately, and `lst[-1]` is the last element. Both behaviours are load-bearing in ordinary code.",
+      "theirs": "`lst[10]` on a short list raises IndexError immediately, and `lst[-1]` is the last element. Both behaviors are load-bearing in ordinary code.",
       "yours": "`arr[10]` returns undefined, and the declared type still says `number`. `arr[-1]` is a lookup of a property named \"-1\", so it is also undefined. The last element is `arr.at(-1)` or `arr[arr.length - 1]`.",
       "trap": "Both are silent under `--strict`: `const v: number = arr[10]` compiles and v is undefined at runtime, and any negative index you carried over from Python turns into undefined rather than wrapping. That undefined then survives - `undefined + 1` is NaN, JSON.stringify drops it from objects, and comparisons against it are quietly false - so the failure appears several layers from its cause. `noUncheckedIndexedAccess` in tsconfig makes the compiler tell the truth about this; it is not part of `strict`.",
       "severity": "high",
@@ -52,7 +52,7 @@
       "severity": "high",
       "tags": [
         "numbers",
-        "serialisation"
+        "serialization"
       ]
     },
     {
@@ -131,7 +131,7 @@
       "id": "await-or-nothing-happens-in-order",
       "title": "A forgotten await gives you a truthy Promise",
       "theirs": "IO is synchronous by default. When you do use asyncio, a missing await means the coroutine never runs at all, which usually announces itself.",
-      "yours": "An async function starts running immediately on call and returns a Promise. Every function that awaits anything must itself be async, so the colour spreads up the call stack.",
+      "yours": "An async function starts running immediately on call and returns a Promise. Every function that awaits anything must itself be async, so the color spreads up the call stack.",
       "trap": "The work does happen - it just is not ordered or checked. A Promise object is always truthy, so `if (await?)` style guards pass: `if (userExists(id))` with the await forgotten is true even when the function resolves to false. A rejected Promise nobody awaited becomes an unhandled rejection that in Node 15 and later terminates the process by default, and a try/catch wrapped around an un-awaited call catches nothing. `array.forEach(async x => ...)` is the same bug in idiomatic clothing: forEach ignores the returned Promises and continues immediately, so use a `for...of` loop with await, or `Promise.all(array.map(...))`.",
       "severity": "high",
       "tags": [
@@ -159,7 +159,7 @@
       "trap": "`{b: 1, 2: 2, a: 3, 1: 4}` serialises as `{\"1\":4,\"2\":2,\"b\":1,\"a\":3}`. Anything that hashes or signs a JSON body - a webhook signature, an idempotency key, a cache key, a golden-file test - stops matching the Python side when keys happen to be numeric strings. Separately, a field set to undefined vanishes from the payload entirely rather than arriving as null, so a PATCH meant to clear a field instead leaves it untouched. Use null when you mean null.",
       "severity": "medium",
       "tags": [
-        "serialisation",
+        "serialization",
         "collections"
       ]
     },

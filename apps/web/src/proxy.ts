@@ -4,7 +4,7 @@ import type { NextRequest } from "next/server";
 /**
  * Next 16 renamed the middleware convention to `proxy`. Same execution model.
  *
- * Cheap cookie presence check only. Real authorisation happens in the page and
+ * Cheap cookie presence check only. Real authorization happens in the page and
  * in every API route via requireUser/requireAdmin - middleware runs on the edge
  * and must not be the only gate.
  */

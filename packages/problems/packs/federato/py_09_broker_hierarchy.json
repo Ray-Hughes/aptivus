@@ -21,7 +21,7 @@
   ],
   "explanation": "",
   "followups": [
-    "What if the input is a DAG, not a tree, so a broker can have two parents? (Premium gets double counted -- you need to decide the business rule, then memoise per node.)",
+    "What if the input is a DAG, not a tree, so a broker can have two parents? (Premium gets double counted -- you need to decide the business rule, then memoize per node.)",
     "What if there is a cycle in the data because the customer's export is broken? (Track a visiting set; this is the next problem.)",
     "How would you do this roll-up in SQL? (Recursive CTE.)"
   ],

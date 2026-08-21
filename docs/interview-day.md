@@ -58,7 +58,7 @@ Being stuck is normal and survivable. Being stuck **and silent** is not.
   window idea, or should I be thinking about this differently?"* This is not a
   penalty. It is what you would do with a colleague.
 - **A working brute force beats an unfinished clever solution.** Say
-  *"Let me get the O(n squared) version working first, then optimise"* and do exactly that.
+  *"Let me get the O(n squared) version working first, then optimize"* and do exactly that.
 
 ## The SQL half
 
@@ -86,7 +86,7 @@ Assume roughly half each, but **let them steer**.
   *"I'm happy with that. Want me to move on?"*
 - At the ~35 minute mark, if you have a partial solution, say
   *"I want to make sure we have something working - let me finish the straightforward
-  version and note where I'd optimise."*
+  version and note where I'd optimize."*
 - Leave 2-3 minutes for their questions and yours.
 
 ## Questions to ask them (have 2-3 ready)

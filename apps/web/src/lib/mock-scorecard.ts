@@ -116,7 +116,7 @@ const emptySplit = (): Split => ({ read: 0, write: 0, debug: 0, idle: 0, total: 
 
 const EARN: Record<string, number> = { easy: 2, medium: 4, hard: 6 };
 
-export function summarise(round: RoundInput, slots: SlotInput[]): Summary {
+export function summarize(round: RoundInput, slots: SlotInput[]): Summary {
   const len = round.durationSeconds;
   const total = Math.max(0, round.endedAt - round.startedAt);
 
@@ -212,7 +212,7 @@ const half = (p: DerivedProblem) => (p.kind === "sql" ? "SQL half" : "algorithms
 const pct = (a: number, b: number) => Math.round((a / Math.max(1, b)) * 100);
 
 /**
- * Named plainly, then normalised, then the one thing that would change it.
+ * Named plainly, then normalized, then the one thing that would change it.
  * Branching on solved count, overtime, whether a problem was stopped
  * deliberately, and whether the unsolved one lost more time to debugging than
  * to writing — because those four facts are what an interviewer would actually
@@ -233,7 +233,7 @@ export function buildVerdict(S: Summary): string[] {
     const slowest = [...S.P].sort((a, b) => b.t.total / b.budget - a.t.total / a.budget)[0];
     p2 =
       `The ${half(slowest)} cost you ${dur(slowest.t.total)} against a ${Math.round(slowest.budget / 60)} minute budget, and ` +
-      `${pct(slowest.t.debug, slowest.t.total)}% of that was after a failing run. Getting there is not in doubt; getting there without the detour is the thing left to practise.`;
+      `${pct(slowest.t.debug, slowest.t.total)}% of that was after a failing run. Getting there is not in doubt; getting there without the detour is the thing left to practice.`;
   } else if (S.solvedCount > 0) {
     const s = solved[0];
     const u = unsolved[0];
@@ -366,7 +366,7 @@ export function problemNote(p: DerivedProblem): string[] {
     );
   } else if (p.stopped) {
     bits.push(
-      `You stopped at ${dur(p.t.total)}. Nothing wrong with that. In the room, say the sentence out loud: “I want to make sure we have something working — let me finish the straightforward version and note where I'd optimise.”`,
+      `You stopped at ${dur(p.t.total)}. Nothing wrong with that. In the room, say the sentence out loud: “I want to make sure we have something working — let me finish the straightforward version and note where I'd optimize.”`,
     );
   } else {
     bits.push(
@@ -488,7 +488,7 @@ export function patternRows(S: Summary) {
 
 export function standing(clean: number, seen: number): { label: string; tone: "bad" | "warn" | "ok" } {
   // One encounter is not a record. Calling a pattern you met for the first
-  // time today your "weakest" is the kind of judgement that makes a scorecard
+  // time today your "weakest" is the kind of judgment that makes a scorecard
   // feel like a grade rather than like feedback.
   if (seen < 2) return { label: "new to you", tone: "warn" };
   const rate = clean / seen;

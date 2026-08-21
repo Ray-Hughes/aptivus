@@ -4,7 +4,7 @@
    coding.html. Dark is the default; light is a full sibling palette.
    ===================================================================== */
 
-/* ---------- 1. tokens: colour ---------------------------------------- */
+/* ---------- 1. tokens: color ---------------------------------------- */
 :root,
 [data-theme="dark"] {
   color-scheme: dark;
@@ -18,7 +18,7 @@
      across the whole gradient. #7C4DFF only reaches 4.2:1 against ink. */
   --brand-grad-cta: linear-gradient(135deg, #00E5FF 0%, #9E7BFF 100%);
   /* the sweep used as TEXT. On white the cyan stop is invisible, so light
-     mode darkens both stops; dark mode keeps the true brand colours. */
+     mode darkens both stops; dark mode keeps the true brand colors. */
   --brand-grad-text: linear-gradient(135deg, #00E5FF 0%, #A98BFF 100%);
 
   /* surfaces, darkest → lightest */

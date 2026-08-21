@@ -131,7 +131,7 @@ export async function startModule(formData: FormData): Promise<void> {
     target = { userId, courseSlug, moduleId: mod.id };
   } catch {
     // Signed out, or a stale link to a module that no longer exists. Either way
-    // the catalogue is a better answer than an error page.
+    // the catalog is a better answer than an error page.
     redirect("/courses");
   }
   await ensureRow(target.userId, target.courseSlug, target.moduleId);

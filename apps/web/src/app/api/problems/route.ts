@@ -1,5 +1,5 @@
 /**
- * GET /api/problems - the catalogue.
+ * GET /api/problems - the catalog.
  *
  * Browsable without an account on purpose: requiring a signup to see the
  * product is the cheapest way to kill conversion. Nothing here is metered

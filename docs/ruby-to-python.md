@@ -122,7 +122,7 @@ canonical key.
 | Ruby | Python |
 |---|---|
 | `def foo(a, b)` ... `end` | `def foo(a, b):` + indentation |
-| `nil` / `true` / `false` | `None` / `True` / `False` (capitalised) |
+| `nil` / `true` / `false` | `None` / `True` / `False` (capitalized) |
 | `x.nil?` | `x is None` |
 | `puts x` | `print(x)` |
 | `"#{a} and #{b}"` | `f"{a} and {b}"` |
@@ -221,7 +221,7 @@ from itertools import combinations, permutations, groupby
 | `deque()` | O(1) `popleft()`. **A list's `pop(0)` is O(n)** -- use deque for BFS queues |
 | `heapq` | min-heap on a plain list. `heappush/heappop/heapify/nsmallest` |
 | `bisect` | binary search on a sorted list |
-| `lru_cache` | one-line memoisation for recursion |
+| `lru_cache` | one-line memoization for recursion |
 | `re` | `re.findall`, `re.sub`, `re.match` |
 
 **heapq is always a MIN heap.** For a max-heap, push negated values:
@@ -278,7 +278,7 @@ Do not go looking for chances to use it in an interview.
 ## 6. Reading stdin (HackerRank's default pad)
 
 The pad Federato shares defaults to a `input()` / `print()` skeleton. Have these
-memorised cold:
+memorized cold:
 
 ```python
 n = int(input())                          # one integer on a line

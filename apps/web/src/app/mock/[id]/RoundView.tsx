@@ -49,7 +49,7 @@ const btn =
 
 const PROBLEM_COLOR = ["#00E5FF", "#9E7BFF"];
 
-/** Contiguous stretches on one problem, for the clock bar's colour runs. */
+/** Contiguous stretches on one problem, for the clock bar's color runs. */
 function mergeByProblem(blocks: Block[]): { p: number; d: number }[] {
   const out: { p: number; d: number }[] = [];
   for (const b of blocks) {
@@ -418,7 +418,7 @@ export function RoundView({
     return () => window.removeEventListener("keydown", onKey);
   });
 
-  /* ---- the bar: elapsed coloured by which problem you were on ---- */
+  /* ---- the bar: elapsed colored by which problem you were on ---- */
   const denom = Math.max(durationSeconds, elapsed);
   const merged = clock.bar;
 
@@ -501,7 +501,7 @@ export function RoundView({
       <div
         className={`relative h-2 w-full shrink-0 ${over ? "bg-[#2a1618]" : soon ? "bg-[#2c2a12]" : "bg-[#1a1c21]"}`}
         role="img"
-        aria-label={`Time used, coloured by which problem you were on. ${over ? `${mmss(-left)} into overtime` : `${mmss(left)} left`}.`}
+        aria-label={`Time used, colored by which problem you were on. ${over ? `${mmss(-left)} into overtime` : `${mmss(left)} left`}.`}
       >
         <div className="flex h-full">
           {merged.map((m, i) => (

@@ -124,7 +124,7 @@ SELECT * FROM ranked WHERE rn = 1;
 treats ties as peers and gives them all the same running total. `ROWS BETWEEN UNBOUNDED
 PRECEDING AND CURRENT ROW` counts physical rows. Knowing this is a strong signal.
 
-### The two patterns to have memorised
+### The two patterns to have memorized
 
 **Latest row per group (dedupe):**
 ```sql

@@ -5,7 +5,7 @@ import { createClient } from "@libsql/client";
  *
  * Scripts each built their own client and half of them forgot the auth token,
  * which works silently against a local file and fails with an opaque 401
- * against a hosted database. Centralising it means that mistake cannot recur.
+ * against a hosted database. Centralizing it means that mistake cannot recur.
  */
 export function connect() {
   const url = process.env.DATABASE_URL ?? "file:aptivus.db";

@@ -55,7 +55,7 @@ body { background: var(--bg); }
 .demo + .demo { margin-top: var(--sp-3); }
 .demo-label { font-size: var(--t-2xs); text-transform: uppercase; letter-spacing: .09em; color: var(--text-3); font-weight: 600; margin-bottom: var(--sp-3); }
 
-/* colour */
+/* color */
 .pal-head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4); flex-wrap: wrap; margin-bottom: var(--sp-3); }
 .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(178px,1fr)); gap: var(--sp-3); }
 .sw {
@@ -159,7 +159,7 @@ body { background: var(--bg); }
     <div class="grp">Foundations</div>
     <a href="#principles">Principles</a>
     <a href="#brand">Brand</a>
-    <a href="#colour">Colour</a>
+    <a href="#color">Color</a>
     <a href="#type">Typography</a>
     <a href="#space">Space &amp; shape</a>
     <a href="#elevation">Elevation</a>
@@ -173,7 +173,7 @@ body { background: var(--bg); }
     <a href="#code">Code surfaces</a>
     <a href="#feedback">Feedback</a>
     <a href="#progress">Progress &amp; rewards</a>
-    <div class="grp">Behaviour</div>
+    <div class="grp">Behavior</div>
     <a href="#motion">Motion</a>
     <a href="#a11y">Accessibility</a>
   </nav>
@@ -196,7 +196,7 @@ body { background: var(--bg); }
         <ul class="rules">
           <li><strong>The code is the subject.</strong> Chrome recedes. The editor, the trace and the problem text get the contrast budget; navigation, toolbars and metadata sit one step back in <code class="inline">--text-2</code> or <code class="inline">--text-3</code>.</li>
           <li><strong>One accent, spent carefully.</strong> The cyan→violet gradient marks the primary action and the brand. If three things on screen glow, none of them do.</li>
-          <li><strong>State has a colour and a shape.</strong> Pass/fail, changed/unchanged, locked/unlocked never rely on hue alone — there is always an icon, a border, or a label alongside.</li>
+          <li><strong>State has a color and a shape.</strong> Pass/fail, changed/unchanged, locked/unlocked never rely on hue alone — there is always an icon, a border, or a label alongside.</li>
           <li><strong>Density where the work is, air where the story is.</strong> The solve screen runs at 13px and 8px gutters. Marketing and profile run at 16px with 24–96px rhythm.</li>
           <li><strong>Nothing decorative moves.</strong> Motion confirms a change of state — a step advancing, a panel opening. It never loops for atmosphere.</li>
         </ul>
@@ -259,10 +259,10 @@ body { background: var(--bg); }
       </div>
     </section>
 
-    <!-- ============== COLOUR ============== -->
-    <section class="sec" id="colour">
-      <h2>Colour</h2>
-      <p class="lede">Every colour in the product is a token. Components reference roles — <code class="inline">--surface-2</code>, <code class="inline">--danger</code> — never hex. Swapping <code class="inline">data-theme</code> on <code class="inline">&lt;html&gt;</code> repoints all of them.</p>
+    <!-- ============== COLOR ============== -->
+    <section class="sec" id="color">
+      <h2>Color</h2>
+      <p class="lede">Every color in the product is a token. Components reference roles — <code class="inline">--surface-2</code>, <code class="inline">--danger</code> — never hex. Swapping <code class="inline">data-theme</code> on <code class="inline">&lt;html&gt;</code> repoints all of them.</p>
 
       <div class="pal-head">
         <h3 class="sub" style="margin:0">Dark — the default</h3>
@@ -285,7 +285,7 @@ body { background: var(--bg); }
             (<code class="inline">--c-com</code>) sit at 3.35:1 on <code class="inline">--surface-in</code>.
             Dimming comments below the code is the convention every editor uses, and a comment never
             carries information the code does not. Nothing else is allowed under 4.5:1.</li>
-          <li>Semantic colours are tuned <strong>per theme</strong>: dark success is #3FDD9A, light success is #0A7A50. The same hex cannot pass on both grounds.</li>
+          <li>Semantic colors are tuned <strong>per theme</strong>: dark success is #3FDD9A, light success is #0A7A50. The same hex cannot pass on both grounds.</li>
         </ul>
       </div>
     </section>
@@ -443,7 +443,7 @@ body { background: var(--bg); }
     <!-- ============== FORMS ============== -->
     <section class="sec" id="forms">
       <h2>Forms</h2>
-      <p class="lede">Recessed fields on raised cards. Focus is a border colour change plus a 3px quiet halo — never a bare browser outline, never nothing.</p>
+      <p class="lede">Recessed fields on raised cards. Focus is a border color change plus a 3px quiet halo — never a bare browser outline, never nothing.</p>
       <div class="demo">
         <div class="form-grid">
           <div class="field">
@@ -521,7 +521,7 @@ body { background: var(--bg); }
     <!-- ============== BADGES ============== -->
     <section class="sec" id="badges">
       <h2>Badges &amp; status</h2>
-      <p class="lede">Small, uppercase-adjacent, always paired with a word. Difficulty, language and plan each own a fixed colour across the whole product.</p>
+      <p class="lede">Small, uppercase-adjacent, always paired with a word. Difficulty, language and plan each own a fixed color across the whole product.</p>
       <div class="demo">
         <div class="demo-label">Difficulty · language · plan</div>
         <div class="row-wrap">
@@ -534,7 +534,7 @@ body { background: var(--bg); }
           <span class="badge badge-new">generated</span>
           <span class="badge">hash map</span>
         </div>
-        <div class="demo-label" style="margin-top:var(--sp-5)">Problem status — colour plus a glyph, never colour alone</div>
+        <div class="demo-label" style="margin-top:var(--sp-5)">Problem status — color plus a glyph, never color alone</div>
         <div class="row-wrap">
           <span class="badge badge-dot" style="color:var(--success)"><span>Solved</span></span>
           <span class="badge badge-dot" style="color:var(--warning)"><span>Attempted</span></span>
@@ -677,7 +677,7 @@ body { background: var(--bg); }
       <p class="lede">Three durations, two curves. Anything longer than 280ms is a page transition, and Aptivus does not have those.</p>
       <div class="demo">
         <div class="motion-row"><span class="k">--dur-1 90ms</span><span>Press feedback, hover tint, chip highlight. Below the threshold where you notice it.</span></div>
-        <div class="motion-row"><span class="k">--dur-2 160ms</span><span>Default. Colour, border and shadow transitions on every control.</span></div>
+        <div class="motion-row"><span class="k">--dur-2 160ms</span><span>Default. Color, border and shadow transitions on every control.</span></div>
         <div class="motion-row"><span class="k">--dur-3 280ms</span><span>Something arriving or leaving: toast, panel, bar fill, ring sweep.</span></div>
         <div class="motion-row"><span class="k">--ease</span><span>cubic-bezier(.4,0,.2,1) — state changes in place.</span></div>
         <div class="motion-row"><span class="k">--ease-out</span><span>cubic-bezier(.16,1,.3,1) — things entering. Fast start, soft landing.</span></div>
@@ -693,7 +693,7 @@ body { background: var(--bg); }
         <ul class="rules">
           <li><strong>One focus rule for the whole product.</strong> <code class="inline">:focus-visible</code> → 2px <code class="inline">--ring</code> at 2px offset. It is never removed; components that need a different look change <code class="inline">--ring</code>, not the rule.</li>
           <li><strong>Body text meets 4.5:1, large text 3:1</strong> on its own surface, verified per theme in the contrast table above.</li>
-          <li><strong>Colour is never the only signal.</strong> Passing tests get a ✓, failing get an ✗, changed variables get a border <em>and</em> a tint.</li>
+          <li><strong>Color is never the only signal.</strong> Passing tests get a ✓, failing get an ✗, changed variables get a border <em>and</em> a tint.</li>
           <li><strong>The solve screen is fully keyboard-driven:</strong> ⌘↵ submits, ⌘⇧↵ runs, ← → step the trace, <kbd>T</kbd> toggles it, <kbd>N</kbd> takes the next problem.</li>
           <li><strong>Live regions</strong> announce run results and step narration, so a screen-reader user hears "line 4 set need = 4000" rather than nothing.</li>
           <li><strong>Panels are resizable but never below their minimum</strong>, and the drag handles are also arrow-key adjustable when focused.</li>

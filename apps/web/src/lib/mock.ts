@@ -45,7 +45,7 @@ export function skewOf(text: string | undefined): Skew {
   return "medium";
 }
 
-/** heavy · moderate · light · none · unknown, normalised to a recommendation. */
+/** heavy · moderate · light · none · unknown, normalized to a recommendation. */
 export function shapeFor(weight: string | undefined): Shape {
   const w = (weight ?? "").toLowerCase();
   if (w.includes("heavy") || w === "moderate") return "split";
@@ -306,7 +306,7 @@ export async function compose(opts: {
     slots = [...a, ...pick("code", 1, taken)];
   }
 
-  // A pack with no SQL cannot honour "SQL only"; fall back rather than 404.
+  // A pack with no SQL cannot honor "SQL only"; fall back rather than 404.
   if (slots.length < 2) {
     const rest = pick(slots[0]?.kind === "sql" ? "code" : "sql", 2 - slots.length, new Set(slots.map((s) => s.problemId)));
     slots = [...slots, ...rest];

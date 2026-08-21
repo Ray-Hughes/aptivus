@@ -118,7 +118,7 @@ function parse(row: CourseRow): LoadedCourse | null {
   const parsed = CourseSchema.safeParse(row.body);
   if (!parsed.success) {
     // A malformed row is a broken import, not a broken request: drop the course
-    // from the listing and say so in the log rather than 500 the catalogue.
+    // from the listing and say so in the log rather than 500 the catalog.
     console.error(`[courses] ${row.slug} failed to parse:`, parsed.error.issues[0]);
     return null;
   }
@@ -161,7 +161,7 @@ export const progressForCourse = cache(
   },
 );
 
-/** Every progress row a user has, newest touch first. Used by the catalogue. */
+/** Every progress row a user has, newest touch first. Used by the catalog. */
 export const allProgress = cache(async (userId: string): Promise<ProgressRow[]> => {
   return db
     .select()

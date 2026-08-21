@@ -121,7 +121,7 @@ function groupAnagrams(words) {
 - **Ruby compares arrays with \`<=>\` and JavaScript cannot.** \`[1, 2] < [1, 3]\` compares two strings after an implicit \`toString()\`, which is a silent wrong answer rather than an error. Write the comparator, as \`byArray\` does above.
 - Any string is a valid \`Map\` key, including \`""\` -- the empty-word case needs no special handling.
 
-### Generalising it
+### Generalizing it
 Swap the key function and this becomes a fuzzy-match deduper:
 \`const key = name.toLowerCase().replace(/[^a-z]/g, "")\` groups "ACME Corp." with "Acme Corp".
 Regex literals are first class in JavaScript exactly as in Ruby; the \`g\` flag is what
@@ -190,7 +190,7 @@ function reconcile(legacy, platform) {
 - **There is no Set arithmetic.** JavaScript's \`Set\` has no \`-\`, \`&\` or \`|\`, so the difference is a \`filter\` over the keys and the intersection is a loop with a \`has\` check. Ruby's \`Set\` and Python's \`set\` both spoil you here; write the filter and move on.
 - Iterating a \`Map\` yields \`[key, value]\` pairs, so \`for (const [id, premium] of L)\` is \`each_pair\`. \`L.keys()\`, \`L.values()\` and \`L.entries()\` return iterators, not arrays -- spread them with \`[...]\` when you need to \`filter\` or \`sort\`.
 - \`sort\` returns the same array it mutated, so \`missing.sort(...)\` inside the object literal is safe and reads well. It is Ruby's \`sort!\` in a place that looks like \`sort\`.
-- Ordinary object literals are the natural return type for a fixed set of named fields, and they serialise straight to JSON. Use \`Map\` for lookup tables, \`{}\` for records.
+- Ordinary object literals are the natural return type for a fixed set of named fields, and they serialize straight to JSON. Use \`Map\` for lookup tables, \`{}\` for records.
 
 ### What the interviewer is watching for
 Do you ask about duplicate ids within a feed? Do you ask whether float premiums need
@@ -508,7 +508,7 @@ left event before scoring the window it belongs to. Trace \`[[1, 5], [4, 5]]\` w
 - \`Infinity\` is a normal number here: it compares greater than everything, arithmetic on it stays \`Infinity\`, and \`Number.isFinite\` is how you test for it. Ruby spells it \`Float::INFINITY\`.
 - \`for (const s of sizes)\` is \`each\`; \`for (const i in sizes)\` gives you **string** indices and is almost never what you want.
 
-### Memoised recursion, if you prefer it
+### Memoized recursion, if you prefer it
 \`\`\`js
 function minLayers(sizes, limit) {
   const memo = new Map();
@@ -576,7 +576,7 @@ underlying structure is what loses the point.
 
 ### Ruby to JavaScript notes
 - **Ruby's Hash and JavaScript's Map both preserve insertion order; a plain \`{}\` does not, quite.** Object keys that look like array indices are reordered ahead of string keys, so \`{2: "a", 1: "b"}\` iterates \`1\` then \`2\`. An LRU built on \`{}\` with numeric keys is broken for that reason alone.
-- \`cache.keys()\` returns a lazy iterator, so \`.next().value\` peeks at the first key without materialising the rest. \`[...cache.keys()][0]\` would work and would be O(n).
+- \`cache.keys()\` returns a lazy iterator, so \`.next().value\` peeks at the first key without materializing the rest. \`[...cache.keys()][0]\` would work and would be O(n).
 - \`const [, key, value] = op\` skips the first element with an empty slot -- Ruby's \`_, key, value = op\`. Unlike Python it does not raise when the lengths disagree; extra elements are dropped and missing ones become \`undefined\`, which is why the two-element \`get\` case is still handled separately for clarity rather than necessity.
 - \`delete\` on a \`Map\` is a method that returns a boolean. The \`delete\` *operator* (\`delete obj.k\`) is a different thing entirely and is slow on plain objects; another reason to prefer \`Map\` for anything you mutate.
 

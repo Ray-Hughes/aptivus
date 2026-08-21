@@ -108,7 +108,7 @@ export default async function Dashboard() {
                 : "rounded-xl bg-gradient-to-r from-[#00E5FF] to-[#9E7BFF] px-5 py-2.5 text-[13.5px] font-semibold text-[#0b0c0f] outline-none ring-offset-2 ring-offset-[#0b0c0f] transition hover:brightness-110 focus-visible:ring-2 focus-visible:ring-[#4aa3ff]"
             }
           >
-            {stats.solved ? "Resume practice →" : "Start practising →"}
+            {stats.solved ? "Resume practice →" : "Start practicing →"}
           </Link>
         </section>
 

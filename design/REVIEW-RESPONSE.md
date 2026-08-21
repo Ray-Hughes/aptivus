@@ -33,14 +33,14 @@ Re-checked across all three ranges and with "Hard problems only" on.
 
 ### 2. `landing.html` — mobile "Start free" at 1.4:1 — **fixed**
 
-`.mobile-menu a` was scoped to `.mobile-menu ul a`, and the CTA colours were set explicitly:
+`.mobile-menu a` was scoped to `.mobile-menu ul a`, and the CTA colors were set explicitly:
 
 ```css
 .mobile-menu .mm-cta .btn-primary { color: var(--text-on-brand); }
 .mobile-menu .mm-cta .btn-secondary { color: var(--text); }
 ```
 
-Measured at 480 px with the menu open: computed colour is now `rgb(4, 7, 14)` —
+Measured at 480 px with the menu open: computed color is now `rgb(4, 7, 14)` —
 **13.10:1** at the cyan end, **6.46:1** at the violet end, against the 1.44 / 1.40 the
 review measured. Your numbers were exact; I reproduced both.
 
@@ -54,7 +54,7 @@ phone).
 
 Measured at 375 px: header `scrollWidth === clientWidth === 375` (was 559 of content in a
 480 px box). `#tStart`, `#clock`, `#themeBtn`, `#pswitchBtn`, `#paneSwitch` all inside the
-viewport, and `elementFromPoint` on the centre of Start and the theme toggle returns those
+viewport, and `elementFromPoint` on the center of Start and the theme toggle returns those
 elements — they are hittable, not just present. Clicking Start starts the clock (44:59
 one second later). Same at 480 px.
 
@@ -99,7 +99,7 @@ travel there and masking them would be theatre. What must never leave the server
 **expected output**. So:
 
 - **Inputs stay visible**, in the picker and in the case bodies. No fake lock.
-- **The picker is grouped and labelled**, which is where the distinction now lives:
+- **The picker is grouped and labeled**, which is where the distinction now lives:
   `Sample cases · input and expected output` / `Hidden cases · real input, expected output
   stays on the server` / `Your file`. Verified in the DOM as real `<optgroup>`s.
 - **Hidden expected values are gone from the UI.** The trace note says
@@ -159,7 +159,7 @@ saying to keep them in step. Knock-on corrections so nothing else lies:
 ### 9. Shared tokens — light `--text-3` failed AA on the page ground — **fixed**
 
 `--text-3` (light) `#6B7486` → **`#656E80`**. Confirmed: 4.43:1 → **4.83:1** on `--bg`
-`#F7F8FB`, and 4.70 → 5.13:1 on `--surface`. Live check on `.hero-trust`: computed colour
+`#F7F8FB`, and 4.70 → 5.13:1 on `--surface`. Live check on `.hero-trust`: computed color
 `rgb(101, 110, 128)` on `rgb(247, 248, 251)`.
 
 The **"--text-3 on --bg" row is now in the contrast table** so it cannot silently regress —
@@ -203,7 +203,7 @@ which is consistent with the streak card's "+10 gems at every 7", with the 12-da
 and with the ledger's existing "7-day streak bonus +10". No button pays for showing up any
 more. The claim handler and its `Daily bonus` ledger entry are gone from the JS.
 
-### 13. `coding.html` — two controls promising behaviour that did not exist — **both fixed**
+### 13. `coding.html` — two controls promising behavior that did not exist — **both fixed**
 
 - **`#stdinBox`**: removed. The Output tab now explains instead of pretending — "Run hands
   your function its arguments, so there is nothing to type here. Problems that read
@@ -219,7 +219,7 @@ more. The claim handler and its `Daily bonus` ledger entry are gone from the JS.
 
 Esc arms "the next Tab moves focus" (the CodeMirror/Monaco convention) and the editor footer
 says so, live: it reads `Tab indents · Esc then Tab moves focus` and flips to
-`Tab moves focus` in accent colour while armed. It disarms after the escape Tab, on any
+`Tab moves focus` in accent color while armed. It disarms after the escape Tab, on any
 other keystroke, and on blur.
 
 Verified with real key events: Tab in the editor still indents and focus stays in `#edTa`;
@@ -250,9 +250,9 @@ satisfied without breaking indentation.
   `aria-labelledby` back to the tab. Verified every `aria-controls` resolves, and that
   arrow-key roving and click switching still work.
 - **`#tCase` widened** (see item 6).
-- **Specimens labelled.** The design-system pack card button reads "Open · specimen" with an
+- **Specimens labeled.** The design-system pack card button reads "Open · specimen" with an
   explaining `title`, the tables section says the rows are specimens and do not navigate, and
-  `#dsTable tbody tr` had its `cursor: pointer` cancelled on that page only — the core rule
+  `#dsTable tbody tr` had its `cursor: pointer` canceled on that page only — the core rule
   is still right for real product tables.
 - **"Included with Pro"** added to profile's Generate footer, in both the static copy and
   the two JS paths that rewrite it.
@@ -264,7 +264,7 @@ satisfied without breaking indentation.
 - **Focus trap on the profile achievement modal.** Skipped. It already sets initial focus and
   closes on Escape; a correct trap means intercepting Tab/Shift+Tab against a live list of
   focusable descendants, and I would rather not land that untested in the last pass of a
-  session where I have already touched the modal's neighbours. It is a real gap — it is the
+  session where I have already touched the modal's neighbors. It is a real gap — it is the
   top of the list next time.
 - **Arrow-key navigation for the problem-switcher `role="menu"`.** Skipped for the same
   reason: the honest fix is either full menu keyboard semantics or dropping to
@@ -284,7 +284,7 @@ satisfied without breaking indentation.
 1. **Case numbering is already one story.** The review says "pick one story" between global
    test indices and hidden-cases-1..n. The results list and the trace picker both already use
    global indices — "Hidden case 3" is the third test in both places, and clicking
-   *Trace this case* on it selects the option labelled "hidden case 3". Renumbering would
+   *Trace this case* on it selects the option labeled "hidden case 3". Renumbering would
    have made the two disagree. Left as is.
 2. **The 1.40:1 figure was right and I was wrong to doubt it.** I initially computed the
    violet end against the raw `#7C4DFF`. Against the CTA sweep's lifted `#9E7BFF`,

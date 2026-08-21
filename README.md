@@ -184,7 +184,7 @@ problem in the shipped pack went through exactly that loop.
 ### Turn it off for the drill itself
 
 Many companies explicitly prohibit AI assistance during the interview, and the point of
-practising is to find out what you can do without it. Assistance belongs before and after
+practicing is to find out what you can do without it. Assistance belongs before and after
 a problem, not during one. Start the timer, close the panel, and earn the explanation.
 
 ## Roadmap

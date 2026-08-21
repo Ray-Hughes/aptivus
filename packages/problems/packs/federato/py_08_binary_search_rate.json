@@ -20,7 +20,7 @@
   "explanation": "### Getting the loop right every time\nUse the `while lo <= hi` form with `mid+1` / `mid-1` and a saved `ans`. It terminates\nby construction because the range strictly shrinks every iteration. If you find\nyourself writing `while lo < hi` and then debugging an infinite loop live on Zoom,\nyou have chosen the harder template.",
   "followups": [
     "Return the band index rather than the rate.",
-    "The table is not sorted when you get it. Does that change the complexity? (Sort once at load, O(n log n) amortised over many lookups.)",
+    "The table is not sorted when you get it. Does that change the complexity? (Sort once at load, O(n log n) amortized over many lookups.)",
     "Thresholds have duplicates. Which one wins? (bisect_right handles 'last matching' correctly; bisect_left does not.)"
   ],
   "signature": {

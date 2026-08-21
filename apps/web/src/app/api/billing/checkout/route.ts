@@ -52,7 +52,7 @@ export async function POST(req: Request) {
     customer: customerId,
     line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${base}/settings?checkout=success`,
-    cancel_url: `${base}/settings?checkout=cancelled`,
+    cancel_url: `${base}/settings?checkout=canceled`,
     automatic_tax: { enabled: true },
     // Read back in the webhook. Entitlement is granted there and nowhere else.
     metadata: {

@@ -105,7 +105,7 @@ This is the one most likely to be asked. Learn this diagram.
              v                         v                          v
       +-------------+          +--------------+           +--------------+
       | Parse /     |          | Enrich:      |           | Enrich:      |
-      | normalise   |          | property data|           | CAT model    |
+      | normalize   |          | property data|           | CAT model    |
       +------+------+          +------+-------+           +------+-------+
              |                        |                          |
              |     (each: retry w/ backoff, circuit breaker,      |
@@ -121,7 +121,7 @@ This is the one most likely to be asked. Learn this diagram.
           +-------------------+                 +--------------------+
           | Canonical store   |                 | Aggregation /      |
           | Postgres (OLTP)   |                 | portfolio rollups  |
-          | serves the app    |                 | (materialised)     |
+          | serves the app    |                 | (materialized)     |
           +-------------------+                 +--------------------+
 ```
 
@@ -134,7 +134,7 @@ This is the one most likely to be asked. Learn this diagram.
 
 2. **Keep the raw payload immutably.** When a carrier says "you dropped my submission",
    you need the bytes they sent. Also lets you reprocess after a parser bug without
-   asking them to resend. This is the Forward Deployed Engineer's favourite design
+   asking them to resend. This is the Forward Deployed Engineer's favorite design
    decision and you should say why.
 
 3. **Enrichment is where the blast radius lives.** Third-party insurance data providers
@@ -194,7 +194,7 @@ Properties that make this hard:
 | Approach | How | Good | Bad |
 |---|---|---|---|
 | **Choreography** (pure events) | Each service listens for events, emits the next | Loosely coupled, easy to add a consumer | No one knows the overall state; debugging is archaeology; hard to answer "where is this submission stuck?" |
-| **Orchestration** (central engine) | A workflow service drives each step | State is explicit and queryable; retries and timeouts centralised; auditable | The engine is a critical dependency; risk of a god-service |
+| **Orchestration** (central engine) | A workflow service drives each step | State is explicit and queryable; retries and timeouts centralized; auditable | The engine is a critical dependency; risk of a god-service |
 | **Durable execution** (Temporal, Step Functions, Cadence) | Workflow written as code; engine persists every step's result | Survives crashes and deploys; retries/timeouts/compensation built in; the code IS the diagram | Operational weight; another system to run; learning curve |
 
 **Recommend orchestration, most likely via a durable execution engine, and say why:**
@@ -239,7 +239,7 @@ of policies, needed in interactive time.
 
 - **Do not compute on read** across the whole book. Maintain **incremental aggregates**
   updated from the `policy.bound` event stream, keyed by (tenant, cat_zone, line, period).
-- Serve from a **materialised aggregate table** in Postgres, or a pre-aggregated store.
+- Serve from a **materialized aggregate table** in Postgres, or a pre-aggregated store.
 - **Lambda-ish reconciliation**: the streaming path gives you fresh-but-approximate;
   a nightly batch recomputes from the source of truth and corrects drift. Streaming
   aggregates drift - acknowledging that is the senior move.
@@ -276,10 +276,10 @@ mid and senior.
 
 The tool is basic. Plan for that.
 
-- **Practise once before Tuesday.** Open https://hr.gs/sampleint, click the Whiteboard
+- **Practice once before Tuesday.** Open https://hr.gs/sampleint, click the Whiteboard
   tab, and draw a five-box pipeline. Find the shape, text, arrow, and undo controls.
   Do not learn the UI while being evaluated.
-- **Boxes and labelled arrows only.** No colours, no icons, no beauty.
+- **Boxes and labeled arrows only.** No colors, no icons, no beauty.
 - **Left to right, request flow on top, data stores below.** Consistent layout beats
   detailed layout.
 - **Label the arrows** with what flows: `submission.received`, `HTTP 202`, `enriched payload`.

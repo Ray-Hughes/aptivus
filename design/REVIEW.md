@@ -23,7 +23,7 @@ eyebrow badge is about tracing, the first section after the hero is the live, sc
 demo (it autoplays on scroll into view), and the top-nav's first link is "The debugger".
 A first-time visitor understands the differentiator within one screen. In `coding.html`
 it is discoverable but not heroic: the Trace button is the *quietest* of the three footer
-actions (`.btn-outline`, grey text) next to Run and Submit, the Tests-pane empty state
+actions (`.btn-outline`, gray text) next to Run and Submit, the Tests-pane empty state
 mentions Run and Submit but never Trace, and the intended wow moment depends on a toast
 that vanishes after 3.2 seconds (item 5). The failing-case → "Trace this case" path
 rescues it, but only after the user has already run.
@@ -50,13 +50,13 @@ purpose-written narration for the self-pairing moment; hint 3 teaches the fix ("
 dict **before** inserting"); the reference solution is annotated `# insert AFTER the
 check`; the Ask panel has a canned answer explaining `[0, 0]` on `[3000, 3000]`; the
 landing-page demo shows the **corrected** code. Editing the code to the correct order
-flips every behaviour accordingly — verified.
+flips every behavior accordingly — verified.
 
 **But the intent is not unmistakable, and it must be.** The only in-UI signal is a toast
 ("Run the code as shipped: sample 2 fails…") that appears at ~0.9 s and disappears at
 ~4 s. Miss it — look at the problem pane first, as most people will — and the page reads
 as *a product that ships buggy starter code*. Real pads ship `pass` or an empty body;
-a pre-filled wrong attempt is a demo device and has to be labelled as one, persistently.
+a pre-filled wrong attempt is a demo device and has to be labeled as one, persistently.
 See required change 5.
 
 ---
@@ -94,7 +94,7 @@ See required change 5.
 4. **`landing.html` — demo slider double-steps on arrow keys.**
    Element: `#dRange` + the `#demo` keydown listener.
    Current: the container's keydown handler calls `go(idx ± 1)` **and** the focused range
-   input's native arrow behaviour then fires `input` → `go()` again. Verified with a real
+   input's native arrow behavior then fires `input` → `go()` again. Verified with a real
    key event: one ArrowRight press moved the counter from **1 / 18 to 3 / 18**. The
    equivalent in `coding.html` is guarded (its document handler ignores keys while an
    INPUT has focus) — copy that guard, or skip the handler when `e.target === dRange`.
@@ -171,8 +171,8 @@ See required change 5.
     server-authoritative, first clean solve only" rule. Remove it, or convert it to the
     documented 7-day-streak +10 moment.
 
-13. **`coding.html` — two controls promise behaviour that does not exist.**
-    - `#stdinBox` (Output tab): labelled "Input (stdin for Run)" but Run never reads it.
+13. **`coding.html` — two controls promise behavior that does not exist.**
+    - `#stdinBox` (Output tab): labeled "Input (stdin for Run)" but Run never reads it.
       The placeholder honestly says this problem takes function arguments — either drop
       the box for function problems or wire it to a stdin problem.
     - `#noteArea` (Notes tab): help text says "Saved locally, per problem. Never sent
@@ -187,7 +187,7 @@ See required change 5.
     the next Tab (CodeMirror/Monaco convention) and say so in the editor footer.
 
 15. **`design-system.html` — doc contradicts its own token.**
-    The colour rules list says "light success is **#0A8F5F**"; the token is `#0A7A50`.
+    The color rules list says "light success is **#0A8F5F**"; the token is `#0A7A50`.
     One of them is wrong — align the prose with the palette (the table already measures
     the real token).
 
@@ -201,7 +201,7 @@ See required change 5.
   the visually quietest button on the screen.
 - `landing.html`: `#demo` is only keyboard-steppable when focus happens to be inside it;
   give `.demo-shell` `tabindex="0"` and an `aria-label` so keyboard users can reach the
-  scrub behaviour deliberately.
+  scrub behavior deliberately.
 - Contrast polish (measured): `.kbd-hint` inside the primary button computes to ~3.56:1
   at the violet end of the sweep (11 px text at 62 % opacity) — raise the opacity or drop
   the hint on the gradient; code comments `--c-com #5B6376` on `--surface-in` are 3.35:1
@@ -250,9 +250,9 @@ Everything else I clicked works, including: landing demo (prev/next/play/scrub/k
 autoplay-on-view, reduced-motion respected), billing toggle (yearly math checks out:
 $79.90 ≈ −17 %), FAQ accordions, burger menu, upgrade button (honest prototype toast);
 coding's tabs (both panes, arrow-key navigation), hints (allowance decrements 5→3, then
-gem pricing appears), solution gate (allowance 3→2, "free after solve" honoured —
+gem pricing appears), solution gate (allowance 3→2, "free after solve" honored —
 verified post-solve), Ask (canned but context-aware answers), problem switcher (honestly
-labelled "Only two are wired up in this prototype"), language switch, timer
+labeled "Only two are wired up in this prototype"), language switch, timer
 (start/pause/reset, warn/danger states), Format, Reset code, both column gutters
 (drag + arrow keys + double-click reset), trace panel (open/close, `T`, play/pause,
 speeds, case switching including "My file, run as written", pin/unpin/unpin-all, resize
@@ -283,9 +283,9 @@ and theme persistence across pages via localStorage.
   actual debugging move, not just the answer.
 - **The simulator reacts to what you type.** Fixing the insert order changes Run, Submit
   and the trace coherently. That makes the prototype feel like a product, not a film.
-- **Honest monetisation on the page.** "5 hints and 3 solutions a day — resets 00:00 UTC"
+- **Honest monetization on the page.** "5 hints and 3 solutions a day — resets 00:00 UTC"
   sits in the pricing table, the hints note, and the top bar; "free once you have passed
-  the tests" is stated at the lock screen and honoured after solve; prototype buttons say
+  the tests" is stated at the lock screen and honored after solve; prototype buttons say
   they are prototypes.
 - **Token discipline.** One shared core (verified byte-identical across all four files),
   a complete light theme, a computed-not-claimed contrast table, a global focus-visible

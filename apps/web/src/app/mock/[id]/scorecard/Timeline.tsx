@@ -8,7 +8,7 @@
  *
  * Four **textures** rather than four hues — diagonal stripes for reading, solid
  * for writing, dots for debugging, faint dots for idle — so it survives the
- * same colour-blindness rule as the rest of the product. It is also the same
+ * same color-blindness rule as the rest of the product. It is also the same
  * encoding as the in-round clock bar, at a higher resolution: you learn to read
  * one by using the other.
  *

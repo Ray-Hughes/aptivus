@@ -25,11 +25,11 @@ export function buildJsonSchema() {
   };
 }
 
-export function serialise(schema) {
+export function serialize(schema) {
   return `${JSON.stringify(schema, null, 2)}\n`;
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  writeFileSync(SCHEMA_FILE, serialise(buildJsonSchema()));
+  writeFileSync(SCHEMA_FILE, serialize(buildJsonSchema()));
   console.log(`wrote ${SCHEMA_FILE}`);
 }

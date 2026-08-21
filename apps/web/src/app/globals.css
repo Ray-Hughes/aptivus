@@ -29,6 +29,28 @@ body {
   color: #dfe1e5;
 }
 
+/*
+ * Tailwind v4's Preflight sets buttons to `cursor: default`, which is correct
+ * per the spec and wrong for everyone who has ever used a website. Restored
+ * globally rather than per component, because it is not one button that is
+ * wrong - it is all of them.
+ *
+ * Disabled controls keep the default cursor: a pointer on something that
+ * cannot be clicked is a small lie.
+ */
+button:not(:disabled),
+[role="button"]:not(:disabled),
+summary,
+label:has(> input[type="checkbox"]),
+label:has(> input[type="radio"]) {
+  cursor: pointer;
+}
+
+button:disabled,
+[role="button"][aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
 body {
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 }

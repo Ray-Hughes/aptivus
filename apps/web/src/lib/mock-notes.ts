@@ -4,7 +4,7 @@
  * These are authored per *pattern* rather than templated, because generic
  * coaching is exactly what makes a scorecard feel like a grade. A note that
  * names the actual trap - `while`, not `if`; the second sort key; the fan-out -
- * reads like feedback. A note that says "good effort, keep practising" reads
+ * reads like feedback. A note that says "good effort, keep practicing" reads
  * like a number with the number hidden.
  *
  * Keyed on `problems.pattern`, which is authored in the pack alongside the
@@ -39,7 +39,7 @@ export const PATTERN_NOTES: Record<string, PatternNote> = {
       "Two ways this one goes wrong: counting and sorting the whole thing (correct, but it throws away the point of the question), and pushing onto the heap without bounding it to k. Say “I'll count, then keep a heap of size k” before you type it.",
     next: {
       title: "Top-K with a bounded heap",
-      body: "Counter, then heapq.nlargest or a size-k heap you pop from. Practise stating why it beats a full sort — the interviewer is listening for n log k.",
+      body: "Counter, then heapq.nlargest or a size-k heap you pop from. Practice stating why it beats a full sort — the interviewer is listening for n log k.",
     },
   },
   "hash grouping": {
@@ -49,7 +49,7 @@ export const PATTERN_NOTES: Record<string, PatternNote> = {
       "The pattern is: find a key that is identical for everything that belongs together, then group in a single dict pass. Most stalls here are spent trying to compare items pairwise instead of naming a key.",
     next: {
       title: "Canonical keys",
-      body: "Practise saying the key before you write the loop: “sorted characters”, “frozen set of ids”, “the tuple of counts”. Naming it correctly makes the code four lines.",
+      body: "Practice saying the key before you write the loop: “sorted characters”, “frozen set of ids”, “the tuple of counts”. Naming it correctly makes the code four lines.",
     },
   },
   stack: {
@@ -129,7 +129,7 @@ export const PATTERN_NOTES: Record<string, PatternNote> = {
       "The move is to stop searching the array and start searching the answer: “can I do it with capacity X?” is a yes/no that is monotonic in X, so binary search over X. Without that sentence the problem looks like an unbounded search.",
     next: {
       title: "Binary search the answer, not the array",
-      body: "Practise the framing sentence: “feasible(x) is monotonic, so I binary search x and write feasible as a linear scan.” Then write feasible() first and the search second.",
+      body: "Practice the framing sentence: “feasible(x) is monotonic, so I binary search x and write feasible as a linear scan.” Then write feasible() first and the search second.",
     },
   },
   "two pointers": {
@@ -149,7 +149,7 @@ export const PATTERN_NOTES: Record<string, PatternNote> = {
       "Almost every graph stall is one of two things: no `visited` set, so cycles run forever, or building the adjacency lazily inside the traversal. Build the adjacency map first as its own step, then traverse.",
     next: {
       title: "Adjacency, then traverse",
-      body: "Two separate steps, always, and a visited set from the first line. Practise both BFS with a deque and DFS with an explicit stack so you are not choosing under pressure.",
+      body: "Two separate steps, always, and a visited set from the first line. Practice both BFS with a deque and DFS with an explicit stack so you are not choosing under pressure.",
     },
   },
   "topological sort": {
@@ -179,7 +179,7 @@ export const PATTERN_NOTES: Record<string, PatternNote> = {
       "Grid DP falls over on the first row and first column. Seed them explicitly before the main loop rather than special-casing inside it, and the body becomes one line.",
     next: {
       title: "Seed the edges, then one clean loop",
-      body: "Fill row 0 and column 0 first, then the double loop has no conditionals in it. Then say the O(width) space optimisation out loud even if you do not write it.",
+      body: "Fill row 0 and column 0 first, then the double loop has no conditionals in it. Then say the O(width) space optimization out loud even if you do not write it.",
     },
   },
   "design / ordered dict": {
@@ -189,7 +189,7 @@ export const PATTERN_NOTES: Record<string, PatternNote> = {
       "The trap is keeping a dict and a list and trying to hold them in step — the list makes eviction O(n) and the two drift. A doubly linked list plus a dict of nodes, or an OrderedDict, gives O(1) on both operations.",
     next: {
       title: "O(1) on both operations, or say why not",
-      body: "Practise the LRU shape until you can write it in ten minutes. Even if you use OrderedDict, be able to explain the linked-list version — that is the follow-up.",
+      body: "Practice the LRU shape until you can write it in ten minutes. Even if you use OrderedDict, be able to explain the linked-list version — that is the follow-up.",
     },
   },
   recursion: {
@@ -241,7 +241,7 @@ export const PATTERN_NOTES: Record<string, PatternNote> = {
       "The move is a conditional aggregate — SUM(CASE WHEN condition THEN 1 ELSE 0 END) — inside the same GROUP BY, not a second join. And the outer join has to stay LEFT or the zero-conversion rows vanish.",
     next: {
       title: "Conditional aggregates over second joins",
-      body: "Practise expressing “how many of them were X” as a SUM(CASE …) in the aggregate you already have. It replaces a whole class of correlated subquery.",
+      body: "Practice expressing “how many of them were X” as a SUM(CASE …) in the aggregate you already have. It replaces a whole class of correlated subquery.",
     },
   },
   "anti-join": {
@@ -340,7 +340,7 @@ export const PATTERN_NOTES: Record<string, PatternNote> = {
 export function genericNote(pattern: string, kind: "sql" | "code"): PatternNote {
   const p = pattern || (kind === "sql" ? "this query shape" : "this shape");
   return {
-    solved: `You closed it. The pattern here is ${p}, and the thing worth practising next is saying which pattern you reached for and why, before you start typing — that narration is most of what a real interviewer is scoring.`,
+    solved: `You closed it. The pattern here is ${p}, and the thing worth practicing next is saying which pattern you reached for and why, before you start typing — that narration is most of what a real interviewer is scoring.`,
     stuck: `This one is ${p}. The most useful thing you can do with an unfinished attempt is to reopen it untimed and get it to green before you look at anything — the second pass is where the pattern actually lands.`,
     next: {
       title: `Drill ${p}`,

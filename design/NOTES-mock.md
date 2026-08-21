@@ -36,7 +36,7 @@ This is the decision the screen lives or dies on, so it gets the most space here
 ### What it does
 
 **A full-width 8px bar sits directly under the round bar, and the elapsed portion is
-coloured by which problem you were on.** Cyan for problem 1, violet for problem 2. The
+colored by which problem you were on.** Cyan for problem 1, violet for problem 2. The
 remaining portion is the recessed track. Digits sit in the top-right corner at
 `--t-sm` in `--text-3` — the quietest legible step in the system — and can be hidden
 entirely with a toggle, leaving only the bar.
@@ -61,16 +61,16 @@ thirds…"), and the answer to that sum is a feeling rather than a decision. Per
 vision reads a *length* for free. So the bar carries the information and the digits are
 demoted to a confirmation you look at when you choose to.
 
-**The colour-by-problem is the point, not decoration.** It makes the bar answer a
+**The color-by-problem is the point, not decoration.** It makes the bar answer a
 second question at a glance: *not just how much is gone, but where it went.* At a
 glance you can see "I am past halfway and the bar is still entirely cyan" — which is
-the single most useful in-round realisation there is, and it is exactly the advice in
+the single most useful in-round realization there is, and it is exactly the advice in
 `docs/interview-day.md` ("assume roughly half each, but let them steer"). That is why
 the halfway tick exists. The bar is a **plan instrument** that happens to also be a
 clock, rather than a threat.
 
 It also means the in-round bar is a live, low-resolution preview of the scorecard's
-timeline. Same encoding, same colours, two levels of detail. You learn to read one by
+timeline. Same encoding, same colors, two levels of detail. You learn to read one by
 using the other.
 
 **The digits can be hidden and the round does not end at zero.** Some people genuinely
@@ -133,7 +133,7 @@ history, never to other users.
 overtime, whether a problem was stopped deliberately, and whether the unsolved one lost
 more time to debugging or to writing, then interpolates the real numbers. So the four
 sample outcomes each read specifically, and so does a round you actually play. The
-tone rule was: name the outcome plainly, then normalise it, then say the one thing that
+tone rule was: name the outcome plainly, then normalize it, then say the one thing that
 would change it. *"You would have got through the SQL half comfortably and run out of
 road on the algorithms half. In a real 45 that reads as a pass on one half and an
 incomplete on the other, which is a very common outcome and not a disaster."*
@@ -145,7 +145,7 @@ halfway line, a danger line at the round length and a hatched overtime tail. It 
 picture that answers *what you were doing*, *which problem*, *in what order* and *how
 close to the wire* simultaneously. Four textures rather than four hues — diagonal
 stripes for reading, solid for writing, dots for debugging, faint dots for idle — so it
-survives the colour-blindness rule that the rest of the system already follows. Under
+survives the color-blindness rule that the rest of the system already follows. Under
 it, three generated call-outs picked from a weighted rule list, so the ones you get are
 the ones that apply.
 
@@ -189,9 +189,9 @@ Consecutive identical seconds collapse into blocks, so a round is a short array 
 shape the four canned scenarios are authored in, which is why the scorecard renders a
 played round and a sample round through identical code. Every number on the scorecard —
 including the fact strip, the split bars, the call-outs and the verdict — is computed
-from that array by `summarise()`.
+from that array by `summarize()`.
 
-It is a heuristic and it should be labelled as one, so it is: the section header says
+It is a heuristic and it should be labeled as one, so it is: the section header says
 plainly how it is derived. Two known weaknesses are in §7.
 
 ---
@@ -220,7 +220,7 @@ The reasoning:
   a new rule to tell it.
 
 The consequence is that a serious user's third mock frequently pays **0 gems**, and the
-scorecard says so without apologising: *"+0 gems. Nothing was solved clean, and the
+scorecard says so without apologizing: *"+0 gems. Nothing was solved clean, and the
 round itself never pays. That is deliberate."* A *Why does a mock pay nothing?* link
 opens a short explainer. This is the right answer but it does argue for a **non-currency
 reward specific to mocks** — rounds run, best round, a mock streak — living on
@@ -246,7 +246,7 @@ There are no dead controls. In particular:
   *light*; choosing the 60-minute extended round pulls in the hard problems.
 - **The editor is real**, with the same treatment as `coding.html`: a textarea over a
   regex-highlighted `<pre>`, line-number gutter, tab handling, Ln/Col. Python and SQL
-  tokenisers both.
+  tokenizers both.
 - **Switching problems preserves everything** — code, scratchpad, last run, per-problem
   elapsed. Verified by driving the page: type SQL, switch, type Python, switch back,
   the SQL is still there.
@@ -254,7 +254,7 @@ There are no dead controls. In particular:
   structural properties from the spec ("ties broken on `feed_row_id`", "only the top
   row kept"), so a correct-looking query missing the second sort key really does come
   back 4 of 6. Python answers are run against the problems' **real** test cases by a
-  small JS simulator parameterised on the axis that actually matters — store-before-check
+  small JS simulator parameterized on the axis that actually matters — store-before-check
   for two-sum, `while` vs `if` for the sliding window, sort-or-not and `<` vs `<=` for
   interval merging. Ship the `if` version of the window shrink and you get 6 of 9 with
   `"pwwkew"` and `"abba"` failing, exactly as Python would. Fix it to `while` and it
@@ -282,7 +282,7 @@ never removed) and adds nothing that breaks it.
   not a scripted `.focus()`.
 - Real tab semantics on the state switcher and the problem rail: `role="tablist"`,
   `aria-selected`, roving `tabindex`, arrow keys, Home/End.
-- Colour is never the only signal: run markers carry a tick or an exclamation and a
+- Color is never the only signal: run markers carry a tick or an exclamation and a
   label; outcome chips carry a glyph and a word; the timeline's four activities are
   four *textures*; the problem tabs carry a status glyph with `sr-only` text.
 - One polite live region, used sparingly — round start, 5:00, 1:00, time, round end.

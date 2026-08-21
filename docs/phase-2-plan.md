@@ -326,7 +326,7 @@ Replace the problem list at `/` with a real front page.
 - **Show the product immediately.** The stepper is the differentiator and no competitor
   has it. A short loop of stepping through two-sum with the variables changing will sell
   this better than any copy. Put it above the fold.
-- **How it works**: pick your company → practise the round → step through what your code
+- **How it works**: pick your company → practice the round → step through what your code
   actually did.
 - **Packs**: what is in the curated set; that generated problems target your company.
 - **Pricing**: free vs $7.99, stated plainly, with the daily limits visible rather than
@@ -397,7 +397,7 @@ employers who have not agreed to anything is not.
 - Backups of Postgres, and one tested restore. Untested backups are not backups.
 - Error tracking (Sentry) and uptime monitoring.
 - A staging environment with Stripe in test mode.
-- Rate limits on generation, or one user with a script becomes your largest cost centre.
+- Rate limits on generation, or one user with a script becomes your largest cost center.
 
 ---
 

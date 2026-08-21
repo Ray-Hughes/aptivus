@@ -49,7 +49,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // The per-IP limit is the tight one, because that is where an attacker
         // actually is. The per-account limit is deliberately loose: a strict
         // one lets anybody lock a victim out of their own account just by
-        // guessing wrong at their address, turning a defence into a denial of
+        // guessing wrong at their address, turning a defense into a denial of
         // service. It is a backstop against a distributed attempt, not the
         // primary control.
         const ip = request instanceof Request ? clientIp(request) : "unknown";

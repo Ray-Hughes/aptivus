@@ -25,7 +25,7 @@ than full pages - treat those specific claims as second-hand.
 
 ## The stack (from job postings)
 
-**Python, TypeScript, React, Node.js, PostgreSQL**, containerised on **Kubernetes**,
+**Python, TypeScript, React, Node.js, PostgreSQL**, containerized on **Kubernetes**,
 **Kafka** for event-driven work, ETL/data pipelines, and ML/prompt-engineering pipelines.
 There is no public engineering blog - this is assembled from listings.
 
@@ -40,7 +40,7 @@ Senior Forward Deployed Engineer, $160k-$200k plus equity. From the live posting
 - Serve as technical escalation for integration issues; debug deep technical problems
 - Lead discovery calls; translate requirements into scoped work
 - Recommend architectural improvements based on what deployments reveal
-- Feed product/roadmap prioritisation; own delivery playbooks and onboarding
+- Feed product/roadmap prioritization; own delivery playbooks and onboarding
 - **"This role will be heavily hands-on with coding, including writing and debugging
   production and integration code"**
 - Languages named: **Python, JavaScript, SQL**
@@ -53,10 +53,10 @@ engineer who can obviously code, *and* the person a carrier trusts in a room.
 
 ## The interview loop
 
-Reported full loop: HR call -> behavioural with TPM -> technical with an engineer ->
-behavioural with the Director of FDE -> meeting with a co-founder. About 2 weeks.
+Reported full loop: HR call -> behavioral with TPM -> technical with an engineer ->
+behavioral with the Director of FDE -> meeting with a co-founder. About 2 weeks.
 Candidates rate overall difficulty ~2.8/5. Reported content: **SQL questions, LeetCode
-questions, and thought-provoking behavioural questions.**
+questions, and thought-provoking behavioral questions.**
 
 Your two scheduled rounds:
 
@@ -70,7 +70,7 @@ Your two scheduled rounds:
 > providers without degrading platform performance."
 
 Reported system design themes: API design (REST/GraphQL contracts supporting complex
-frontend operations), data modelling for high-write/high-read workloads, scalability
+frontend operations), data modeling for high-write/high-read workloads, scalability
 (concurrency, caching, background job processing).
 
 ## Reading the signal for an FDE round
@@ -116,7 +116,7 @@ algorithms. But it also means:
 - [Federato - AI-Native Insurance Platform](https://www.federato.ai/)
 - [Senior Forward Deployed Engineer job posting](https://job-boards.greenhouse.io/federato/jobs/5375752008)
 - [Forward Deployed Engineer II job posting](https://job-boards.greenhouse.io/federato/jobs/5019876008)
-- [Federato Interview Questions - Glassdoor](https://www.glassdoor.com/Interview/Federato-Interview-Questions-E6809618.htm) (403 to automated fetch; summarised from search results)
+- [Federato Interview Questions - Glassdoor](https://www.glassdoor.com/Interview/Federato-Interview-Questions-E6809618.htm) (403 to automated fetch; summarized from search results)
 - [Federato FDE Interview Questions - Glassdoor](https://www.glassdoor.com/Interview/Federato-Forward-Deployed-Engineer-Interview-Questions-EI_IE6809618.0,8_KO9,34.htm) (403)
 - [Federato Software Engineer Interview Guide - Dataford](https://dataford.io/interview-guides/federato/software-engineer)
 - [Federato $80M raise announcement](https://www.prnewswire.com/news-releases/federato-announces-80-million-raised-to-bring-riskops-to-insurance-302311553.html)

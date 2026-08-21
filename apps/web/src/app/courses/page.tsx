@@ -95,7 +95,7 @@ export default async function CoursesPage() {
               href="/problems"
               className="mt-5 inline-block rounded-lg border border-white/12 bg-white/[0.04] px-4 py-2 text-[13.5px] outline-none ring-offset-2 ring-offset-[#0b0c0f] transition hover:bg-white/[0.09] focus-visible:ring-2 focus-visible:ring-[#4aa3ff]"
             >
-              Practise problems instead
+              Practice problems instead
             </Link>
           </div>
         ) : (

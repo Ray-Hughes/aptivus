@@ -15,7 +15,7 @@
    coding.html. Dark is the default; light is a full sibling palette.
    ===================================================================== */
 
-/* ---------- 1. tokens: colour ---------------------------------------- */
+/* ---------- 1. tokens: color ---------------------------------------- */
 :root,
 [data-theme="dark"] {
   color-scheme: dark;
@@ -29,7 +29,7 @@
      across the whole gradient. #7C4DFF only reaches 4.2:1 against ink. */
   --brand-grad-cta: linear-gradient(135deg, #00E5FF 0%, #9E7BFF 100%);
   /* the sweep used as TEXT. On white the cyan stop is invisible, so light
-     mode darkens both stops; dark mode keeps the true brand colours. */
+     mode darkens both stops; dark mode keeps the true brand colors. */
   --brand-grad-text: linear-gradient(135deg, #00E5FF 0%, #A98BFF 100%);
 
   /* surfaces, darkest → lightest */
@@ -630,7 +630,7 @@ code.inline {
   height: 56px; padding: 0 var(--sp-5);
   background: var(--bg-elev); border-bottom: 1px solid var(--border);
 }
-/* The default .tip points UP and is centred with left:50%. In the sticky top bar that put
+/* The default .tip points UP and is centered with left:50%. In the sticky top bar that put
    the tooltip above the viewport (invisible) and its layout overflow pushed 32px of
    horizontal scroll onto every width. Here they hang down and anchor to the right edge. */
 .app-top .tip::after {
@@ -1253,7 +1253,7 @@ code.inline {
     </div>
     <div class="ft">
       <button class="btn btn-secondary" id="modalClose" style="flex:1">Close</button>
-      <a class="btn btn-primary" href="coding.html" style="flex:1" id="modalGo">Go practise</a>
+      <a class="btn btn-primary" href="coding.html" style="flex:1" id="modalGo">Go practice</a>
     </div>
   </div>
 </div>
@@ -1399,7 +1399,7 @@ code.inline {
     ["∞", "Month on fire", 0, "A 30-day streak.", "12 of 30 days. Do not break it now.", 12, 30],
     ["◈", "Polyglot", 0, "Solve the same problem in Python and SQL.", "Available when the multi-language runner ships.", 0, 1],
     ["⌘", "Keyboard native", 0, "Submit 20 times without touching the mouse.", "13 of 20.", 13, 20],
-    ["✦", "Generator", 0, "Practise 10 problems generated for your target company.", "0 of 10 · needs Pro or 50 gems.", 0, 10]
+    ["✦", "Generator", 0, "Practice 10 problems generated for your target company.", "0 of 10 · needs Pro or 50 gems.", 0, 10]
   ];
   $("#achGrid").innerHTML = ACH.map(function (a, i) {
     const on = a[2] === 1;

@@ -45,7 +45,7 @@ const theme = EditorView.theme(
   { dark: true },
 );
 
-/** Token colours, kept in step with the rest of the product. */
+/** Token colors, kept in step with the rest of the product. */
 const highlight = EditorView.baseTheme({});
 
 export function CodeEditor({

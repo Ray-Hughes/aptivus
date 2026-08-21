@@ -271,7 +271,7 @@ export const reveals = sqliteTable(
  * teaching markdown, checkpoints, completion rules - lives in `body`, exactly
  * as `problems.body` holds the whole problem.
  *
- * The denormalised counts exist so the catalogue can be rendered without
+ * The denormalized counts exist so the catalog can be rendered without
  * parsing five 60KB JSON documents to answer "how many modules".
  */
 export const courses = sqliteTable(
@@ -286,7 +286,7 @@ export const courses = sqliteTable(
     estimatedHours: real("estimated_hours").notNull().default(0),
     timeNote: text("time_note"),
     version: integer("version").notNull().default(1),
-    /** Denormalised from `body` at import time, for the catalogue. */
+    /** Denormalized from `body` at import time, for the catalog. */
     moduleCount: integer("module_count").notNull().default(0),
     problemCount: integer("problem_count").notNull().default(0),
     tags: text("tags", { mode: "json" }).$type<string[]>(),

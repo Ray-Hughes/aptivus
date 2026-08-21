@@ -15,7 +15,7 @@
    coding.html. Dark is the default; light is a full sibling palette.
    ===================================================================== */
 
-/* ---------- 1. tokens: colour ---------------------------------------- */
+/* ---------- 1. tokens: color ---------------------------------------- */
 :root,
 [data-theme="dark"] {
   color-scheme: dark;
@@ -29,7 +29,7 @@
      across the whole gradient. #7C4DFF only reaches 4.2:1 against ink. */
   --brand-grad-cta: linear-gradient(135deg, #00E5FF 0%, #9E7BFF 100%);
   /* the sweep used as TEXT. On white the cyan stop is invisible, so light
-     mode darkens both stops; dark mode keeps the true brand colours. */
+     mode darkens both stops; dark mode keeps the true brand colors. */
   --brand-grad-text: linear-gradient(135deg, #00E5FF 0%, #A98BFF 100%);
 
   /* surfaces, darkest → lightest */
@@ -1273,7 +1273,7 @@ const PROBLEMS = {
             <code class="inline">(index, value)</code> — the reverse of Ruby’s <code class="inline">|value, index|</code>. This bites Rails people constantly.</li>
         <li><code class="inline">need in seen</code> is <code class="inline">seen.key?(need)</code>. On a dict,
             <code class="inline">in</code> checks <b>keys</b>, not values.</li>
-        <li><code class="inline">seen[p] = i</code> needs no initialisation — no <code class="inline">Hash.new(0)</code> ceremony
+        <li><code class="inline">seen[p] = i</code> needs no initialization — no <code class="inline">Hash.new(0)</code> ceremony
             unless you want a default, and then you reach for <code class="inline">collections.defaultdict</code>.</li>
       </ul>
       <h3>Say this out loud</h3>

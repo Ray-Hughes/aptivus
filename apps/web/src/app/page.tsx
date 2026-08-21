@@ -140,7 +140,7 @@ export default async function Home() {
               },
               {
                 n: "02",
-                t: "Practise the real round",
+                t: "Practice the real round",
                 d: "Part SQL, part algorithms, on a clock, in a pad that behaves like the one you will be sitting in. Hints when you need them, honestly rationed.",
               },
               {
@@ -183,7 +183,7 @@ export default async function Home() {
             <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-7">
               <h3 className="text-[17px] font-semibold">Free</h3>
               <p className="mt-1 text-[13px] text-[#7f8794]">Everything you need to actually prepare.</p>
-              <p className="mt-5 text-[30px] font-bold">£0</p>
+              <p className="mt-5 text-[30px] font-bold">$0</p>
               <ul className="mt-6 space-y-2.5 text-[13.5px] text-[#9aa1ad]">
                 <li>All 32 curated problems</li>
                 <li>Unlimited running, tracing and the expression console</li>
@@ -201,7 +201,7 @@ export default async function Home() {
                 Coming soon
               </span>
               <h3 className="text-[17px] font-semibold">Pro</h3>
-              <p className="mt-1 text-[13px] text-[#7f8794]">For the fortnight before the interview.</p>
+              <p className="mt-1 text-[13px] text-[#7f8794]">For the two weeks before the interview.</p>
               <p className="mt-5 text-[30px] font-bold">
                 $7.99<span className="text-[15px] font-normal text-[#7f8794]">/month</span>
               </p>

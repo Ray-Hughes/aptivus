@@ -8,7 +8,7 @@
   "tags": [
     "binary search",
     "greedy",
-    "optimisation"
+    "optimization"
   ],
   "minutes": 18,
   "mode": "function",
@@ -23,7 +23,7 @@
     "Return the actual day-by-day split, not just the capacity. (Run the greedy pass once more at the answer and record where each day breaks.)",
     "Submissions may be reordered freely. Does this still work? (No -- reordering makes it bin packing, which is NP-hard. The 'in order' constraint is what makes the greedy feasibility check exact, and saying so is the strongest answer you can give here.)",
     "The workloads are floats, not integers. (The same search, but you iterate a fixed number of times or until hi - lo < epsilon, because there is no next-integer to land on.)",
-    "Same shape, different dressing: minimum eating speed to finish n piles in h hours, or splitting an array into k subarrays with the smallest largest sum. (All the same predicate-plus-boundary skeleton. Recognising the family is the skill.)"
+    "Same shape, different dressing: minimum eating speed to finish n piles in h hours, or splitting an array into k subarrays with the smallest largest sum. (All the same predicate-plus-boundary skeleton. Recognizing the family is the skill.)"
   ],
   "signature": {
     "name": {

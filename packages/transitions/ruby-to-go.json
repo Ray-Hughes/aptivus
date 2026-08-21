@@ -22,7 +22,7 @@
     {
       "id": "zero-values",
       "title": "Zero values instead of nil",
-      "theirs": "Uninitialised things are nil, and nil is falsy, so `if x` covers it.",
+      "theirs": "Uninitialized things are nil, and nil is falsy, so `if x` covers it.",
       "yours": "Every type has a zero value: 0, \"\", false, and nil only for pointers, slices, maps, channels, funcs and interfaces.",
       "trap": "A missing map key returns the zero value rather than nil, so `m[\"absent\"]` is 0 and looks like a real answer. Use the two-value form, `v, ok := m[k]`, whenever absent and zero mean different things.",
       "severity": "high",
@@ -95,7 +95,7 @@
       "title": "context.Context threads through everything",
       "theirs": "Timeouts belong to the HTTP client or the job runner; you rarely pass them by hand.",
       "yours": "ctx is the first parameter of anything that does IO, and it carries deadlines and cancellation down the call tree.",
-      "trap": "It looks like ceremony until the first time a request is cancelled and your code keeps querying the database on its behalf. Passing context.Background() deep in a request path is the tell that it was not threaded properly.",
+      "trap": "It looks like ceremony until the first time a request is canceled and your code keeps querying the database on its behalf. Passing context.Background() deep in a request path is the tell that it was not threaded properly.",
       "severity": "high",
       "tags": [
         "concurrency",
@@ -140,11 +140,11 @@
       "title": "Packages, modules and visibility by case",
       "theirs": "require, gems, and private/protected keywords.",
       "yours": "go.mod, import paths that are URLs, and an identifier is exported if it starts with a capital letter.",
-      "trap": "Capitalisation is an access modifier. Renaming a field from userID to UserID changes its visibility, and JSON marshalling silently ignores unexported fields - a very common first-week bug.",
+      "trap": "Capitalization is an access modifier. Renaming a field from userID to UserID changes its visibility, and JSON marshalling silently ignores unexported fields - a very common first-week bug.",
       "severity": "high",
       "tags": [
         "packages",
-        "serialisation"
+        "serialization"
       ]
     }
   ]

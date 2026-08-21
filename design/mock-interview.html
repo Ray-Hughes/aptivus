@@ -15,7 +15,7 @@
    coding.html. Dark is the default; light is a full sibling palette.
    ===================================================================== */
 
-/* ---------- 1. tokens: colour ---------------------------------------- */
+/* ---------- 1. tokens: color ---------------------------------------- */
 :root,
 [data-theme="dark"] {
   color-scheme: dark;
@@ -29,7 +29,7 @@
      across the whole gradient. #7C4DFF only reaches 4.2:1 against ink. */
   --brand-grad-cta: linear-gradient(135deg, #00E5FF 0%, #9E7BFF 100%);
   /* the sweep used as TEXT. On white the cyan stop is invisible, so light
-     mode darkens both stops; dark mode keeps the true brand colours. */
+     mode darkens both stops; dark mode keeps the true brand colors. */
   --brand-grad-text: linear-gradient(135deg, #00E5FF 0%, #A98BFF 100%);
 
   /* surfaces, darkest → lightest */
@@ -625,7 +625,7 @@ code.inline {
 /* =====================================================================
    MOCK INTERVIEW — page styles
    Everything above this line is the shared core. Nothing below invents a
-   colour; every value is a token.
+   color; every value is a token.
    ===================================================================== */
 
 :root { --chrome-h: 92px; }          /* app-top + protobar, kept in sync by JS */
@@ -844,7 +844,7 @@ body.in-round { overflow: hidden; }
 .clockread.hush .digits { display: none; }
 
 /* the bar. Full width, 6px, drains left to right, and the elapsed part is
-   coloured by WHICH PROBLEM you were on — so it doubles as the live
+   colored by WHICH PROBLEM you were on — so it doubles as the live
    version of the scorecard's time split. */
 .clockbar { flex: 0 0 auto; position: relative; height: 8px; background: var(--surface-3);
   overflow: hidden; border-bottom: 1px solid var(--border);
@@ -1156,7 +1156,7 @@ body.col-resizing { cursor: col-resize; user-select: none; }
     <linearGradient id="apGradL" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#0090B4"/><stop offset="100%" stop-color="#6A3BE0"/>
     </linearGradient>
-    <!-- timeline fills: colour AND texture, so the chart never relies on hue alone -->
+    <!-- timeline fills: color AND texture, so the chart never relies on hue alone -->
     <pattern id="pRead" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
       <rect width="7" height="7" fill="var(--violet-quiet)"/>
       <rect width="2.6" height="7" fill="var(--violet)" opacity=".62"/>
@@ -1265,7 +1265,7 @@ body.col-resizing { cursor: col-resize; user-select: none; }
         <div class="card-bd">
           <div class="step-hd">
             <span class="n">1</span>
-            <h2 id="s1h">Who are you practising for?</h2>
+            <h2 id="s1h">Who are you practicing for?</h2>
             <span class="hint" id="srcHint">Sets the split, the difficulty and the clock.</span>
           </div>
           <div class="seg" id="srcKind" role="group" aria-label="Source kind" style="margin-bottom:14px">
@@ -1392,7 +1392,7 @@ body.col-resizing { cursor: col-resize; user-select: none; }
     <button class="btn btn-outline btn-sm" id="endBtn" style="align-self:center">End round</button>
   </div>
 
-  <div class="clockbar" id="clockBar" role="img" aria-label="Time used, coloured by which problem you were on">
+  <div class="clockbar" id="clockBar" role="img" aria-label="Time used, colored by which problem you were on">
     <div class="segs" id="clockSegs"></div>
     <span class="overwash" id="overWash" hidden></span>
     <span class="tick half" id="tickHalf" title="halfway"></span>
@@ -1667,7 +1667,7 @@ appetite    (line_of_business, state, tier)   -- PK (line_of_business, state)</c
     checks: [
       { n: "Reaches the state through accounts", d: "submissions has no state column — it comes from accounts", t: (c) => /join\s+accounts/.test(c) },
       { n: "Nothing is dropped", d: "a LEFT JOIN onto appetite, not an inner one", t: (c) => /left\s+(outer\s+)?join\s+appetite/.test(c) },
-      { n: "Unmatched rows are labelled", d: "COALESCE(tier, 'unclassified')", t: (c) => /coalesce\s*\([^)]*unclassified/.test(c) },
+      { n: "Unmatched rows are labeled", d: "COALESCE(tier, 'unclassified')", t: (c) => /coalesce\s*\([^)]*unclassified/.test(c) },
       { n: "Grouped and counted", d: "GROUP BY the tier expression with a COUNT", t: (c) => /group\s+by/.test(c) && /count\s*\(/.test(c) },
       { n: "Ordered correctly", d: "count descending, then tier ascending", t: (c) => /order\s+by[\s\S]*desc[\s\S]*tier/.test(c) }
     ],
@@ -2214,7 +2214,7 @@ const FN_PY = /\b(?:len|range|enumerate|max|min|sorted|set|dict|list|int|str|abs
 const KW_SQL = /\b(?:select|from|where|group|by|order|having|join|left|right|inner|outer|full|on|as|with|over|partition|and|or|not|null|is|in|exists|desc|asc|limit|distinct|case|when|then|else|end|union|all)\b/i;
 const FN_SQL = /\b(?:row_number|rank|dense_rank|lag|lead|sum|count|avg|min|max|coalesce|nullif|round|cast|date|strftime)\b/i;
 
-function tokenise(line, lang) {
+function tokenize(line, lang) {
   const out = [];
   const master = lang === "sql"
     ? /(--[^\n]*)|('[^']*')|(\b\d+(?:\.\d+)?\b)|([A-Za-z_]\w*)/g
@@ -2240,7 +2240,7 @@ function tokenise(line, lang) {
 function paintEditor() {
   const ta = $("#edTa"), lang = R.problems[R.cur].ref.kind === "sql" ? "sql" : "py";
   const lines = ta.value.split("\n");
-  $("#edHl").innerHTML = lines.map(l => '<span class="l">' + tokenise(l, lang) + "</span>").join("");
+  $("#edHl").innerHTML = lines.map(l => '<span class="l">' + tokenize(l, lang) + "</span>").join("");
   $("#edGutter").innerHTML = lines.map((_, i) => "<i>" + (i + 1) + "</i>").join("");
   const h = Math.max(lines.length * 22 + 24, 300);
   ta.style.height = h + "px"; $("#edHl").style.minHeight = h + "px";
@@ -2434,7 +2434,7 @@ const SCENS = {
 };
 
 /* ---- derive everything the page shows ---- */
-function summarise(round) {
+function summarize(round) {
   let at = 0; const laid = [];
   const per = round.problems.map(() => ({ read: 0, write: 0, debug: 0, idle: 0, total: 0 }));
   for (const b of round.blocks) { laid.push({ p: b.p, a: b.a, d: b.d, at: at }); per[b.p][b.a] += b.d; per[b.p].total += b.d; at += b.d; }
@@ -2487,7 +2487,7 @@ function buildVerdict(S) {
     const slowest = S.P.slice().sort((x, y) => (y.t.total / y.budget) - (x.t.total / x.budget))[0];
     p2 = "The " + half(slowest) + " cost you " + dur(slowest.t.total) + " against a " + Math.round(slowest.budget / 60) +
          " minute budget, and " + Math.round(slowest.t.debug / Math.max(1, slowest.t.total) * 100) +
-         "% of that was after a failing run. Getting there is not in doubt; getting there without the detour is the thing left to practise.";
+         "% of that was after a failing run. Getting there is not in doubt; getting there without the detour is the thing left to practice.";
   } else if (S.solvedCount > 0) {
     const s = solved[0], u = unsolved[0];
     p1 = "You would have got through the " + half(s) + " comfortably and " +
@@ -2556,7 +2556,7 @@ function problemNote(p, S) {
   const ratio = p.t.total / p.budget;
   if (p.solved && ratio <= 1.1) bits.push("Time: <b>" + dur(p.t.total) + "</b> against a " + Math.round(p.budget / 60) + " minute budget. That is the pace you want.");
   else if (p.solved) bits.push("It cost <b>" + dur(p.t.total) + "</b> against a " + Math.round(p.budget / 60) + " minute budget. Correct and slow still passes; correct and slow twice in a 45 does not.");
-  else if (p.stopped) bits.push("You stopped at <b>" + dur(p.t.total) + "</b>. Nothing wrong with that. In the room, say the sentence out loud: <em>“I want to make sure we have something working — let me finish the straightforward version and note where I'd optimise.”</em>");
+  else if (p.stopped) bits.push("You stopped at <b>" + dur(p.t.total) + "</b>. Nothing wrong with that. In the room, say the sentence out loud: <em>“I want to make sure we have something working — let me finish the straightforward version and note where I'd optimize.”</em>");
   else bits.push("You put <b>" + dur(p.t.total) + "</b> into it against a " + Math.round(p.budget / 60) + " minute budget and did not close it. The budget is not a target, but twice over it is the moment to ask for a nudge.");
   if (p.firstKeyDelay != null && p.firstKeyDelay > 180)
     bits.push("<b>" + mmss(p.firstKeyDelay) + "</b> passed before your first keystroke. The first ninety seconds are the highest-leverage of a round — but only if the interviewer can hear them.");
@@ -2595,7 +2595,7 @@ function buildNext(S) {
 let CURRENT = null;
 
 function showScorecard(round) {
-  CURRENT = summarise(round);
+  CURRENT = summarize(round);
   const S = CURRENT;
 
   $("#scSourceTag").textContent = round.live ? "your round" : "sample round";

@@ -28,7 +28,7 @@ V1 = os.path.join(REPO, "packs")
 OUT = os.path.join(PKG, "packs")
 
 # ---------------------------------------------------------------------------
-# Editorial table: everything that is a judgement call, in one place.
+# Editorial table: everything that is a judgment call, in one place.
 # ---------------------------------------------------------------------------
 
 # Explanation sections that are about Python rather than about the idea. They

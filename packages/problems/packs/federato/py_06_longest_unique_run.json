@@ -18,7 +18,7 @@
     "Keep a dict {char: last index seen}. When you see a repeat, you know exactly where to jump left to.",
     "Careful: only jump left FORWARD. left = max(left, last[ch] + 1). Without the max, a stale entry from before the window drags left backwards and you overcount."
   ],
-  "explanation": "### The template worth memorising\n```\nleft = 0\nfor right in range(len(arr)):\n    add arr[right] to the window\n    while window is invalid:\n        remove arr[left] from the window\n        left += 1\n    best = max(best, right - left + 1)\n```\nEvery sliding-window problem is that shape. The only thing that changes is what\n\"window state\" and \"invalid\" mean.",
+  "explanation": "### The template worth memorizing\n```\nleft = 0\nfor right in range(len(arr)):\n    add arr[right] to the window\n    while window is invalid:\n        remove arr[left] from the window\n        left += 1\n    best = max(best, right - left + 1)\n```\nEvery sliding-window problem is that shape. The only thing that changes is what\n\"window state\" and \"invalid\" mean.",
   "followups": [
     "Return the substring itself, not just the length.",
     "Allow at most K repeats of any code. (Same template, different invalid condition.)",

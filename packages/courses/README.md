@@ -3,7 +3,7 @@
 A **pack** is a bag of problems. A **course** is an opinion about the order you should
 do them in, and the teaching that goes between them.
 
-Packs answer "what should I practise". Courses answer "what should I do next, and why",
+Packs answer "what should I practice". Courses answer "what should I do next, and why",
 which is the question anyone with a date in the calendar is actually asking.
 
 ```
@@ -55,7 +55,7 @@ are shared; the sequencing and the teaching are not.
 | `timeNote` | no | where the estimate comes from and what makes it longer |
 | `prerequisites` | yes | plain-English strings; `[]` means none |
 | `prerequisiteCourses` | no | slugs of other courses; validated to exist |
-| `outcomes` | yes | observable behaviours, not feelings |
+| `outcomes` | yes | observable behaviors, not feelings |
 | `tags`, `version` | no | |
 | `modules` | yes | ordered; the order is the curriculum |
 

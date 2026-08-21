@@ -26,7 +26,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import vm from "node:vm";
 import { languagesOf, loadAllProblems } from "./src/index.mjs";
-import { buildJsonSchema, SCHEMA_FILE, serialise } from "./scripts/gen-schema.mjs";
+import { buildJsonSchema, SCHEMA_FILE, serialize } from "./scripts/gen-schema.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = dirname(dirname(HERE));
@@ -38,7 +38,7 @@ const require = createRequire(import.meta.url);
 /* comparison - the same rules core/engine.py applies                  */
 /* ------------------------------------------------------------------ */
 
-/** Normalise a JavaScript value so it survives a JSON round trip. */
+/** Normalize a JavaScript value so it survives a JSON round trip. */
 function norm(v) {
   if (v === undefined) return null;
   if (v instanceof Set) return [...v].map(norm).sort(byJson);
@@ -261,7 +261,7 @@ async function main() {
 
   // The checked-in JSON Schema is generated from the zod schema. If it is
   // stale, whatever validates against it is validating against a fiction.
-  if (!existsSync(SCHEMA_FILE) || readFileSync(SCHEMA_FILE, "utf8") !== serialise(buildJsonSchema())) {
+  if (!existsSync(SCHEMA_FILE) || readFileSync(SCHEMA_FILE, "utf8") !== serialize(buildJsonSchema())) {
     console.error("FAIL schema.json is stale - run `npm run schema`");
     process.exit(1);
   }

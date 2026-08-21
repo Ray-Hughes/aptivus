@@ -20,7 +20,7 @@ things that can actually sink you:
    *Fix: the 12 SQL problems in the pack, twice.*
 3. **Not narrating.** For a Forward Deployed Engineer, "can you explain your thinking to
    a customer" IS the job. Silent correct code scores worse than narrated near-miss code.
-   *Fix: practise out loud, literally, alone, feeling stupid.*
+   *Fix: practice out loud, literally, alone, feeling stupid.*
 
 Notably **not** on that list: exotic algorithms. Reported Federato rounds are described
 as moderate difficulty (Glassdoor puts the overall loop at 2.8/5). Nobody is asking you
@@ -84,7 +84,7 @@ The bread and butter. Most likely to actually appear.
 ## Fri Aug 21 - Windows, pointers, and window functions (2-3 hrs)
 
 **Python (~75 min)**
-- [ ] `py_06` Longest run of distinct codes - **memorise the sliding window template**
+- [ ] `py_06` Longest run of distinct codes - **memorize the sliding window template**
 - [ ] `py_07` Merge overlapping coverage - the sort-first interval pattern
 - [ ] `py_08` Binary search rate band - the "rightmost <= x" variant
 
@@ -147,7 +147,7 @@ Have a text editor open for scratch notes and a pen and paper.
 
 **3:00pm:** see `docs/interview-day.md`.
 
-**Evening:** system design deep pass. Practise drawing the diagrams by hand.
+**Evening:** system design deep pass. Practice drawing the diagrams by hand.
 
 ---
 

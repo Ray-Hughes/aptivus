@@ -47,7 +47,7 @@
       "type": "array",
       "minItems": 1,
       "items": { "type": "string", "minLength": 10 },
-      "description": "What the learner can do afterwards. Observable behaviours, not feelings."
+      "description": "What the learner can do afterwards. Observable behaviors, not feelings."
     },
     "tags": { "type": "array", "items": { "type": "string" } },
     "version": { "type": "integer", "minimum": 1 },

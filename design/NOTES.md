@@ -27,12 +27,12 @@ same tells that make it look like a 2015 assessment tool:
 
 | Old | Why it reads dated | New |
 |---|---|---|
-| `#1b1c1f` neutral grey ground | The grey of a Java IDE. No temperature, no identity. | `#08090C`, near-black with a blue cast, and layered surfaces instead of one flat grey |
+| `#1b1c1f` neutral gray ground | The gray of a Java IDE. No temperature, no identity. | `#08090C`, near-black with a blue cast, and layered surfaces instead of one flat gray |
 | `#39c06c` green primary button | *The* HackerRank tell. A green "Submit" is somebody else's brand. | The cyan→violet brand sweep, used for exactly one action per view |
 | 4–5px radii, 1px borders everywhere | Every box is a box. | 8/10px controls, 14px cards, 20px sheets; separation by surface value first, border second |
 | System sans at 13/14px, no scale | Nothing has a size relationship to anything else. | An 11-step scale with tracking that tightens as size grows |
-| Colour-only status (green tick, red cross, yellow dot) | Fails for ~8% of men. | Colour **plus** a glyph plus a label, everywhere |
-| Trace panel as a strip of grey buttons | The best thing in the product looked like a debug console. | The trace panel is now the visual centre of the solve screen |
+| Color-only status (green tick, red cross, yellow dot) | Fails for ~8% of men. | Color **plus** a glyph plus a label, everywhere |
+| Trace panel as a strip of gray buttons | The best thing in the product looked like a debug console. | The trace panel is now the visual center of the solve screen |
 | No light theme | Half of developers work in light. | A full sibling palette, not an inverted afterthought |
 
 The workflow is untouched. Read the problem → write code → run → diagnose → test →
@@ -48,7 +48,7 @@ reference **roles**, never hex. Swapping `data-theme` on `<html>` repoints every
 token at once — which is why the theme toggle is instant and total, including
 syntax highlighting and chart gradients.
 
-### Colour
+### Color
 
 Surfaces run darkest → lightest as `--bg` → `--surface` → `--surface-2` →
 `--surface-3`, with one exception that matters: `--surface-in` goes *darker* than
@@ -61,7 +61,7 @@ Text has exactly three levels — `--text`, `--text-2`, `--text-3` — and `--te
 is the floor for anything a user has to read. Below that is decorative and must
 repeat itself somewhere legible.
 
-Semantic colours are tuned **per theme** rather than shared. Dark success is
+Semantic colors are tuned **per theme** rather than shared. Dark success is
 `#3FDD9A`; light success is `#0A7A50`. The same hex cannot pass 4.5:1 on both
 grounds, and pretending otherwise is how "we support light mode" turns into an
 accessibility bug.
@@ -75,7 +75,7 @@ prints a pass/fail table. That caught three real failures during this work:
 
 That last one is worth explaining. The brand sweep is `#00E5FF → #7C4DFF`. White
 text on the cyan end is 1.7:1 — hopeless. Ink text on the violet end is 4.19:1 —
-close, and still a fail. No text colour clears AA across that whole span. So
+close, and still a fail. No text color clears AA across that whole span. So
 buttons use `--brand-grad-cta`, the same sweep with the violet stop lifted to
 `#9E7BFF`, which puts ink at 6.46:1 at the dark end and 13.1:1 at the light end.
 The lift is imperceptible next to the logo and it is the difference between passing
@@ -111,8 +111,8 @@ component can forget it.
 
 ### `coding.html` — the one that matters
 
-**The trace panel is now the centre of gravity.** It is the only thing in this
-product no competitor has, and in the old UI it was a grey strip of unlabelled
+**The trace panel is now the center of gravity.** It is the only thing in this
+product no competitor has, and in the old UI it was a gray strip of unlabelled
 arrow glyphs under the editor. Now:
 
 - The **narration is the largest text in the panel** (14px against the 13px
@@ -143,13 +143,13 @@ is free the moment you pass the tests — the §5 recommendation from the Phase 
 rendered as UI.
 
 **What is real:** the editor is a real textarea with live syntax highlighting drawn
-by a regex tokeniser onto a `<pre>` behind it, with a line-number gutter, tab
+by a regex tokenizer onto a `<pre>` behind it, with a line-number gutter, tab
 handling, and Ln/Col tracking. Run, Submit and Trace all go through a tiny
 JavaScript simulator of `find_pair`, so they **respond to what you actually type**.
 The starter code ships with the classic bug — `seen[p] = i` above the membership
 check — so Run fails sample 2 with `[0, 0]`, and if you move that line below the
 check, the tests genuinely pass, Submit fires the confetti and credits 2 gems.
-That bug is a **demo device and is labelled as one, permanently**: a comment on the
+That bug is a **demo device and is labeled as one, permanently**: a comment on the
 line itself, a note under the Description tabs, and a line in the Tests empty state.
 A real starter ships as an empty body; this one opens mid-attempt so there is
 something to Run, fail and Trace within ten seconds of landing.
@@ -186,7 +186,7 @@ its own bordered container with a gradient header, a claimable daily bonus, a le
 ring, an append-only-looking gem ledger, a 12-week streak heatmap, and fourteen
 achievement tiles — seven earned, seven locked with real progress bars and a detail
 modal. Locked tiles show the *specific* next step ("12 of 30 days. Do not break it
-now."), because a locked badge with no path is just a grey square.
+now."), because a locked badge with no path is just a gray square.
 
 The stats are honest about weakness: patterns are sorted worst-first, and the call-out
 names the two weakest patterns and says they are in this round. That is the thing the
@@ -201,7 +201,7 @@ product claims to do that a problem list cannot.
   changes `--ring`, not the rule.
 - Real tab semantics: `role="tablist"`, `aria-selected`, roving `tabindex`, arrow
   keys / Home / End.
-- Colour is never the only signal — pass/fail carry glyphs, changed variables carry
+- Color is never the only signal — pass/fail carry glyphs, changed variables carry
   a border *and* a tint, difficulty badges carry their word.
 - Live regions announce run results and step narration.
 - The solve screen is fully keyboard driven: `⌘↵` runs, `⌘⇧↵` submits, `←`/`→` step
@@ -216,7 +216,7 @@ product claims to do that a problem list cannot.
 
 - **The token block is duplicated across four files.** That is the price of
   "standalone, no build step". If these become real pages, extract it to one
-  stylesheet on day one — a colour changed in three of four files is worse than no
+  stylesheet on day one — a color changed in three of four files is worse than no
   system at all. These four were generated from a single shared `core.css` — see
   `_src/`, which holds that file, the four page sources and the ten-line `build.py`
   that inlines one into the others. The outputs need nothing from `_src` to run.
@@ -238,7 +238,7 @@ product claims to do that a problem list cannot.
   says so in its `title` instead of pretending otherwise. It
   needs its own design — two problems, one clock, a scorecard at the end — and that
   is the obvious next deliverable.
-- **The gem economy is drawn, not modelled.** Balances, ledger entries and earn
+- **The gem economy is drawn, not modeled.** Balances, ledger entries and earn
   rates are the numbers from the Phase 2 plan, but nothing here validates that a
   daily cap of 30 with 2/4/6 per clean solve produces the intended pressure. That
   is a spreadsheet question, and it should be answered before the UI hardens.

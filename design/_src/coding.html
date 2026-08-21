@@ -661,7 +661,7 @@ const PROBLEMS = {
             <code class="inline">(index, value)</code> — the reverse of Ruby’s <code class="inline">|value, index|</code>. This bites Rails people constantly.</li>
         <li><code class="inline">need in seen</code> is <code class="inline">seen.key?(need)</code>. On a dict,
             <code class="inline">in</code> checks <b>keys</b>, not values.</li>
-        <li><code class="inline">seen[p] = i</code> needs no initialisation — no <code class="inline">Hash.new(0)</code> ceremony
+        <li><code class="inline">seen[p] = i</code> needs no initialization — no <code class="inline">Hash.new(0)</code> ceremony
             unless you want a default, and then you reach for <code class="inline">collections.defaultdict</code>.</li>
       </ul>
       <h3>Say this out loud</h3>

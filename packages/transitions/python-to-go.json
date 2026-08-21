@@ -4,7 +4,7 @@
   "summary": "The syntax is small enough to learn in a weekend, which misleads people into thinking the transition is small. Python hands you one universal habit - everything is a reference to a heap object, and anything wrong raises - and Go removes both halves at once: structs are copied on assignment, on argument passing and on every loop iteration, so mutation frequently lands on a copy and vanishes, while missing map keys return a zero value, integers wrap instead of growing, and strings are bytes rather than characters. The compiler will be strict about things Python never mentioned - an unused variable is an error - and completely silent about the entire class of bug that used to be a KeyError. Budget your first month for the value-versus-pointer distinction and for concurrency without a GIL; the rest is vocabulary.",
   "verification": {
     "level": "reviewed",
-    "note": "No Go toolchain was available when this was written, so nothing here was executed. Restricted to spec-level behaviour; anything uncertain was dropped rather than guessed."
+    "note": "No Go toolchain was available when this was written, so nothing here was executed. Restricted to spec-level behavior; anything uncertain was dropped rather than guessed."
   },
   "concepts": [
     {
@@ -24,7 +24,7 @@
       "title": "A missing map key is not an error",
       "theirs": "`d[k]` raises KeyError on a missing key, which is how you find out you spelled it wrong. `d.get(k)` is the opt-in for silence.",
       "yours": "`m[k]` returns the value type's zero value when the key is absent - 0, \"\", false, or nil. The two-value form `v, ok := m[k]` tells you which happened.",
-      "trap": "A typo'd key is now a valid answer. `limits[\"maxRetries\"]` against a map populated with \"max_retries\" is 0, and 0 retries is a plausible configuration, so it deploys. The related one: reading from a nil map is legal and returns zero values, but *writing* to a nil map panics with \"assignment to entry in nil map\" - so a struct field of map type that nobody initialised reads fine in tests and crashes on the first write in production.",
+      "trap": "A typo'd key is now a valid answer. `limits[\"maxRetries\"]` against a map populated with \"max_retries\" is 0, and 0 retries is a plausible configuration, so it deploys. The related one: reading from a nil map is legal and returns zero values, but *writing* to a nil map panics with \"assignment to entry in nil map\" - so a struct field of map type that nobody initialized reads fine in tests and crashes on the first write in production.",
       "severity": "high",
       "tags": [
         "collections",
@@ -32,11 +32,11 @@
       ]
     },
     {
-      "id": "map-iteration-is-randomised",
-      "title": "Map iteration order is deliberately randomised",
+      "id": "map-iteration-is-randomized",
+      "title": "Map iteration order is deliberately randomized",
       "theirs": "Dicts preserve insertion order, guaranteed by the language since 3.7, so iterating one is reproducible and JSON output from a dict is stable.",
       "yours": "The spec leaves map iteration order unspecified, and the runtime randomises the starting point on purpose so that code cannot come to depend on it. Sort the keys when you need an order.",
-      "trap": "The randomisation is per-iteration, not per-process, so a test that happens to pass locally will fail on a different run rather than on a different machine - the worst possible failure signature, because it reads as flakiness rather than a bug. Anything that builds a signature, a cache key, or a golden file by ranging over a map is wrong the moment the map has more than one entry. Note that `encoding/json` does sort map keys when marshalling, so JSON output is stable while your own iteration is not.",
+      "trap": "The randomization is per-iteration, not per-process, so a test that happens to pass locally will fail on a different run rather than on a different machine - the worst possible failure signature, because it reads as flakiness rather than a bug. Anything that builds a signature, a cache key, or a golden file by ranging over a map is wrong the moment the map has more than one entry. Note that `encoding/json` does sort map keys when marshalling, so JSON output is stable while your own iteration is not.",
       "severity": "high",
       "tags": [
         "collections",
@@ -152,22 +152,22 @@
     },
     {
       "id": "nil-slice-marshals-as-null",
-      "title": "A nil slice and an empty slice serialise differently",
+      "title": "A nil slice and an empty slice serialize differently",
       "theirs": "An empty list is an empty list. `json.dumps([])` is `[]`, and there is no second kind of empty.",
       "yours": "`var xs []int` is nil; `xs := []int{}` is empty and non-nil. Both have len 0, both are safe to range over, and append works on both, so they are interchangeable everywhere except one place: `encoding/json` marshals a nil slice as `null` and an empty slice as `[]`.",
-      "trap": "A handler that returns a struct whose slice field was never assigned emits `{\"items\": null}`, and a JavaScript client doing `data.items.map(...)` throws on null while it would have been happy with `[]`. Nothing in Go complains, the Go tests that unmarshal it back pass, and the failure is entirely on the other side of the wire. Initialise slices you intend to serialise.",
+      "trap": "A handler that returns a struct whose slice field was never assigned emits `{\"items\": null}`, and a JavaScript client doing `data.items.map(...)` throws on null while it would have been happy with `[]`. Nothing in Go complains, the Go tests that unmarshal it back pass, and the failure is entirely on the other side of the wire. Initialize slices you intend to serialize.",
       "severity": "medium",
       "tags": [
         "nil",
-        "serialisation"
+        "serialization"
       ]
     },
     {
       "id": "loop-variable-scope-changed",
       "title": "Loop variable capture depends on your go.mod version",
       "theirs": "Closures capture the variable, not the value, so lambdas built in a loop all see the last value. Everyone learns the `lambda i=i:` workaround.",
-      "yours": "From Go 1.22, `for` declares a fresh variable per iteration, so a closure or goroutine captures that iteration's value. Before 1.22 there was one shared variable and the same late-binding behaviour Python has.",
-      "trap": "The behaviour is selected by the `go` directive in go.mod, not by the toolchain you have installed - so the identical source file behaves one way in a module declaring go 1.22 or later and the other way in a module declaring go 1.21. Most of the advice you will find online predates the change and tells you to write `v := v` at the top of the loop body, which is now redundant but harmless. The thing that is *not* harmless is assuming the new behaviour while working in an older module: `go func() { use(v) }()` in a loop then processes the last item several times and skips the rest.",
+      "yours": "From Go 1.22, `for` declares a fresh variable per iteration, so a closure or goroutine captures that iteration's value. Before 1.22 there was one shared variable and the same late-binding behavior Python has.",
+      "trap": "The behavior is selected by the `go` directive in go.mod, not by the toolchain you have installed - so the identical source file behaves one way in a module declaring go 1.22 or later and the other way in a module declaring go 1.21. Most of the advice you will find online predates the change and tells you to write `v := v` at the top of the loop body, which is now redundant but harmless. The thing that is *not* harmless is assuming the new behavior while working in an older module: `go func() { use(v) }()` in a loop then processes the last item several times and skips the rest.",
       "severity": "medium",
       "tags": [
         "closures",

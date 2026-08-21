@@ -139,10 +139,10 @@ Weight the high-severity traps early: those are the ones where their existing
 habit produces code that runs and is quietly wrong.
 
 Every lesson's "relevance" must name something concrete about this role - the
-code they will read or write in their first fortnight. If you cannot justify a
+code they will read or write in their first two weeks. If you cannot justify a
 lesson that way, leave it out.
 
-In "rationale", say what you prioritised and what you deliberately left out.
+In "rationale", say what you prioritized and what you deliberately left out.
 `.trim();
 }
 

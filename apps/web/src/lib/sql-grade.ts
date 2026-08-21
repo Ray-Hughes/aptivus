@@ -12,7 +12,7 @@ export type SqlRows = { columns: string[]; rows: unknown[][] };
 
 const FORBIDDEN = /\b(attach|pragma|vacuum)\b/i;
 
-function normalise(rows: unknown[][], ordered: boolean) {
+function normalize(rows: unknown[][], ordered: boolean) {
   const cell = (v: unknown) =>
     typeof v === "number" ? Math.round(v * 1e6) / 1e6 : v === null ? null : v;
   const out = rows.map((r) => r.map(cell));
@@ -34,9 +34,9 @@ export async function gradeSql(
     for (const stmt of problem.seed.split(";")) if (stmt.trim()) await db.execute(stmt);
     const ref = await db.execute(problem.solution);
 
-    const expected = normalise(ref.rows.map((r) => Array.from(r as unknown as unknown[])),
+    const expected = normalize(ref.rows.map((r) => Array.from(r as unknown as unknown[])),
                                Boolean(problem.ordered));
-    const got = normalise(submitted.rows ?? [], Boolean(problem.ordered));
+    const got = normalize(submitted.rows ?? [], Boolean(problem.ordered));
 
     if (got.length !== expected.length) {
       return {
