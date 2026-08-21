@@ -111,6 +111,10 @@ export const profiles = sqliteTable("profiles", {
   targetRound: text("target_round"),
   experienceLevel: text("experience_level"),
   primaryLanguage: text("primary_language").notNull().default("python"),
+  /** What they are already fluent in, and how fluent - this is what the
+      language tracks teach BY COMPARISON rather than from scratch. */
+  expertise: text("expertise", { mode: "json" })
+    .$type<{ language: string; level: "working" | "strong" | "expert" }[]>(),
   interviewDate: integer("interview_date"),
 });
 

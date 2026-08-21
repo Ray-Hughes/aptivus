@@ -29,6 +29,13 @@
       "when": 1787285853221,
       "tag": "0003_language_tracks",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1787286126415,
+      "tag": "0004_profile_expertise",
+      "breakpoints": true
     }
   ]
 }

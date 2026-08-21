@@ -1,5 +1,6 @@
 import "server-only";
 import { generateJson, type AiResult } from "./ai";
+import { loadTransition, transitionBrief } from "./transitions";
 
 /**
  * Generating a language roadmap aimed at one person's actual job.
@@ -101,38 +102,60 @@ is the highest-value sentence you can write for them.
 export function roadmapPrompt(input: {
   targetLanguage: string;
   knownLanguages: string[];
+  expertise?: { language: string; level: string }[];
   jobTitle: string;
   jobContext?: string | null;
 }) {
-  const known = input.knownLanguages.length ? input.knownLanguages.join(", ") : "unspecified";
+  const map = loadTransition(input.knownLanguages, input.targetLanguage);
+  const strongest =
+    input.expertise?.slice().sort((a, b) =>
+      ({ expert: 0, strong: 1, working: 2 }[a.level] ?? 3) -
+      ({ expert: 0, strong: 1, working: 2 }[b.level] ?? 3))[0];
+
+  const fluency = strongest
+    ? `They are ${strongest.level === "expert" ? "an expert in" : `${strongest.level} in`} ` +
+      `${LANGUAGE_LABEL[strongest.language] ?? strongest.language}.`
+    : `They already know ${input.knownLanguages.join(", ") || "another language"}.`;
+
   return `
 Build a hands-on ${LANGUAGE_LABEL[input.targetLanguage] ?? input.targetLanguage} roadmap for
-an experienced engineer who already knows ${known} and is starting this role:
+an experienced engineer starting this role:
 
 Role: ${input.jobTitle}
-${input.jobContext ? `What the job involves:\n${input.jobContext}` : ""}
+${input.jobContext ? `What the job involves:\n${input.jobContext}\n` : ""}
+${fluency}
 
-Order the lessons by what this job needs FIRST, not by how the language is
-usually taught. Skip anything a working engineer in this role would rarely
-touch, however traditional it is to teach it early.
+TEACH BY COMPARISON. They are not learning to program - they are learning one
+language's way of doing what they already do fluently. Every lesson should
+land as "here is how the thing you already know is spelled here, and here is
+where your instinct will betray you". The moment of value is the second half.
 
-Every lesson's "relevance" must name something concrete about THIS role - the
-kind of code they will be reading or writing in their first fortnight. If you
-cannot justify a lesson that way, leave it out.
+${map ? transitionBrief(map) : `No authored transition map exists for this pair.
+Stay with comparisons you are certain of, and prefer saying nothing to stating
+a correspondence you are not sure about - the learner cannot check you.`}
 
-In "rationale", say plainly what you have prioritised and, just as usefully,
-what you have deliberately left out and why.
+Order by what THIS job needs first, not by how the language is usually taught.
+Weight the high-severity traps early: those are the ones where their existing
+habit produces code that runs and is quietly wrong.
+
+Every lesson's "relevance" must name something concrete about this role - the
+code they will read or write in their first fortnight. If you cannot justify a
+lesson that way, leave it out.
+
+In "rationale", say what you prioritised and what you deliberately left out.
 `.trim();
 }
 
 export function lessonPrompt(input: {
   targetLanguage: string;
   knownLanguages: string[];
+  expertise?: { language: string; level: string }[];
   jobTitle: string;
   spec: Roadmap["lessons"][number];
   position: number;
   total: number;
 }) {
+  const map = loadTransition(input.knownLanguages, input.targetLanguage);
   return `
 Write lesson ${input.position} of ${input.total} in a ${LANGUAGE_LABEL[input.targetLanguage]}
 roadmap for an engineer who knows ${input.knownLanguages.join(", ") || "another language"}
@@ -145,9 +168,12 @@ Concepts: ${input.spec.concepts.join(", ")}
 Produce:
 
 - "teaching": markdown. Short. Explain the idea, then show the shape of it in
-  code. Where the reader's existing language would lead them astray, say so
-  explicitly ("in Ruby this returns nil; here it raises"). This is read in a
-  narrow pane, so keep code lines under about 70 characters.
+  code. Open with the comparison: how they already do this, then how it is
+  done here, then the trap. Be concrete - "in Ruby this returns nil; here it
+  returns a zero value and an error you must check". This is read in a narrow
+  pane, so keep code lines under about 70 characters.
+
+${map ? transitionBrief(map) : "No authored transition map for this pair - only make comparisons you are certain of."}
 
 - "scaffold": the starting code the learner sees. It must be MOSTLY WRITTEN -
   imports, the signature, the surrounding structure - with one clearly marked
