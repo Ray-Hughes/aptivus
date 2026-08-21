@@ -61,7 +61,15 @@ try {
     body: new URLSearchParams({ email, password: "Correct-Horse-9", csrfToken, callbackUrl: B }),
   }));
   const who = await (await fetch(`${B}/api/auth/session`, { headers: { cookie: cookie() } })).json();
-  check("signed in", who?.user?.email === email, who?.user?.email ?? "no session");
+  if (who?.user?.email !== email) {
+    console.log("FAIL  signed in  [no session]");
+    console.log(
+      "\nCould not sign in, so nothing below was tested. Most likely the sign-in\n" +
+      "rate limit (10 per IP per 15 minutes) - restart the dev server to clear it.\n",
+    );
+    process.exit(1);
+  }
+  check("signed in", true, email);
 
   r = await post(`/api/problems/no-such-problem/ask`, { question: "why does this loop" });
   check("unknown problem is 404", r.status === 404, `${r.status}`);

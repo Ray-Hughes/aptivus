@@ -74,7 +74,20 @@ const idB = await makeUser(emailB);
 try {
   const A = await signIn(emailA);
   const who = await (await fetch(`${B}/api/auth/session`, { headers: { cookie: A() } })).json();
-  check("signed in", who?.user?.email === emailA, who?.user?.email ?? "no session");
+  if (who?.user?.email !== emailA) {
+    // Stop here rather than reporting two dozen 401s. Every later check would
+    // "fail" for the same single reason, which buries the actual cause. The
+    // usual one is the sign-in rate limiter, which is in-process and per IP:
+    // running this suite repeatedly is itself enough to trip it.
+    console.log("FAIL  signed in  [no session]");
+    console.log(
+      "\nCould not sign in, so nothing below was tested. Most likely the sign-in\n" +
+      "rate limit (10 per IP per 15 minutes) - restart the dev server to clear it,\n" +
+      "since the buckets live in memory.\n",
+    );
+    process.exit(1);
+  }
+  check("signed in", true, emailA);
 
   // 1. body validation
   let r = await post(A, "/api/tracks", { targetLanguage: "python", jobTitle: "x" });
