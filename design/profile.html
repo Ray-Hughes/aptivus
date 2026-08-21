@@ -630,6 +630,15 @@ code.inline {
   height: 56px; padding: 0 var(--sp-5);
   background: var(--bg-elev); border-bottom: 1px solid var(--border);
 }
+/* The default .tip points UP and is centred with left:50%. In the sticky top bar that put
+   the tooltip above the viewport (invisible) and its layout overflow pushed 32px of
+   horizontal scroll onto every width. Here they hang down and anchor to the right edge. */
+.app-top .tip::after {
+  bottom: auto; top: calc(100% + 8px); left: auto; right: 0;
+  transform: translateY(-3px);   /* nowrap keeps it one line; it grows leftwards, which does not scroll */
+}
+.app-top .tip:hover::after, .app-top .tip:focus-visible::after { transform: translateY(0); }
+
 .app-nav { display: flex; gap: 2px; }
 .app-nav a {
   padding: 6px 12px; border-radius: var(--r-sm); font-size: var(--t-sm);
@@ -873,10 +882,6 @@ code.inline {
   .two-col { grid-template-columns: 1fr; }
 }
 @media (max-width: 720px) {
-  /* the hover tooltips are laid out at left:50% and centred with a transform, so their
-     layout overflow dragged the document sideways on a phone. Nothing hovers on a
-     phone anyway — the chips repeat their meaning in the rewards block. */
-  .tip::after { display: none; }
   .app-nav { display: none; }
   .tiles { grid-template-columns: 1fr; }
   /* the 12-week heatmap has a 381px min-content width; without this the whole page
@@ -1465,7 +1470,8 @@ code.inline {
   renderPatterns();
 
   /* ---------- attempts bars ---------- */
-  const ATT = [["1st try", 14], ["2 attempts", 11], ["3 attempts", 6], ["4+", 3]];
+  /* sums to 24 — the same 24 the tile, the donut and the pattern bars report */
+  const ATT = [["1st try", 12], ["2 attempts", 7], ["3 attempts", 3], ["4+", 2]];
   const attMax = 14;
   $("#attempts").innerHTML = ATT.map(function (a) {
     return '<div class="patbar" style="grid-template-columns:88px minmax(0,1fr) 34px"><span class="pn">' + a[0] + "</span>" +

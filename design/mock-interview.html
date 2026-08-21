@@ -997,14 +997,22 @@ body.col-resizing { cursor: col-resize; user-select: none; }
 .block-hd .why { font-size: var(--t-sm); color: var(--text-3); max-width: 60ch; }
 
 /* timeline */
-.tl-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; }
+.tl-card { position: relative; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); }
 .tl-wrap { padding: var(--sp-5) var(--sp-5) var(--sp-3); overflow-x: auto; }
+.tl-stage { position: relative; }
 .tl { display: block; width: 100%; min-width: 620px; height: 168px; }
 .tl .lane-lbl { font-size: 10px; fill: var(--text-3); font-family: var(--font-sans); font-weight: 600; letter-spacing: .07em; }
 .tl .axis-lbl { font-size: 10px; fill: var(--text-3); font-family: var(--font-mono); }
 .tl .pband-lbl { font-size: 11px; fill: var(--text-2); font-family: var(--font-sans); font-weight: 600; }
-.tl .ev { cursor: pointer; }
-.tl .ev:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.tl-ev {
+  position: absolute; width: 21px; height: 21px; margin: -10.5px 0 0 -10.5px; padding: 0;
+  display: grid; place-items: center; border-radius: var(--r-full);
+  background: var(--surface); border: 1.8px solid currentColor; cursor: pointer;
+  transition: transform var(--dur-2) var(--ease-out);
+}
+.tl-ev:hover { transform: scale(1.14); }
+.tl-ev.solid { background: currentColor; }
+.tl-ev.solid svg { color: var(--surface); }
 .tl-legend { display: flex; gap: var(--sp-4); flex-wrap: wrap; padding: 0 var(--sp-5) var(--sp-4); }
 .tl-legend .lg { display: flex; align-items: center; gap: 8px; font-size: var(--t-xs); color: var(--text-2); background: none; border: 0; padding: 4px 0; cursor: default; }
 .tl-legend .lg i, .tl-legend .lg svg { width: 22px; height: 12px; border-radius: 3px; display: block; flex: 0 0 auto; }
@@ -1496,10 +1504,13 @@ body.col-resizing { cursor: col-resize; user-select: none; }
       <p class="why">Derived from the trace and attempt log: keystrokes make a minute writing, a minute after a failing run is debugging, a minute before the first run is reading.</p>
     </div>
     <div class="tl-card">
-      <div class="tl-wrap" id="tlWrap" style="position:relative">
-        <svg class="tl" id="tl" role="img" aria-labelledby="tlDesc"><title id="tlDesc">Timeline of the round</title></svg>
-        <div class="tl-tip" id="tlTip" role="tooltip" aria-hidden="true"></div>
+      <div class="tl-wrap" id="tlWrap">
+        <div class="tl-stage" id="tlStage">
+          <svg class="tl" id="tl" role="img" aria-labelledby="tlDesc"><title id="tlDesc">Timeline of the round</title></svg>
+          <div id="tlEvents" aria-label="Events in this round"></div>
+        </div>
       </div>
+      <div class="tl-tip" id="tlTip" role="tooltip" aria-hidden="true"></div>
       <div class="tl-legend" id="tlLegend"></div>
       <div class="tl-callouts" id="tlCallouts"></div>
     </div>
@@ -2565,6 +2576,15 @@ function buildNext(S) {
   if (S.over > 0) out.push({ w: 85, t: "Call it at the 35 minute mark", b: "You ran " + mmss(S.over) + " past the end. In the room nobody grants that. At about 35 minutes, say <em>“I want to make sure we have something working”</em> and ship the straightforward version — a working brute force beats an unfinished clever solution, every time.", cta: "Add to plan" });
   else if (worst && worst.t.debug / Math.max(1, worst.t.total) > .3) out.push({ w: 75, t: "Narrate the debugging, not just the writing", b: "Your longest silent stretch was " + dur(worst.t.debug) + " after a failing run on problem " + (worst.i + 1) + ". That is exactly the window where an interviewer cannot tell whether you are close or lost. Say the hypothesis out loud before you test it.", cta: "Add to plan" });
   out.push({ w: 40, t: "Run one more round before you stop tonight", b: "Two rounds back to back is the closest thing to the real fatigue. Record the second one and play it back — you will hear the dead air, and the dead air is what costs you.", cta: "Start a round", again: true });
+
+  /* always-available process work, from the interview-day notes. These fill the
+     list when the round itself was clean, because a clean round still has a
+     "how did you talk while you did it" answer. */
+  const slowStart = S.P.slice().sort((a, b) => (b.firstKeyDelay || 0) - (a.firstKeyDelay || 0))[0];
+  out.push({ w: 34, t: "Finish out loud, not just correctly", b: "When the tests go green, do not stop. Walk your own edge cases, state the complexity — <em>“O(n) time, O(n) space, one pass”</em> — and offer the trade-off. Three sentences, real points, and most candidates skip all three.", cta: "Add to plan" });
+  out.push({ w: 32, t: "Two clarifying questions before you type", b: "<em>“Can the input be empty?”</em> · <em>“Can there be duplicates?”</em> · <em>“Roughly how large is n?”</em> " + (slowStart && slowStart.firstKeyDelay > 120 ? "You had " + mmss(slowStart.firstKeyDelay) + " of silent reading this round — that is exactly where those questions belong." : "They cost thirty seconds and they catch the misunderstanding while it is still free."), cta: "Add to plan" });
+  out.push({ w: 30, t: "Say the grain of every table out loud", b: "Before the SQL question, name what one row means in each table: <em>“submissions is one row per submission, quotes is one row per quote, so a submission can have several quotes — watch for fan-out.”</em> It is the habit that separates people who write SQL from people you trust with a customer's numbers.", cta: "Add to plan" });
+
   return out.sort((a, b) => b.w - a.w).slice(0, 3);
 }
 
@@ -2706,11 +2726,11 @@ function drawTimeline(S) {
   S.runsMerged.slice(1).forEach(r => parts.push(`<line x1="${x(r.at)}" y1="56" x2="${x(r.at)}" y2="104" stroke="var(--bg)" stroke-width="2"/>`));
   parts.push(`<rect x="0" y="58" width="${W}" height="44" rx="6" fill="none" stroke="var(--border)"/>`);
 
-  // events — nudge up when two land close together so neither hides the other
-  let lastEvX = -999, lift = 0;
+  // events — HTML buttons over the chart, so focus, hover and hit area behave
+  let lastEvX = -999, lift = 0; const evHtml = [];
   S.round.events.forEach(e => {
     if (e.k === "switch") return;
-    if (x(e.at) - lastEvX < 22) lift = lift ? 0 : 21; else lift = 0;
+    if (x(e.at) - lastEvX < 24) lift = lift ? 0 : 22; else lift = 0;
     lastEvX = x(e.at);
     const cx = x(e.at), col = e.k === "solved" ? "var(--success)" : e.k === "stopped" ? "var(--text-3)"
       : e.pass === e.total ? "var(--success)" : "var(--warning)";
@@ -2718,15 +2738,15 @@ function drawTimeline(S) {
       : e.k === "stopped" ? "Stopped problem " + (e.p + 1) + " at " + mmss(e.at)
       : e.k === "done" ? "Marked problem " + (e.p + 1) + " done at " + mmss(e.at)
       : "Run at " + mmss(e.at) + " · " + e.pass + " of " + e.total + " checks · problem " + (e.p + 1);
-    const glyph = e.k === "solved" ? "M-3.2 0.2 -1 2.4 3.2 -2" : e.k === "stopped" ? "M-2.2 -2.2h4.4v4.4h-4.4z"
-      : e.pass === e.total ? "M-3.2 0.2 -1 2.4 3.2 -2" : "M0 -2.6v3.2M0 2.4v.2";
     const big = e.k === "solved" || e.k === "stopped";
-    parts.push(`<g class="ev" tabindex="0" role="img" aria-label="${esc(lbl)}" data-tip="${esc(lbl)}" transform="translate(${cx},${42 - lift})">
-      <line x1="0" y1="${big ? 9 : 7}" x2="0" y2="${16 + lift}" stroke="${col}" stroke-width="1.5" opacity=".7"/>
-      <circle r="${big ? 10 : 7.5}" fill="${big ? col : "var(--surface)"}" stroke="${col}" stroke-width="1.8"/>
-      <path d="${glyph}" fill="${e.k === "stopped" ? "var(--surface)" : "none"}" stroke="${big ? "var(--surface)" : col}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    </g>`);
+    const glyph = e.k === "stopped" ? '<rect x="4.5" y="4.5" width="7" height="7" rx="1.5" fill="currentColor"/>'
+      : (e.k === "solved" || e.pass === e.total) ? '<path d="M4 8.3 6.8 11 12 5.4" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>'
+      : '<path d="M8 4.4v4.4M8 11.1v.5" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/>';
+    parts.push(`<line x1="${cx}" y1="${42 - lift + (big ? 10 : 9)}" x2="${cx}" y2="${58}" stroke="${col}" stroke-width="1.5" opacity=".65"/>`);
+    evHtml.push(`<button type="button" class="tl-ev${big ? " solid" : ""}" style="color:${col};left:${cx + 20}px;top:${42 - lift + 20}px"
+      aria-label="${esc(lbl)}" data-tip="${esc(lbl)}"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">${glyph}</svg></button>`);
   });
+  $("#tlEvents").innerHTML = evHtml.join("");
 
   // axis
   const step = TMAX > 3000 ? 600 : 300;
@@ -2742,6 +2762,7 @@ function drawTimeline(S) {
   parts.push(`<line x1="${x(S.len)}" y1="30" x2="${x(S.len)}" y2="108" stroke="var(--danger)" stroke-width="1.5" stroke-dasharray="4 3"/>`);
   parts.push(`<text class="axis-lbl" x="${x(S.len) - 7}" y="140" text-anchor="end" fill="var(--danger)">${mmss(S.len)} — time</text>`);
 
+  $("#tlStage").style.width = W + "px";
   svg.setAttribute("viewBox", "0 0 " + W + " " + H);
   svg.setAttribute("width", W); svg.setAttribute("height", H);
   svg.style.minWidth = W + "px";
@@ -2754,16 +2775,17 @@ function drawTimeline(S) {
   function show(el) {
     const t = el.getAttribute("data-tip"); if (!t) return;
     tip.innerHTML = "<b>" + esc(t) + "</b>";
-    const r = el.getBoundingClientRect(), w = $("#tlWrap").getBoundingClientRect();
+    const r = el.getBoundingClientRect(), w = $(".tl-card").getBoundingClientRect();
     tip.style.opacity = "1";
-    tip.style.left = clamp(r.left - w.left + r.width / 2 - tip.offsetWidth / 2, 4, w.width - tip.offsetWidth - 4) + "px";
+    tip.style.left = clamp(r.left - w.left + r.width / 2 - tip.offsetWidth / 2, 6, w.width - tip.offsetWidth - 6) + "px";
     tip.style.top = (r.top - w.top - tip.offsetHeight - 8) + "px";
   }
   function hide() { tip.style.opacity = "0"; }
-  $("#tl").addEventListener("mouseover", e => { const g = e.target.closest(".ev"); if (g) show(g); });
-  $("#tl").addEventListener("mouseout", hide);
-  $("#tl").addEventListener("focusin", e => { const g = e.target.closest(".ev"); if (g) show(g); });
-  $("#tl").addEventListener("focusout", hide);
+  const box = $("#tlEvents");
+  box.addEventListener("mouseover", e => { const g = e.target.closest(".tl-ev"); if (g) show(g); });
+  box.addEventListener("mouseout", hide);
+  box.addEventListener("focusin", e => { const g = e.target.closest(".tl-ev"); if (g) show(g); });
+  box.addEventListener("focusout", hide);
 })();
 
 /* scorecard buttons */
