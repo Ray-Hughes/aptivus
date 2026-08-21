@@ -1,0 +1,179 @@
+{
+  "from": "python",
+  "to": "go",
+  "summary": "The syntax is small enough to learn in a weekend, which misleads people into thinking the transition is small. Python hands you one universal habit - everything is a reference to a heap object, and anything wrong raises - and Go removes both halves at once: structs are copied on assignment, on argument passing and on every loop iteration, so mutation frequently lands on a copy and vanishes, while missing map keys return a zero value, integers wrap instead of growing, and strings are bytes rather than characters. The compiler will be strict about things Python never mentioned - an unused variable is an error - and completely silent about the entire class of bug that used to be a KeyError. Budget your first month for the value-versus-pointer distinction and for concurrency without a GIL; the rest is vocabulary.",
+  "verification": {
+    "level": "reviewed",
+    "note": "No Go toolchain was available when this was written, so nothing here was executed. Restricted to spec-level behaviour; anything uncertain was dropped rather than guessed."
+  },
+  "concepts": [
+    {
+      "id": "errors-are-values",
+      "title": "Errors are returned, and panic is not an exception",
+      "theirs": "Raise and try/except, with a hierarchy you can catch broadly. An unhandled exception unwinds the stack and prints a traceback pointing at the cause.",
+      "yours": "Functions return `(T, error)` and you check `err != nil` on the line after the call. `panic` exists for programmer errors, and `recover` only works inside a function deferred from the frame that is unwinding.",
+      "trap": "There is no unwinding to save you. `v, _ := parse(s)` compiles cleanly, throws the failure away, and leaves v as the zero value - so a failed parse becomes 0 and travels on as a real-looking number. Reaching for panic/recover as a try/except substitute fails in a second way: a panic in a goroutine can only be recovered inside that same goroutine, so a deferred recover in the function that started it does nothing and the whole process dies.",
+      "severity": "high",
+      "tags": [
+        "errors",
+        "control-flow"
+      ]
+    },
+    {
+      "id": "maps-return-zero-values",
+      "title": "A missing map key is not an error",
+      "theirs": "`d[k]` raises KeyError on a missing key, which is how you find out you spelled it wrong. `d.get(k)` is the opt-in for silence.",
+      "yours": "`m[k]` returns the value type's zero value when the key is absent - 0, \"\", false, or nil. The two-value form `v, ok := m[k]` tells you which happened.",
+      "trap": "A typo'd key is now a valid answer. `limits[\"maxRetries\"]` against a map populated with \"max_retries\" is 0, and 0 retries is a plausible configuration, so it deploys. The related one: reading from a nil map is legal and returns zero values, but *writing* to a nil map panics with \"assignment to entry in nil map\" - so a struct field of map type that nobody initialised reads fine in tests and crashes on the first write in production.",
+      "severity": "high",
+      "tags": [
+        "collections",
+        "nil"
+      ]
+    },
+    {
+      "id": "map-iteration-is-randomised",
+      "title": "Map iteration order is deliberately randomised",
+      "theirs": "Dicts preserve insertion order, guaranteed by the language since 3.7, so iterating one is reproducible and JSON output from a dict is stable.",
+      "yours": "The spec leaves map iteration order unspecified, and the runtime randomises the starting point on purpose so that code cannot come to depend on it. Sort the keys when you need an order.",
+      "trap": "The randomisation is per-iteration, not per-process, so a test that happens to pass locally will fail on a different run rather than on a different machine - the worst possible failure signature, because it reads as flakiness rather than a bug. Anything that builds a signature, a cache key, or a golden file by ranging over a map is wrong the moment the map has more than one entry. Note that `encoding/json` does sort map keys when marshalling, so JSON output is stable while your own iteration is not.",
+      "severity": "high",
+      "tags": [
+        "collections",
+        "testing"
+      ]
+    },
+    {
+      "id": "structs-are-values",
+      "title": "Assignment copies the struct",
+      "theirs": "Every name is a reference to the same object. `b = a` gives two names for one thing, and `for item in items: item.done = True` mutates the objects in the list.",
+      "yours": "A struct is a value. `b := a` copies every field, passing a struct to a function copies it, and putting one in a slice copies it in. Sharing requires a pointer, `*T`.",
+      "trap": "`for _, item := range items { item.Done = true }` compiles, runs, and changes nothing - `item` is a fresh copy each iteration and is discarded at the end of the body. This is probably the single most common first-month Go bug for people arriving from Python, and there is no error, no warning, and no vet check for it by default. Use `for i := range items { items[i].Done = true }`, or hold `[]*Item` and accept the pointer.",
+      "severity": "high",
+      "tags": [
+        "types",
+        "mutation"
+      ]
+    },
+    {
+      "id": "pointer-receivers",
+      "title": "A value receiver gets a copy of the struct",
+      "theirs": "`self` is always the object. A method that assigns to `self.x` changes the object every caller sees.",
+      "yours": "`func (c Counter) Inc()` receives a copy; `func (c *Counter) Inc()` receives a pointer. Only the pointer form can mutate. Go auto-takes the address for you when calling a pointer method on an addressable value, so both spellings look identical at the call site.",
+      "trap": "Because the call site is identical, a method that mutates through a value receiver is a silent no-op: `c.Inc()` runs, increments a copy, and returns. The convention that saves you is to make the whole method set consistent - if any method needs a pointer receiver, give them all pointer receivers - which also avoids the copy-a-mutex-by-accident case that `go vet` does catch.",
+      "severity": "high",
+      "tags": [
+        "types",
+        "mutation"
+      ]
+    },
+    {
+      "id": "slices-share-backing-arrays",
+      "title": "Slicing does not copy",
+      "theirs": "`xs[:2]` builds a new list. The original is untouched no matter what you do to the result.",
+      "yours": "A slice is a pointer, a length and a capacity over a backing array. `xs[:2]` shares that array with xs. `append` writes into spare capacity when there is some and allocates a new array when there is not.",
+      "trap": "Whether a caller sees your writes depends on capacity, which means it depends on the data. `head := xs[:2]; head = append(head, y)` overwrites xs[2] when xs is longer than 2, and silently does not when append had to reallocate - so the same function is aliasing in one call and copying in the next. Passing a slice to a function that appends is the usual way to meet this. Use a full slice expression, `xs[0:2:2]`, or `copy` into a fresh slice when the caller must be isolated.",
+      "severity": "high",
+      "tags": [
+        "collections",
+        "memory"
+      ]
+    },
+    {
+      "id": "integer-arithmetic-wraps",
+      "title": "Integers have a fixed width, and division truncates toward zero",
+      "theirs": "int is arbitrary precision, so it never overflows. `//` floors toward negative infinity and `%` takes the sign of the divisor: `-7 // 2` is -4 and `-7 % 2` is 1.",
+      "yours": "int is 64-bit on ordinary platforms, and the spec defines signed overflow as wrapping in two's complement rather than as an error. `/` on integers truncates toward zero, so `-7 / 2` is -3, and `%` takes the sign of the dividend, so `-7 % 2` is -1.",
+      "trap": "Both differences are silent and both matter. An accumulator that would have grown without limit in Python wraps to a large negative number, and the only symptom is an impossible metric. The sign rules flip the wrap-around index idiom: `xs[(i-1)%len(xs)]` is correct in Python and panics with a negative index in Go for i = 0. A constant that does not fit is a compile error, which is exactly why the runtime case is easy to assume is also checked.",
+      "severity": "high",
+      "tags": [
+        "numbers"
+      ]
+    },
+    {
+      "id": "strings-are-bytes",
+      "title": "A string is bytes, and len is a byte count",
+      "theirs": "A str is a sequence of code points. `len(s)` counts characters, `s[0]` is a one-character string, and slicing respects character boundaries.",
+      "yours": "A string is an immutable byte slice holding UTF-8. `len(s)` is the number of bytes, `s[0]` is a `byte` (uint8), and `s[:n]` cuts at a byte offset. `for i, r := range s` decodes runes, with i as the byte offset. `[]rune(s)` gives you code points, and `utf8.RuneCountInString` gives the count.",
+      "trap": "Everything works until the input is not ASCII, which means it works throughout development and fails on the first user with an accent or an emoji. `len(\"héllo\")` is 6 in Go and 5 in Python, so a length validation rejects legal names. Truncating with `s[:20]` for a preview or a database column can cut a multi-byte rune in half and produce invalid UTF-8 that some downstream JSON encoder or database driver rejects, at write time, far from the truncation.",
+      "severity": "high",
+      "tags": [
+        "strings",
+        "unicode"
+      ]
+    },
+    {
+      "id": "short-declaration-shadows",
+      "title": "`:=` inside a block declares a new variable",
+      "theirs": "Assignment inside an `if` or `for` body writes to the enclosing function's local. There is no block scope, so you cannot accidentally create a second variable of the same name.",
+      "yours": "Every block is a scope, and `:=` declares. Inside an if or for body, `x := ...` creates a new x that shadows the outer one and dies at the closing brace. `=` assigns to the existing one.",
+      "trap": "The classic shape is an error variable: `if _, err := f(); err != nil` is fine, but writing `err := g()` inside a block when you meant to set the outer err leaves the outer one nil, so the caller's `if err != nil` never fires. It compiles because the inner variable is used by the check right below it. Shadowing is not part of the default `go vet` run, so nothing flags it unless you enable a shadow analyser through golangci-lint.",
+      "severity": "high",
+      "tags": [
+        "scope",
+        "errors"
+      ]
+    },
+    {
+      "id": "typed-nil-in-interface",
+      "title": "A nil pointer in an interface is not nil",
+      "theirs": "None is None. There is one of it, and `x is None` is unambiguous.",
+      "yours": "An interface value is a (type, value) pair and is nil only when both halves are. A nil `*MyError` stored in an `error` carries a type, so the interface is non-nil while the pointer inside it is nil.",
+      "trap": "This is the sharpest edge in the language. A function declared to return `error` that returns a `*MyError` variable holding nil produces an error value for which `err != nil` is true, so the caller takes the failure branch on success - and then usually panics dereferencing it. It comes from a helper declared as `func check() *ValidationError` whose result is returned up through a function declared as `error`. The rule: declare the return type as `error`, and return a literal `nil`, never a typed nil pointer variable.",
+      "severity": "high",
+      "tags": [
+        "nil",
+        "interfaces",
+        "errors"
+      ]
+    },
+    {
+      "id": "no-gil",
+      "title": "There is no GIL, so shared state is genuinely unsafe",
+      "theirs": "Threads run Python bytecode one at a time, so `list.append` and `dict[k] = v` from several threads cannot corrupt the container - four threads appending 20,000 items each really do produce 80,000 items.",
+      "yours": "Goroutines run in parallel on multiple cores. Any variable touched by two goroutines without a mutex or a channel is a data race, and the language makes no guarantees at all about a program that has one.",
+      "trap": "The habit of sharing a dict or a list between workers ports straight across and is now a bug. Concurrent writes to a map are the loud case: the runtime detects many of them and stops the process with \"fatal error: concurrent map writes\", which recover cannot catch and which usually appears first under production load rather than in tests. The quiet case is a struct field or a counter, where a race just loses updates. `go test -race` finds these and it belongs in CI from day one - it only reports races that actually execute, so it is worth running against your integration tests, not just unit tests.",
+      "severity": "high",
+      "tags": [
+        "concurrency"
+      ]
+    },
+    {
+      "id": "defer-is-function-scoped",
+      "title": "`defer` fires at function exit, not at end of block",
+      "theirs": "`with` is scoped to its block, so opening a file inside a loop body closes it at the end of each iteration.",
+      "yours": "A deferred call runs when the enclosing *function* returns, whatever block it was written in. Deferred calls stack up and run last-in-first-out, and their arguments are evaluated at the point of the defer statement, not at the point of the call.",
+      "trap": "`defer f.Close()` inside a loop keeps every handle open until the function returns, so a long-running loop exhausts the file descriptor limit rather than closing anything early - and it works fine on the ten-file test fixture. Argument evaluation is the second surprise: `defer log(err)` captures whatever err held at that moment, so it logs nil while the code that follows it sets the real error. Wrap the per-iteration work in its own function, and use a closure - `defer func() { log(err) }()` - when you need the final value.",
+      "severity": "medium",
+      "tags": [
+        "control-flow",
+        "resources"
+      ]
+    },
+    {
+      "id": "nil-slice-marshals-as-null",
+      "title": "A nil slice and an empty slice serialise differently",
+      "theirs": "An empty list is an empty list. `json.dumps([])` is `[]`, and there is no second kind of empty.",
+      "yours": "`var xs []int` is nil; `xs := []int{}` is empty and non-nil. Both have len 0, both are safe to range over, and append works on both, so they are interchangeable everywhere except one place: `encoding/json` marshals a nil slice as `null` and an empty slice as `[]`.",
+      "trap": "A handler that returns a struct whose slice field was never assigned emits `{\"items\": null}`, and a JavaScript client doing `data.items.map(...)` throws on null while it would have been happy with `[]`. Nothing in Go complains, the Go tests that unmarshal it back pass, and the failure is entirely on the other side of the wire. Initialise slices you intend to serialise.",
+      "severity": "medium",
+      "tags": [
+        "nil",
+        "serialisation"
+      ]
+    },
+    {
+      "id": "loop-variable-scope-changed",
+      "title": "Loop variable capture depends on your go.mod version",
+      "theirs": "Closures capture the variable, not the value, so lambdas built in a loop all see the last value. Everyone learns the `lambda i=i:` workaround.",
+      "yours": "From Go 1.22, `for` declares a fresh variable per iteration, so a closure or goroutine captures that iteration's value. Before 1.22 there was one shared variable and the same late-binding behaviour Python has.",
+      "trap": "The behaviour is selected by the `go` directive in go.mod, not by the toolchain you have installed - so the identical source file behaves one way in a module declaring go 1.22 or later and the other way in a module declaring go 1.21. Most of the advice you will find online predates the change and tells you to write `v := v` at the top of the loop body, which is now redundant but harmless. The thing that is *not* harmless is assuming the new behaviour while working in an older module: `go func() { use(v) }()` in a loop then processes the last item several times and skips the rest.",
+      "severity": "medium",
+      "tags": [
+        "closures",
+        "concurrency",
+        "versions"
+      ]
+    }
+  ]
+}

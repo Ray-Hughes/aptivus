@@ -60,3 +60,29 @@ compiles or runs and is quietly wrong, which is the most expensive kind.
 Author it, then have someone who actually writes the target language read the
 `trap` lines. Those are the sentences the product lives or dies on. An
 unreviewed pair should not ship.
+
+## Provenance
+
+Every map carries a `verification` block, and the learner is shown what it says:
+
+```json
+"verification": {
+  "level": "executed",
+  "note": "Snippets run against CPython 3.12.7 and Ruby 3.2.2."
+}
+```
+
+`executed` means the snippets behind these claims were actually run in both
+languages. `reviewed` means they were not — usually because the toolchain was
+not available — so they rest on care alone, and the UI says so in those words.
+`ruby-to-go` and `python-to-go` are `reviewed`: there was no Go toolchain on
+the machine where they were written, so anything uncertain was dropped rather
+than guessed.
+
+Telling someone a comparison is checked when it was not is the exact failure
+this package exists to prevent, only with our name on it.
+
+`npm run build` runs `scripts/check-transitions.mjs`, which fails on a
+malformed map rather than letting it fail to load — a map that silently does
+not load downgrades the roadmap to "the model's own knowledge" with nobody
+told.

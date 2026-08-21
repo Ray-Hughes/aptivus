@@ -1,0 +1,177 @@
+{
+  "from": "ruby",
+  "to": "python",
+  "summary": "These two languages look close enough that you will be productive in a week and subtly wrong for a month. Both are dynamic, garbage-collected and object-oriented, so the syntax translates almost mechanically - and that is the problem, because the semantics underneath do not. The expensive differences are all in the same family: Python evaluates things once that Ruby evaluates every time, Python's mutating methods return None where Ruby's return the object, and Python treats emptiness as falsehood where Ruby only ever treats nil and false that way. Nothing here raises an exception; it just produces the wrong answer.",
+  "verification": {
+    "level": "executed",
+    "note": "Snippets run against CPython 3.12.7 and Ruby 3.2.2."
+  },
+  "concepts": [
+    {
+      "id": "mutable-default-arguments",
+      "title": "Default arguments are evaluated once, at def time",
+      "theirs": "`def add(x, acc = [])` re-evaluates `[]` on every call that omits acc, so each call gets a fresh array.",
+      "yours": "`def add(x, acc=[])` evaluates `[]` once, when the def statement executes, and every call that omits acc shares that one object. The idiom is `acc=None` plus `if acc is None: acc = []` inside.",
+      "trap": "The first call looks right, so tests pass. `add(1)` returns [1], then `add(2)` returns [1, 2] and `add(3)` returns [1, 2, 3] - state leaks between unrelated calls for the lifetime of the process. Same for `{}`, `set()`, and any object built by a function call in the signature, including `datetime.now()`, which freezes at import time.",
+      "severity": "high",
+      "tags": [
+        "functions",
+        "mutation"
+      ]
+    },
+    {
+      "id": "empty-collections-are-falsy",
+      "title": "Empty is false, and 0 is false",
+      "theirs": "Only nil and false are falsy. `if 0`, `if \"\"` and `if []` all take the true branch, so `if x` reliably means \"x exists\".",
+      "yours": "0, 0.0, \"\", [], {}, set() and None are all falsy. `if x` means \"x exists and is non-empty and non-zero\".",
+      "trap": "`if user.credits:` skips the user who has exactly zero credits, and `if results:` treats \"the query ran and legitimately found nothing\" the same as \"the query never ran\". Both branches are reachable and neither errors. When you mean existence, write `is not None`; when you mean non-empty, say so.",
+      "severity": "high",
+      "tags": [
+        "truthiness",
+        "control-flow"
+      ]
+    },
+    {
+      "id": "methods-need-parentheses",
+      "title": "A method without parentheses is an object, not a call",
+      "theirs": "Parentheses are optional. `user.admin?` calls the method and gives you the boolean.",
+      "yours": "`user.is_admin` gives you the bound method object. `user.is_admin()` calls it.",
+      "trap": "A bound method object is always truthy, so `if user.is_admin:` is taken for every user, including the ones where the method returns False. There is no error, no warning, and the condition reads perfectly in review. This also bites on `list.sort` vs `list.sort()` and on `x.strip` in a comprehension.",
+      "severity": "high",
+      "tags": [
+        "methods",
+        "truthiness"
+      ]
+    },
+    {
+      "id": "mutating-methods-return-none",
+      "title": "In-place methods return None",
+      "theirs": "The bang/non-bang pair. `arr.sort` returns a new sorted array and leaves arr alone; `arr.sort!` mutates and returns the array, so chaining works either way.",
+      "yours": "`lst.sort()`, `lst.reverse()`, `lst.append(x)` and `dct.update(d)` mutate in place and return None. The non-mutating versions are separate builtins: `sorted(lst)`, `reversed(lst)`, `lst + [x]`.",
+      "trap": "`names = names.sort()` sets names to None, and the failure surfaces somewhere else entirely - a TypeError on len(None) three functions away, or a None quietly written to the database. Chaining is worse: `data.append(x).append(y)` blows up on the second call.",
+      "severity": "high",
+      "tags": [
+        "collections",
+        "mutation"
+      ]
+    },
+    {
+      "id": "augmented-assignment-mutates",
+      "title": "`+=` on a list mutates the caller's list",
+      "theirs": "`xs += [9]` builds a new array and rebinds the local. The caller's array is untouched; you need `xs << 9` or `xs.concat!` to reach through.",
+      "yours": "For lists, `xs += [9]` calls `__iadd__` and extends in place, which is the same object the caller passed in. `xs = xs + [9]` builds a new list and rebinds.",
+      "trap": "`+=` and `= ... +` are the same thing in Ruby and different things in Python. A helper that does `items += extras` before returning has just modified its argument, so the caller's list grows every time the helper runs. Strings, tuples and ints are immutable and so behave the Ruby way, which is exactly why this is easy to miss until a list is involved.",
+      "severity": "high",
+      "tags": [
+        "mutation",
+        "collections"
+      ]
+    },
+    {
+      "id": "iterators-are-one-shot",
+      "title": "map, filter and zip are lazy and consume once",
+      "theirs": "`map` returns an Array. You can iterate it, count it, and iterate it again.",
+      "yours": "In Python 3, `map`, `filter`, `zip`, `reversed`, `enumerate` and generator expressions return iterators that yield values once and are then exhausted. `dict.keys()` and friends are views, which is different again - reusable, but a live window on the dict.",
+      "trap": "The first pass works and the second silently sees nothing. `rows = filter(ok, rows)` followed by `if not rows` (always false - an iterator is truthy even when empty) and then `for r in rows` is three separate bugs in one line. Wrap it in `list(...)` the moment you need it more than once.",
+      "severity": "high",
+      "tags": [
+        "iterators",
+        "collections"
+      ]
+    },
+    {
+      "id": "closures-capture-variables",
+      "title": "Closures capture the variable, and loop variables outlive the loop",
+      "theirs": "Each block invocation gets fresh block-local parameters, so `3.times.map { |i| -> { i } }` produces lambdas returning 0, 1 and 2. After `each`, the block parameter is out of scope entirely.",
+      "yours": "A `for` target is an ordinary local in the enclosing function scope. Closures capture the variable, not its value at creation time, so they all read whatever it holds when they are finally called.",
+      "trap": "`[lambda: i for i in range(3)]` gives three callables that all return 2. The classic form is building callbacks or partial handlers in a loop and having them all fire against the last item. The fix is a default argument, `lambda i=i: i`, which snapshots by value. Separately, the loop variable is still bound after the loop ends, so a later typo referencing it finds a stale value instead of raising NameError.",
+      "severity": "high",
+      "tags": [
+        "closures",
+        "scope"
+      ]
+    },
+    {
+      "id": "identity-is-not-equality",
+      "title": "`is` looks like Ruby's `equal?` and is far more dangerous",
+      "theirs": "`equal?` is object identity, but on a 64-bit build every Integer up to 2**62-1 is an immediate value, so `257.equal?(257)` is true and identity on ordinary numbers always agrees with equality.",
+      "yours": "`is` is object identity. CPython caches int objects only for -5 through 256, so identity agrees with equality below the cache boundary and diverges above it.",
+      "trap": "`n is 256` is True and `n is 257` is False for values computed at runtime - the test passes on your fixture and fails on production data. Strings are worse, because the compiler folds and dedupes literals: two identical literals in one file are the same object, but a string assembled at runtime is not, so `built is \"hello\"` is False while `\"hello\" is \"hello\"` is True. Reserve `is` for None, True, False and sentinels.",
+      "severity": "high",
+      "tags": [
+        "equality",
+        "identity"
+      ]
+    },
+    {
+      "id": "assignment-creates-locals",
+      "title": "Assignment always creates a local unless you say otherwise",
+      "theirs": "`@count` and `count` are lexically distinct, so you cannot confuse an instance variable with a local by accident, and a block can assign to an outer local directly.",
+      "yours": "`self.count` is the attribute and `count` is a local. Any name assigned anywhere in a function body is a local for the whole body; reaching out requires `global` or `nonlocal`.",
+      "trap": "Dropping `self.` in a method - `total = total + 1` where you meant `self.total` - is a silent no-op if a local of that name exists, and the object's state simply never changes. The nested-function version is louder: assigning to a name you also read from an enclosing scope raises UnboundLocalError at the read, not at the assignment, so the traceback points at a line that looks innocent.",
+      "severity": "high",
+      "tags": [
+        "scope",
+        "objects"
+      ]
+    },
+    {
+      "id": "true-division",
+      "title": "`/` between two ints gives a float",
+      "theirs": "`7 / 2` is 3. Integer in, integer out; you opt into floats with `7.0 / 2` or `fdiv`.",
+      "yours": "`7 / 2` is 3.5 in Python 3, always a float. `7 // 2` is 3 and keeps the int type. Both languages floor toward negative infinity, so `-7 // 2` is -4 in Python and `-7 / 2` is -4 in Ruby - that part agrees.",
+      "trap": "The type change travels. A computed page offset becomes a float, and it will not error until it reaches something that demands an int - a list index, a range, or a JSON payload that suddenly carries 3.0 where a consumer expected 3. Above 2**53 the float also stops being exact, so a large id divided and multiplied back does not return the id you started with.",
+      "severity": "medium",
+      "tags": [
+        "numbers"
+      ]
+    },
+    {
+      "id": "imports-bind-values",
+      "title": "`from x import y` copies the binding, not a reference to it",
+      "theirs": "`require` loads a file and the constant you reference is looked up through the owning module every time.",
+      "yours": "`from config import DEBUG` binds the current value of config.DEBUG into your module's namespace. `import config` then `config.DEBUG` looks it up at each use.",
+      "trap": "Anything that reassigns the module attribute later - a settings loader, a test fixture, a feature-flag toggle - updates config.DEBUG while your module keeps the value it copied at import time. The two names disagree forever and nothing warns you. Import the module and read through it whenever the value can change.",
+      "severity": "medium",
+      "tags": [
+        "modules",
+        "imports"
+      ]
+    },
+    {
+      "id": "bare-except-catches-everything",
+      "title": "A bare `except:` is not the same as a bare `rescue`",
+      "theirs": "`rescue` with no class catches StandardError, which deliberately excludes SystemExit, NoMemoryError and friends, so the runaway-catch case is handled for you.",
+      "yours": "`except:` catches BaseException - including SystemExit, KeyboardInterrupt and GeneratorExit. `except Exception:` is the real equivalent of a bare rescue.",
+      "trap": "A bare `except:` around a worker loop swallows Ctrl-C and swallows sys.exit(), so the process refuses to shut down and you reach for kill -9 without understanding why. It also hides every typo in the block, since NameError and AttributeError are caught too.",
+      "severity": "medium",
+      "tags": [
+        "errors"
+      ]
+    },
+    {
+      "id": "numeric-dict-keys-collapse",
+      "title": "1, 1.0 and True are the same dict key",
+      "theirs": "Hash lookup uses eql? and hash, and Integer#eql?(Float) is false, so `{1 => :a}[1.0]` is nil and `{1 => :a}[true]` is nil. Symbols and strings are distinct keys too.",
+      "yours": "Dict lookup uses `==` and hash, and 1 == 1.0 == True with all three hashing identically. `{1: 'a'}[1.0]` returns 'a', and `{True: 'x', 1: 'y'}` is a one-entry dict.",
+      "trap": "A dict keyed by ids collides when part of the pipeline yields floats and part yields ints, and the collision is a silent overwrite rather than a duplicate. The related trap is JSON: `json.dumps({1: 'a'})` writes `{\"1\": \"a\"}` without complaint, so a round-trip through JSON turns every int key into a string key and every subsequent `d[1]` lookup misses.",
+      "severity": "medium",
+      "tags": [
+        "collections",
+        "serialisation"
+      ]
+    },
+    {
+      "id": "privacy-is-a-convention",
+      "title": "There is no private",
+      "theirs": "`private` is enforced by the runtime; calling a private method from outside raises NoMethodError.",
+      "yours": "A leading underscore is a convention that nothing enforces. A double underscore triggers name mangling - `self.__x` inside class Foo becomes `_Foo__x` - which is about avoiding collisions in subclasses, not about access control.",
+      "trap": "Not much of a trap, more a habit to drop: do not build elaborate privacy machinery, and do not use `__name` as a security boundary, because `obj._Foo__x` reaches it. Underscore-prefixed means \"not part of the contract\", and in practice that is enough.",
+      "severity": "low",
+      "tags": [
+        "objects",
+        "design"
+      ]
+    }
+  ]
+}

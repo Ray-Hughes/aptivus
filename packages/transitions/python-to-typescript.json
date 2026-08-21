@@ -1,0 +1,179 @@
+{
+  "from": "python",
+  "to": "typescript",
+  "summary": "TypeScript gives you the type system Python's annotations only gesture at - and then erases every bit of it before the code runs. That is the whole shape of this transition: the compiler is genuinely good and the runtime underneath it is JavaScript, with one floating-point number type, string-only object keys, coercing `==`, and a `this` that falls off methods when you pass them around. The traps are not in the type system; they are in the gap between what the annotation promises and what the runtime does at the boundary where data actually arrives. Learn where the compiler stops checking - `as`, `any`, `JSON.parse`, array indexing - because that is exactly where your Python instincts will assume a runtime error that never comes.",
+  "verification": {
+    "level": "executed",
+    "note": "Snippets run against CPython 3.12.7, Node 23.1.0 and tsc 5.9.3 --strict."
+  },
+  "concepts": [
+    {
+      "id": "types-are-erased",
+      "title": "Types vanish at runtime; `as` checks nothing",
+      "theirs": "Annotations are also ignored at runtime, but you are used to that and you validate at the edges with pydantic, or you rely on the fact that a wrong type hits a TypeError fairly quickly because operators are strict.",
+      "yours": "Types are erased entirely at compile time. `as User` is a claim you make to the compiler, not a conversion, and there is no `isinstance` to fall back on because the type does not exist at runtime.",
+      "trap": "`const u = JSON.parse(body) as User` compiles clean under `--strict` and hands you an object whose id is the string \"7\" and whose name is undefined. Nothing raises. The string id flows into a comparison, `u.id === 7` is false, and the bug surfaces as a missing record. JavaScript's loose operators then keep it alive: `\"7\" * 2` is 14, so arithmetic on the wrong type often produces a plausible number. Validate at the boundary with zod or equivalent; treat every `as` in a diff as a place someone turned the compiler off.",
+      "severity": "high",
+      "tags": [
+        "types",
+        "serialisation"
+      ]
+    },
+    {
+      "id": "any-is-contagious",
+      "title": "`any` silently switches checking off, and strictness is a config choice",
+      "theirs": "There is no `any`. An untyped Python function is untyped for everyone equally, and mypy's strictness settings do not change what the program does.",
+      "yours": "`any` is assignable to and from everything, and it propagates through property access, calls and array elements. Without `strict` (specifically `noImplicitAny` and `strictNullChecks`) in tsconfig, untyped parameters become `any` and `null`/`undefined` are assignable to every type.",
+      "trap": "One `any` at the edge - a library without types, a `catch (e)`, a hand-rolled fetch wrapper - disables checking for everything downstream of it, and the editor still shows confident-looking types the whole way. With `strictNullChecks` off, a `User` annotation is really `User | null | undefined`, so every red squiggle you were relying on for null safety was never turned on. Check tsconfig before you trust a codebase's types.",
+      "severity": "high",
+      "tags": [
+        "types",
+        "tooling"
+      ]
+    },
+    {
+      "id": "out-of-range-index-is-undefined",
+      "title": "Indexing past the end returns undefined, and `-1` is not the last element",
+      "theirs": "`lst[10]` on a short list raises IndexError immediately, and `lst[-1]` is the last element. Both behaviours are load-bearing in ordinary code.",
+      "yours": "`arr[10]` returns undefined, and the declared type still says `number`. `arr[-1]` is a lookup of a property named \"-1\", so it is also undefined. The last element is `arr.at(-1)` or `arr[arr.length - 1]`.",
+      "trap": "Both are silent under `--strict`: `const v: number = arr[10]` compiles and v is undefined at runtime, and any negative index you carried over from Python turns into undefined rather than wrapping. That undefined then survives - `undefined + 1` is NaN, JSON.stringify drops it from objects, and comparisons against it are quietly false - so the failure appears several layers from its cause. `noUncheckedIndexedAccess` in tsconfig makes the compiler tell the truth about this; it is not part of `strict`.",
+      "severity": "high",
+      "tags": [
+        "collections",
+        "types"
+      ]
+    },
+    {
+      "id": "one-number-type",
+      "title": "There is one number type and it is a float64",
+      "theirs": "int is arbitrary precision. A 19-digit id, a factorial, a hash - all exact, forever, with no configuration.",
+      "yours": "`number` is an IEEE double. Integers are exact only up to 2**53 - 1. `bigint` exists with a separate literal syntax (`1n`) and does not mix with `number` in arithmetic.",
+      "trap": "Precision is lost silently at the parse step, before any code of yours runs. `JSON.parse('{\"id\":9007199254740993}')` gives 9007199254740992, and the same is true of a literal typed into the source. Snowflake ids, Postgres bigints and nanosecond timestamps all land in that range, and the corruption is a single digit - the record still exists, it is just the wrong one. Carry large ids as strings across the wire.",
+      "severity": "high",
+      "tags": [
+        "numbers",
+        "serialisation"
+      ]
+    },
+    {
+      "id": "integer-division-is-a-comment",
+      "title": "`//` is a comment, not floor division",
+      "theirs": "`a // b` floors and stays an int; `a / b` gives a float. Two distinct, visible operators.",
+      "yours": "`/` is the only division and always produces a float: `7 / 2` is 3.5. Flooring is `Math.floor(a / b)`, and truncation toward zero is `Math.trunc`. `//` starts a line comment.",
+      "trap": "`const mid = lo // 2` is not a syntax error. It parses as `const mid = lo`, with the rest of the line commented out and the semicolon inserted automatically. The variable is assigned - just to the un-divided value - so the code runs and a binary search or pagination offset is quietly wrong. Search a freshly ported file for `//` immediately after an identifier.",
+      "severity": "high",
+      "tags": [
+        "numbers",
+        "syntax"
+      ]
+    },
+    {
+      "id": "modulo-follows-the-dividend",
+      "title": "`%` on a negative number is negative",
+      "theirs": "The result takes the sign of the divisor, so `-1 % 3` is 2 and `(i - 1) % len(xs)` is a correct backwards-cyclic index.",
+      "yours": "The result takes the sign of the dividend, so `-1 % 3` is -1. The non-negative form is `((n % m) + m) % m`.",
+      "trap": "The wrap-around idiom breaks at exactly one input. `xs[(i - 1) % xs.length]` works for every i except 0, where it evaluates to `xs[-1]` and yields undefined rather than the last element - so a carousel, ring buffer or round-robin scheduler misbehaves once per cycle and passes any test that starts in the middle. Hash bucketing has the same hole for negative hashes.",
+      "severity": "high",
+      "tags": [
+        "numbers",
+        "operators"
+      ]
+    },
+    {
+      "id": "empty-arrays-are-truthy",
+      "title": "`[]` and `{}` are truthy",
+      "theirs": "Empty containers are falsy, so `if items:` is the idiomatic non-empty check and `if not items:` covers both None and empty.",
+      "yours": "Every object is truthy, including `[]` and `{}`. Only false, 0, -0, 0n, \"\", null, undefined and NaN are falsy. Non-empty is `items.length > 0`.",
+      "trap": "`if (items)` is true for an empty array, so the \"nothing to do\" early return you relied on never fires and the code proceeds into a loop that does nothing, a UI that renders an empty table where the empty state should be, or a request sent with an empty payload. `if (!items)` has the same hole. It never raises, and it looks exactly like the Python you meant.",
+      "severity": "high",
+      "tags": [
+        "truthiness",
+        "control-flow"
+      ]
+    },
+    {
+      "id": "equality-is-reference-based",
+      "title": "`===` on objects and arrays compares references",
+      "theirs": "`==` on lists, dicts, tuples and dataclasses compares contents recursively, so `[1, 2] == [1, 2]` is True and value equality is the default assumption.",
+      "yours": "`===` on objects and arrays is identity: `[1, 2] === [1, 2]` is false, and so is `{a: 1} === {a: 1}`. Structural comparison needs a helper - `assert.deepStrictEqual`, lodash `isEqual`, or a hand-written compare. `==` is worse, not better: it coerces, so `0 == \"\"` and `null == undefined` are both true.",
+      "trap": "Every collection operation that leaned on value equality changes meaning at once, and none of them raise. `arr.includes(obj)`, `arr.indexOf(obj)` and `new Set(objects)` all compare by reference, so a Set of structurally identical objects deduplicates nothing and quietly grows. `Array.prototype.filter` with an equality predicate returns everything. Deduplicate on a primitive key, not on the object.",
+      "severity": "high",
+      "tags": [
+        "equality",
+        "collections"
+      ]
+    },
+    {
+      "id": "object-keys-are-strings",
+      "title": "Object keys are strings; every object key collapses to the same one",
+      "theirs": "Dict keys keep their type and hash by value. `d[1]` and `d[\"1\"]` are different entries, and `d[(row, col)]` with a tuple key is an ordinary idiom.",
+      "yours": "Plain-object keys are strings or symbols. Anything else is stringified on the way in. `Map` keeps key types and permits object keys - but compares those by reference, not by value.",
+      "trap": "Two failures, both silent. `obj[1]` and `obj[\"1\"]` are the same slot, so an id map fed both ints and strings merges entries. Worse, a tuple-key habit ported as `cache[[row, col]]` stringifies to \"row,col\" - which coincidentally works - while `cache[{row, col}]` stringifies to \"[object Object]\", so every single entry overwrites the previous one and the cache holds exactly one value while reporting hits for every key. Switching to `Map` fixes the type question and not the value-equality one: `m.set({a: 1}, x)` then `m.get({a: 1})` is undefined. Build a string key explicitly.",
+      "severity": "high",
+      "tags": [
+        "collections",
+        "equality"
+      ]
+    },
+    {
+      "id": "this-is-not-self",
+      "title": "Methods lose their receiver when you pass them around",
+      "theirs": "`obj.method` is a bound method that carries its instance permanently. Passing it as a callback is safe and common.",
+      "yours": "`this` is determined by how the function is called, not where it was defined. Extracting `const f = obj.method` and calling `f()` leaves `this` undefined - class bodies are always strict mode. Arrow functions capture `this` lexically, which is why class properties are often declared as arrow functions.",
+      "trap": "`setTimeout(this.flush, 1000)`, `arr.map(this.transform)` and `emitter.on('x', this.handle)` all compile, all type-check, and all throw \"Cannot read properties of undefined\" at call time - which is to say, later, in production, in whichever code path first triggers the callback. TypeScript will not catch it by default; `strictBindCallApply` does not cover this case. Pass `(...args) => this.handle(...args)`, or define the method as an arrow-function property.",
+      "severity": "high",
+      "tags": [
+        "objects",
+        "functions"
+      ]
+    },
+    {
+      "id": "await-or-nothing-happens-in-order",
+      "title": "A forgotten await gives you a truthy Promise",
+      "theirs": "IO is synchronous by default. When you do use asyncio, a missing await means the coroutine never runs at all, which usually announces itself.",
+      "yours": "An async function starts running immediately on call and returns a Promise. Every function that awaits anything must itself be async, so the colour spreads up the call stack.",
+      "trap": "The work does happen - it just is not ordered or checked. A Promise object is always truthy, so `if (await?)` style guards pass: `if (userExists(id))` with the await forgotten is true even when the function resolves to false. A rejected Promise nobody awaited becomes an unhandled rejection that in Node 15 and later terminates the process by default, and a try/catch wrapped around an un-awaited call catches nothing. `array.forEach(async x => ...)` is the same bug in idiomatic clothing: forEach ignores the returned Promises and continues immediately, so use a `for...of` loop with await, or `Promise.all(array.map(...))`.",
+      "severity": "high",
+      "tags": [
+        "async",
+        "errors"
+      ]
+    },
+    {
+      "id": "structural-typing",
+      "title": "Types are structural, so distinct types with the same shape are interchangeable",
+      "theirs": "isinstance and nominal classes. A UserId class and an OrderId class are never mistaken for each other, whatever their contents.",
+      "yours": "A type is a shape. Anything with the required members satisfies it, no declaration or inheritance needed - which makes describing existing JavaScript pleasant, and makes two same-shaped types identical as far as the compiler is concerned.",
+      "trap": "`type UserId = string` and `type OrderId = string` are aliases, not distinct types, so passing one where the other is expected type-checks perfectly and the mix-up shows up as a database miss. The same holds for `{lat: number, lng: number}` versus `{x: number, y: number}` once you rename fields. The fix is a branded type - `type UserId = string & {readonly __brand: unique symbol}` - which costs a cast at the boundary and buys real separation. Note that object *literals* do get an excess-property check, so the looseness is easy to underestimate from small examples.",
+      "severity": "medium",
+      "tags": [
+        "types",
+        "design"
+      ]
+    },
+    {
+      "id": "key-order-and-json-shape",
+      "title": "Integer-like keys reorder themselves, and undefined disappears from JSON",
+      "theirs": "Dicts preserve insertion order (guaranteed since 3.7) whatever the key types, and `json.dumps` writes them in that order. `None` serialises to null, and 3.0 serialises as 3.0.",
+      "yours": "Object properties with integer-like string keys are ordered first, ascending, regardless of insertion order; everything else follows in insertion order. `JSON.stringify` omits keys whose value is undefined and turns undefined array elements into null. There is no float/int distinction, so 3.0 serialises as 3.",
+      "trap": "`{b: 1, 2: 2, a: 3, 1: 4}` serialises as `{\"1\":4,\"2\":2,\"b\":1,\"a\":3}`. Anything that hashes or signs a JSON body - a webhook signature, an idempotency key, a cache key, a golden-file test - stops matching the Python side when keys happen to be numeric strings. Separately, a field set to undefined vanishes from the payload entirely rather than arriving as null, so a PATCH meant to clear a field instead leaves it untouched. Use null when you mean null.",
+      "severity": "medium",
+      "tags": [
+        "serialisation",
+        "collections"
+      ]
+    },
+    {
+      "id": "sort-and-string-methods",
+      "title": "`sort` compares as strings, and `replace` replaces once",
+      "theirs": "`sorted(xs)` returns a new list and compares numbers as numbers; `list.sort()` mutates and returns None. `str.replace(a, b)` replaces every occurrence.",
+      "yours": "`arr.sort()` mutates in place *and* returns the same array, and the default comparator converts each element to a string. Numeric sorting needs `arr.sort((a, b) => a - b)`. `str.replace(\"a\", \"b\")` with a string pattern replaces only the first match; `replaceAll` or a `/g` regex replaces all.",
+      "trap": "Both fail by producing a result rather than an error. `[1, 10, 2, 9].sort()` returns [1, 10, 2, 9] - unchanged, and therefore extremely convincing - because \"10\" sorts before \"2\". And because sort returns the array, `const sorted = items.sort()` reads like the Python `sorted()` you meant while having also reordered the caller's array in place; use `[...items].sort()` if the original matters. The `replace` case gets caught in tests with one occurrence and escapes with two.",
+      "severity": "high",
+      "tags": [
+        "collections",
+        "strings"
+      ]
+    }
+  ]
+}

@@ -15,7 +15,7 @@ export function NewTrackForm({
   targets: { slug: string; label: string }[];
   known: string[];
   knownLabels: Record<string, string>;
-  mappedPairs: { from: string; to: string }[];
+  mappedPairs: { from: string; to: string; level: "executed" | "reviewed" }[];
   hasExpertise: boolean;
   pro: boolean;
   gems: number;
@@ -29,10 +29,12 @@ export function NewTrackForm({
   const [error, setError] = useState<string | null>(null);
 
   const from = known.filter((k) => k !== target);
-  // Whether we hold authored, human-checked correspondences for this pair, or
-  // are relying on the model's own knowledge. The learner deserves to know
-  // which, because they cannot check the comparisons themselves.
-  const mapped = from.some((f) => mappedPairs.some((p) => p.from === f && p.to === target));
+  // Whether we hold authored correspondences for this pair, and if so whether
+  // they were actually executed or only written carefully. The learner deserves
+  // to know which, because they cannot check the comparisons themselves - and
+  // claiming "checked" for something we never ran would be the exact failure
+  // the authored maps exist to prevent, only with our name on it.
+  const map = mappedPairs.find((p) => from.includes(p.from) && p.to === target);
   const affordable = pro || gems >= cost;
 
   async function submit(e: React.FormEvent) {
@@ -102,9 +104,11 @@ export function NewTrackForm({
         </p>
         {from.length > 0 && (
           <p className="mt-1.5 text-[12px] leading-relaxed text-[#6b727e]">
-            {mapped
-              ? "We hold a human-written map of the traps between these two languages, so the comparisons are checked rather than improvised."
-              : "We have no authored map for this pair yet, so comparisons come from the model alone. It is told to stay quiet rather than guess, but treat them with more suspicion than usual."}
+            {map?.level === "executed"
+              ? "We hold a human-written map of the traps between these two languages, and every claim in it was checked by running it in both. The comparisons you read are not improvised."
+              : map
+                ? "We hold a human-written map for this pair, but the toolchain was not available to execute it, so those claims rest on care rather than on having been run. Anything uncertain was left out."
+                : "We have no authored map for this pair yet, so comparisons come from the model alone. It is told to stay quiet rather than guess, but treat them with more suspicion than usual."}
           </p>
         )}
       </div>

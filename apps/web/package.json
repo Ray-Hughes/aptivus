@@ -10,7 +10,7 @@
     "problems:verify": "node ../../packages/problems/verify.mjs",
     "problems:import": "node scripts/import-problems.mjs",
     "courses:import": "node scripts/import-courses.mjs",
-    "prebuild": "node scripts/check-engine-sync.mjs",
+    "prebuild": "node scripts/check-engine-sync.mjs && node scripts/check-transitions.mjs",
     "db:migrate": "node scripts/migrate.mjs",
     "db:seed": "node scripts/seed.mjs",
     "db:import": "node scripts/import-problems.mjs && node scripts/import-companies.mjs && node scripts/import-courses.mjs",

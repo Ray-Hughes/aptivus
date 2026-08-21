@@ -2,6 +2,10 @@
   "from": "ruby",
   "to": "go",
   "summary": "Ruby optimises for the writer; Go optimises for the reader six months later. Expect to write more lines to say the same thing, and to spend that budget on error paths Ruby let you ignore. The hardest adjustment is not syntax - it is that Go removes the escape hatches Ruby taught you to lean on: no exceptions, no monkey patching, no nil-safe navigation, and no metaprogramming to paper over a design you have not settled yet.",
+  "verification": {
+    "level": "reviewed",
+    "note": "No Go toolchain was available when this was written, so nothing here was executed."
+  },
   "concepts": [
     {
       "id": "errors-are-values",
@@ -10,7 +14,10 @@
       "yours": "Functions return (value, error). You check err on the line after every call that can fail.",
       "trap": "Nothing unwinds. `val, _ := doThing()` compiles cleanly and discards the failure, so the bug surfaces later as a zero value with no stack trace pointing at the cause.",
       "severity": "high",
-      "tags": ["errors", "control-flow"]
+      "tags": [
+        "errors",
+        "control-flow"
+      ]
     },
     {
       "id": "zero-values",
@@ -19,7 +26,10 @@
       "yours": "Every type has a zero value: 0, \"\", false, and nil only for pointers, slices, maps, channels, funcs and interfaces.",
       "trap": "A missing map key returns the zero value rather than nil, so `m[\"absent\"]` is 0 and looks like a real answer. Use the two-value form, `v, ok := m[k]`, whenever absent and zero mean different things.",
       "severity": "high",
-      "tags": ["types", "nil"]
+      "tags": [
+        "types",
+        "nil"
+      ]
     },
     {
       "id": "no-nil-navigation",
@@ -28,7 +38,10 @@
       "yours": "Dereferencing a nil pointer panics at runtime. You check, or you design so it cannot be nil.",
       "severity": "high",
       "trap": "Ruby lets you defer the question of whether something exists. Go makes you answer it at the point you receive the value, and a panic in production is the cost of postponing it.",
-      "tags": ["nil", "pointers"]
+      "tags": [
+        "nil",
+        "pointers"
+      ]
     },
     {
       "id": "structs-not-objects",
@@ -37,7 +50,10 @@
       "yours": "Structs hold data; methods are functions with a receiver. Composition by embedding. No inheritance at all.",
       "trap": "Reaching for an abstract base class is the instinct to unlearn. The Go answer is usually a small interface defined where it is *consumed*, not where it is implemented.",
       "severity": "medium",
-      "tags": ["types", "design"]
+      "tags": [
+        "types",
+        "design"
+      ]
     },
     {
       "id": "interfaces-are-implicit",
@@ -46,7 +62,10 @@
       "yours": "A type satisfies an interface by having the methods. No `implements` keyword - but it is checked at compile time.",
       "trap": "Closer to Ruby than it first looks, so the mistake is over-declaring. Define interfaces small and at the point of use; a one-method interface is idiomatic, not lazy.",
       "severity": "medium",
-      "tags": ["types", "design"]
+      "tags": [
+        "types",
+        "design"
+      ]
     },
     {
       "id": "slices-share-memory",
@@ -55,7 +74,10 @@
       "yours": "A slice is a window onto a backing array. Two slices can share storage, and append may or may not reallocate.",
       "trap": "`b := a[:2]` then writing to b can change a. And append sometimes mutates in place and sometimes copies, so whether a caller sees your change depends on capacity - a genuinely surprising source of bugs.",
       "severity": "high",
-      "tags": ["collections", "memory"]
+      "tags": [
+        "collections",
+        "memory"
+      ]
     },
     {
       "id": "goroutines-and-channels",
@@ -64,7 +86,9 @@
       "yours": "`go f()` starts a goroutine. Channels pass values between them. This is normal code, not infrastructure.",
       "trap": "Starting one is trivial, so leaking one is trivial. A goroutine blocked forever on a channel nobody writes to is invisible until the process runs out of memory. Know who closes a channel, and use context for cancellation.",
       "severity": "high",
-      "tags": ["concurrency"]
+      "tags": [
+        "concurrency"
+      ]
     },
     {
       "id": "context",
@@ -73,7 +97,10 @@
       "yours": "ctx is the first parameter of anything that does IO, and it carries deadlines and cancellation down the call tree.",
       "trap": "It looks like ceremony until the first time a request is cancelled and your code keeps querying the database on its behalf. Passing context.Background() deep in a request path is the tell that it was not threaded properly.",
       "severity": "high",
-      "tags": ["concurrency", "io"]
+      "tags": [
+        "concurrency",
+        "io"
+      ]
     },
     {
       "id": "no-monkey-patching",
@@ -82,7 +109,9 @@
       "yours": "Methods can only be defined on types declared in the same package. Wrap, or write a plain function.",
       "trap": "Whole categories of Ruby solution simply do not translate, and the workarounds people reach for first - reflection, empty interfaces - are worse than the plain function they were avoiding.",
       "severity": "medium",
-      "tags": ["design"]
+      "tags": [
+        "design"
+      ]
     },
     {
       "id": "explicit-formatting",
@@ -91,7 +120,9 @@
       "yours": "gofmt is not configurable. Everyone's code looks the same.",
       "trap": "Not a trap - a relief. Do not fight it, and do not add a formatter config to a Go repo.",
       "severity": "low",
-      "tags": ["tooling"]
+      "tags": [
+        "tooling"
+      ]
     },
     {
       "id": "testing-is-builtin",
@@ -100,7 +131,9 @@
       "yours": "`go test`, functions named TestX(t *testing.T), and table-driven cases as the default idiom.",
       "trap": "Looking for an RSpec equivalent wastes a week. The plain table of cases IS the idiom, and interfaces defined at the point of use make most mocking unnecessary.",
       "severity": "medium",
-      "tags": ["testing"]
+      "tags": [
+        "testing"
+      ]
     },
     {
       "id": "packages-not-gems",
@@ -109,7 +142,10 @@
       "yours": "go.mod, import paths that are URLs, and an identifier is exported if it starts with a capital letter.",
       "trap": "Capitalisation is an access modifier. Renaming a field from userID to UserID changes its visibility, and JSON marshalling silently ignores unexported fields - a very common first-week bug.",
       "severity": "high",
-      "tags": ["packages", "serialisation"]
+      "tags": [
+        "packages",
+        "serialisation"
+      ]
     }
   ]
 }

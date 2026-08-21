@@ -1,0 +1,179 @@
+{
+  "from": "javascript",
+  "to": "python",
+  "summary": "Most of what you fought in JavaScript is gone: one number type becomes two honest ones, `==` stops coercing, there is no `this` to lose, and the standard library is finally worth reading. The cost is that Python's defaults are the opposite of JavaScript's in three places that matter - emptiness is falsy, mutable state in a def line or a class body is created once and shared, and coroutines do nothing until awaited. None of those raise; they produce a program that runs and reports the wrong number. The `for` loop is the other one to watch, because `for x in xs` is the syntax of `for...in` and the behaviour of `for...of`.",
+  "verification": {
+    "level": "executed",
+    "note": "Snippets run against CPython 3.12.7 and Node 23.1.0."
+  },
+  "concepts": [
+    {
+      "id": "empty-collections-are-falsy",
+      "title": "`[]` and `{}` are falsy",
+      "theirs": "Every object is truthy. `[]` and `{}` are true, `\"0\"` is true, and only a short list of primitives is false - so `if (arr)` is a null check and nothing more.",
+      "yours": "Empty containers are falsy along with 0, 0.0, \"\" and None. `if items:` means \"items exists and has something in it\".",
+      "trap": "This one is usually a relief and occasionally a disaster. `if (arr)` translated as `if items:` silently changes meaning: the branch that used to run for a present-but-empty list now takes the else path, so \"no rows found\" and \"the fetch never happened\" become the same case. Write `if items is not None:` when you meant the null check.",
+      "severity": "high",
+      "tags": [
+        "truthiness",
+        "control-flow"
+      ]
+    },
+    {
+      "id": "mutable-default-arguments",
+      "title": "Default parameter values are built once, not per call",
+      "theirs": "`function f(a, acc = [])` runs the default expression on every call that omits the argument, so each call gets its own array. It is safe to default to `[]`, `{}`, or `Date.now()`.",
+      "yours": "The default expression in `def f(a, acc=[])` is evaluated exactly once, when the `def` statement runs at import time, and the resulting object is reused by every call that omits the argument.",
+      "trap": "Successive calls share one accumulator: `f(1)` returns [1], `f(2)` returns [1, 2]. In a web process the def runs once at boot, so the leak is per-worker and grows for days. `def log(msg, at=datetime.now())` is the same bug with a timestamp frozen at deploy time. Default to None and build the real value in the body.",
+      "severity": "high",
+      "tags": [
+        "functions",
+        "mutation"
+      ]
+    },
+    {
+      "id": "class-attributes-are-shared",
+      "title": "A class body is not a field declaration",
+      "theirs": "`class Bag { items = []; }` is a class field: the initialiser runs per construction, so every instance gets its own array.",
+      "yours": "`class Bag: items = []` creates one attribute on the class itself. Every instance reads through to that single object. Per-instance state is created in `__init__` with `self.items = []`.",
+      "trap": "Reads and mutations go to the shared object while assignment does not: `b.items.append(x)` is visible from every other instance, but `b.items = [x]` quietly creates an instance attribute that shadows the class one. So the same field appears shared in some code paths and private in others. Dataclasses reject the obvious version of this at class-creation time and make you write `field(default_factory=list)`, which is a good reason to use them.",
+      "severity": "high",
+      "tags": [
+        "objects",
+        "mutation"
+      ]
+    },
+    {
+      "id": "mutating-methods-return-none",
+      "title": "`sort()` mutates and returns None, and takes a key not a comparator",
+      "theirs": "`arr.sort()` mutates and returns the same array, so chaining works. The default comparison is lexicographic on stringified elements, which is why `[1, 10, 2, 9].sort()` stays in that order and everyone passes `(a, b) => a - b`.",
+      "yours": "`lst.sort()` mutates in place and returns None; `sorted(lst)` returns a new list. Numbers compare as numbers, so no comparator is needed. `sort` and `sorted` take `key=`, a function of one element, not a two-argument comparator.",
+      "trap": "`items = items.sort()` sets items to None, and the error surfaces far from the line that caused it. Passing your old comparator as `key=` is worse than an error in the cases where it does not raise: a one-argument lambda that ignores the ordering you wanted will happily produce a stable but meaningless order. Mixed types no longer coerce either - `sorted([1, \"a\"])` raises TypeError rather than sorting by string.",
+      "severity": "high",
+      "tags": [
+        "collections",
+        "mutation"
+      ]
+    },
+    {
+      "id": "for-in-yields-values",
+      "title": "`for x in xs` behaves like `for...of`",
+      "theirs": "`for (const i in arr)` yields the indices, and as strings. `for (const v of arr)` yields the values. `in` on an array tests whether an index exists, so `0 in [5, 6]` is true.",
+      "yours": "`for x in xs` yields the values - the `for...of` behaviour under the `for...in` spelling. Indices come from `enumerate(xs)`. The `in` operator is a membership test: `0 in [5, 6]` is False and `5 in [5, 6]` is True.",
+      "trap": "Translating `for (const i in arr) total += arr[i]` line for line gives `for i in nums: total += nums[i]`, which on a list of integers is now indexing by value. On [3, 1, 2] that is an IndexError; on a list whose values all happen to be valid indices it runs and returns a plausible wrong total. The `in` operator is the quieter half: `if key in data` reads identically in both languages but tests keys on a dict and values on a list, so `0 in [5, 6]` flips from true to False.",
+      "severity": "high",
+      "tags": [
+        "iteration",
+        "operators"
+      ]
+    },
+    {
+      "id": "identity-is-not-strict-equality",
+      "title": "`is` is not `===`",
+      "theirs": "`==` coerces and `===` does not, so the rule is \"always use `===`\" and it is a reliable rule.",
+      "yours": "`==` does not coerce across types - it compares values, and is what you want essentially always. `is` compares object identity and is not the strict-equality operator, however much it looks like one.",
+      "trap": "`is` appears to work because CPython caches small integers (-5 to 256) and the compiler dedupes string literals within a file. So `n is 200` is True, `n is 300` is False for runtime-computed values, and a comparison against a string literal is True until the string arrives from a socket or is built by concatenation. The failure depends on the data, which means it reaches production. Use `is` only for None, True, False and sentinel objects.",
+      "severity": "high",
+      "tags": [
+        "equality",
+        "identity"
+      ]
+    },
+    {
+      "id": "closures-capture-late",
+      "title": "There is no per-iteration binding",
+      "theirs": "`let` gives each iteration of a `for` loop its own binding, so closures created inside the loop capture that iteration's value. `var` does not, which is why `let` exists.",
+      "yours": "The loop target is one ordinary local in the enclosing function scope, reused each pass, and closures capture the variable rather than its current value. It behaves like `var`, and there is no `let`.",
+      "trap": "`handlers = [lambda: i for i in range(3)]` produces three callables that all return 2. Anything built in a loop and called later - event handlers, retry callbacks, `functools.partial` chains, threads started from a loop - collapses onto the final element. The idiomatic fix is a default argument, `lambda i=i: i`, which binds by value at definition time.",
+      "severity": "high",
+      "tags": [
+        "closures",
+        "scope"
+      ]
+    },
+    {
+      "id": "iterators-are-one-shot",
+      "title": "`map` and `filter` return one-shot iterators",
+      "theirs": "`arr.map()` and `arr.filter()` return real arrays. You can read `.length`, iterate twice, and index them.",
+      "yours": "`map`, `filter`, `zip`, `reversed` and `enumerate` return lazy iterators that yield each element once and are then exhausted. List comprehensions - `[f(x) for x in xs if ok(x)]` - are the idiomatic replacement and give you an actual list.",
+      "trap": "The second pass silently sees an empty sequence. `rows = filter(is_valid, rows)` then logging `len(rows)` raises, but the more common shape is iterating once to count and again to write, and the write does nothing. An exhausted iterator is still truthy, so `if not rows` does not catch it either.",
+      "severity": "high",
+      "tags": [
+        "iterators",
+        "collections"
+      ]
+    },
+    {
+      "id": "coroutines-need-await",
+      "title": "Calling an async function without await does nothing at all",
+      "theirs": "An async function starts executing the moment you call it and runs synchronously up to the first await. Forgetting to await loses the result and the error handling, but the work still happens.",
+      "yours": "Calling an async def returns a coroutine object and executes zero lines of the body. The work only happens when something awaits it or schedules it on the loop with `asyncio.create_task` or `asyncio.gather`.",
+      "trap": "`save_to_db(record)` without await is a no-op that returns a truthy object, and the only sign is a RuntimeWarning on stderr that most log configurations swallow. The mirror image also exists: `asyncio.create_task` starts work but nothing keeps a reference, and a task nobody holds can be garbage-collected mid-flight, so keep the handle. There is also no implicit event loop - top-level async code needs `asyncio.run`.",
+      "severity": "high",
+      "tags": [
+        "async",
+        "concurrency"
+      ]
+    },
+    {
+      "id": "list-repetition-shares-references",
+      "title": "`[[]] * 3` makes three references to one list",
+      "theirs": "There is no repetition operator, so you build grids with `Array.from({length: 3}, () => [])` and the arrow function makes the per-row freshness obvious.",
+      "yours": "`*` repeats a sequence and copies references, not objects. `[[]] * 3` is a list of three names for the same inner list. Build rows with a comprehension: `[[] for _ in range(3)]`.",
+      "trap": "It looks like it works, because `len(grid)` is 3 and each row is an empty list. Then `grid[0].append(1)` and every row contains 1. `[[0] * cols] * rows` is the version that reaches production, because the inner `* cols` on immutable ints is perfectly correct and the outer one on lists is not.",
+      "severity": "high",
+      "tags": [
+        "collections",
+        "mutation"
+      ]
+    },
+    {
+      "id": "modulo-follows-the-divisor",
+      "title": "`%` on a negative number returns a non-negative result",
+      "theirs": "The remainder takes the sign of the dividend: `-1 % 3` is -1. Division never truncates, because there is only one number type - `7 / 2` is 3.5.",
+      "yours": "The result takes the sign of the divisor, so `-1 % 3` is 2 and `-7 // 2` is -4. There are two numeric types: `/` always produces a float, `//` floors and keeps ints, and int is arbitrary precision.",
+      "trap": "The wrap-around idiom changes meaning. `items[(i - 1) % len(items)]` is a correct backwards-cyclic index in Python; the same expression in JavaScript yields -1 at i = 0 and indexes to undefined, which is why the JS version you are porting probably has a hand-written guard around it. Carry the guard over and it is now dead code hiding the one input where the two disagree. In the other direction, `/` always producing a float means any computed index has to use `//` or it raises at the subscript.",
+      "severity": "medium",
+      "tags": [
+        "numbers",
+        "operators"
+      ]
+    },
+    {
+      "id": "equality-is-structural",
+      "title": "`==` on containers compares contents",
+      "theirs": "`===` on objects and arrays is reference identity - `[1, 2] === [1, 2]` is false - so everyone reaches for a deepEqual helper or JSON.stringify.",
+      "yours": "`==` on lists, tuples, dicts and sets compares element by element, recursively. `[1, 2] == [1, 2]` is True. Dataclasses get the same behaviour for free with `eq=True`, which is the default.",
+      "trap": "Mostly a relief, with two edges. Structural equality is O(n) and recursive, so an equality check inside a hot loop over large structures is a real cost that `===` never had. And identity has not disappeared - if you translate a `===` reference check into `is`, you get a comparison that is False for equal-but-distinct objects and that no test with literal fixtures will catch.",
+      "severity": "medium",
+      "tags": [
+        "equality",
+        "collections"
+      ]
+    },
+    {
+      "id": "dict-keys-keep-their-type",
+      "title": "Dict keys are typed, and JSON does not preserve that",
+      "theirs": "Plain object keys are coerced to strings, so `obj[1]` and `obj[\"1\"]` are the same slot and an object used as a key becomes the literal string \"[object Object]\". Map keys keep their type but compare objects by reference.",
+      "yours": "Dict keys keep their type and hash by value: `d[1]` and `d[\"1\"]` are different entries, and a tuple works as a key - `d[(row, col)]` is idiomatic and compares structurally, unlike a JS Map keyed on an array.",
+      "trap": "The type is real until JSON is involved. `json.dumps({1: 'a'})` emits `{\"1\": \"a\"}` without a word of complaint, and loading it back gives you a dict with string keys, so every subsequent `d[user_id]` lookup misses and any `.get` default quietly takes over. Anything that round-trips through a cache, a queue or an HTTP boundary needs the key type reasserted on the way back in.",
+      "severity": "medium",
+      "tags": [
+        "collections",
+        "serialisation"
+      ]
+    },
+    {
+      "id": "self-is-explicit",
+      "title": "`self` is a parameter, and forgetting it makes a local",
+      "theirs": "`this` is implicit and dynamic - the risk is losing it, which is why `.bind(this)` and arrow functions exist. A detached method is the classic failure.",
+      "yours": "`self` is the first parameter of every instance method and is written explicitly at every attribute access. Bound methods carry their instance permanently, so `callback(obj.method)` just works and there is no bind, no arrow-function workaround, and no `that = this`.",
+      "trap": "Losing `this` is replaced by a quieter failure: `total = total + 1` when you meant `self.total` assigns a local that dies at the end of the method, so the object's state never changes and nothing raises. Python's rule is that a name assigned anywhere in a function is a local for the whole function, which also means a method that reads `count` before assigning it raises UnboundLocalError at the read.",
+      "severity": "medium",
+      "tags": [
+        "objects",
+        "scope"
+      ]
+    }
+  ]
+}
