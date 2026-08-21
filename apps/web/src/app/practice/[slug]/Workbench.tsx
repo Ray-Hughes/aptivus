@@ -9,7 +9,7 @@ import {
   getEngine, type ResultRow, type TestCase, type TraceResult,
 } from "@/lib/engine-client";
 
-type ProblemTab = "description" | "schema" | "hints" | "solution";
+type ProblemTab = "description" | "schema" | "hints" | "ask" | "solution";
 
 function RowTable({ columns, rows }: { columns: string[]; rows: unknown[][] }) {
   if (!columns.length) return <p className="text-[12.5px] text-[#8b929d]">No columns returned.</p>;
@@ -83,6 +83,9 @@ export function Workbench(props: {
   const [expr, setExpr] = useState("");
   const [replLog, setReplLog] = useState<{ q: string; a: string; bad?: boolean }[]>([]);
   const [hints, setHints] = useState<string[]>([]);
+  const [asked, setAsked] = useState<{ q: string; a: string; at?: string }[]>([]);
+  const [question, setQuestion] = useState("");
+  const [useStep, setUseStep] = useState(true);
   const [ent, setEnt] = useState(props.entitlements);
   const engine = useRef(getEngine());
 
@@ -200,6 +203,44 @@ export function Workbench(props: {
     }
   });
 
+  /* --- ask ------------------------------------------------------------ */
+  const ask = () => guard("ask", async () => {
+    const q = question.trim();
+    if (!q) return;
+    // The trace context is what makes the answer about their code rather than
+    // about the problem in general, so it is sent whenever they are actually
+    // paused somewhere.
+    const cur = trace?.steps[step];
+    const at =
+      useStep && trace && cur
+        ? {
+            line: cur.line,
+            source: trace.source[cur.line - 1] ?? "",
+            func: cur.func,
+            locals: Object.keys(cur.locals)
+              .sort()
+              .slice(0, 30)
+              .map((n) => [n, trace.pool[cur.locals[n]]?.s ?? "?"] as [string, string]),
+          }
+        : undefined;
+
+    const res = await fetch(`/api/problems/${props.slug}/ask`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question: q, code, language: isSql ? "sql" : lang, at }),
+    });
+    const data = await res.json();
+    setAsked((prev) => [
+      ...prev,
+      {
+        q,
+        a: res.ok ? data.answer : (data.error ?? "Could not answer that."),
+        at: at ? `line ${at.line} in ${at.func}` : undefined,
+      },
+    ]);
+    setQuestion("");
+  });
+
   /* --- trace ---------------------------------------------------------- */
   const runTrace = () => guard("trace", async () => {
     const t = await engine.current.trace(code, props.sampleTests[0] ?? {}, "function", func);
@@ -299,6 +340,7 @@ export function Workbench(props: {
               ["description", "Description"],
               ...(isSql ? [["schema", "Schema & data"] as const] : []),
               ["hints", `Hints ${hints.length}/${props.hintCount}`],
+              ["ask", "Ask"],
               ["solution", "Solution"],
             ] as [ProblemTab, string][]).map(([id, label]) => (
               <button
@@ -393,6 +435,82 @@ export function Workbench(props: {
               </div>
             )}
 
+            {pTab === "ask" && (
+              <div className="flex h-full flex-col">
+                <div className="min-h-0 flex-1 space-y-4 overflow-y-auto">
+                  {asked.length === 0 && (
+                    <div className="text-[12.5px] leading-relaxed text-[#8b929d]">
+                      <p>
+                        Stuck on one specific thing? Ask about that thing. It answers about
+                        your code, not the problem in general.
+                      </p>
+                      <p className="mt-2.5">
+                        If you are stepping through a trace it can see where you are paused
+                        and what every variable actually holds, so
+                        {" "}
+                        <span className="font-mono text-[#9ecbff]">
+                          why is stack empty here
+                        </span>{" "}
+                        gets a real answer.
+                      </p>
+                      <p className="mt-2.5 text-[#6b727e]">
+                        It will not write the solution. That is the Solution tab, and it costs
+                        something on purpose.
+                      </p>
+                    </div>
+                  )}
+                  {asked.map((t, i) => (
+                    <div key={i}>
+                      <p className="text-[12.5px] font-medium text-[#c8ccd4]">
+                        {t.q}
+                        {t.at && (
+                          <span className="ml-2 rounded-full bg-white/[0.07] px-2 py-0.5 font-mono text-[11px] text-[#8b929d]">
+                            {t.at}
+                          </span>
+                        )}
+                      </p>
+                      <Markdown source={t.a} className="mt-1.5 text-[13px] text-[#c8ccd4]" />
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-3 shrink-0 border-t border-white/[0.07] pt-3">
+                  {trace && (
+                    <label className="mb-2 flex cursor-pointer items-center gap-2 text-[12px] text-[#8b929d]">
+                      <input
+                        type="checkbox" checked={useStep}
+                        onChange={(e) => setUseStep(e.target.checked)}
+                        className="accent-[#4aa3ff]"
+                      />
+                      Include where I am paused
+                      <span className="font-mono text-[#6b727e]">
+                        line {trace.steps[step]?.line} in {trace.steps[step]?.func}
+                      </span>
+                    </label>
+                  )}
+                  <form
+                    onSubmit={(e) => { e.preventDefault(); ask(); }}
+                    className="flex gap-2"
+                  >
+                    <input
+                      value={question}
+                      onChange={(e) => setQuestion(e.target.value)}
+                      maxLength={1000}
+                      placeholder="What is this line actually doing?"
+                      className="flex-1 rounded-lg border border-[#2a2d33] bg-[#0f1013] px-3 py-2 text-[13px] text-[#e6e8ec] outline-none transition focus:border-[#4aa3ff]/60"
+                    />
+                    <button
+                      type="submit"
+                      disabled={busy === "ask" || question.trim().length < 3}
+                      className="rounded-lg border border-[#3a3d42] px-3 py-2 text-[12.5px] text-[#c8ccd4] transition hover:border-[#4a4d52] disabled:opacity-40"
+                    >
+                      {busy === "ask" ? "Thinking…" : "Ask"}
+                    </button>
+                  </form>
+                </div>
+              </div>
+            )}
+
             {pTab === "solution" && (
               <div>
                 {solution ? (
@@ -472,11 +590,16 @@ export function Workbench(props: {
             </div>
             <div className="flex items-center justify-between border-t border-[#24262b] px-4 py-2.5">
               <div className="flex gap-2">
-                <button onClick={runTrace} disabled={!!busy || booting}
-                        className={`${btn} border border-[#33363d] text-[#dfe1e5]`}>
-                  {busy === "trace" ? "Tracing…" : "Trace"}
-                </button>
-                <button onClick={runSamples} disabled={!!busy || booting}
+                {/* There is nothing to step through in a SELECT, and Run has to
+                    go to the SQL engine - sending a query to the Python one
+                    just produces a syntax error about the user's correct SQL. */}
+                {!isSql && (
+                  <button onClick={runTrace} disabled={!!busy || booting}
+                          className={`${btn} border border-[#33363d] text-[#dfe1e5]`}>
+                    {busy === "trace" ? "Tracing…" : "Trace"}
+                  </button>
+                )}
+                <button onClick={isSql ? runSql : runSamples} disabled={!!busy || booting}
                         className={`${btn} border border-[#33363d] text-[#dfe1e5]`}>
                   {busy === "run" ? "Running…" : "Run"}
                 </button>

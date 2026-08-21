@@ -14,6 +14,7 @@ const FLAGS = [
   ["multi_language", "JavaScript and Ruby adapters", 0, 0],
   ["admin_panel", "Admin area", 1, 100],
   ["language_tracks", "Job-targeted language learning tracks", 1, 100],
+  ["coach", "Ask for an explanation while solving", 1, 100],
 ];
 for (const [key, description, enabled, rollout] of FLAGS) {
   await c.execute({

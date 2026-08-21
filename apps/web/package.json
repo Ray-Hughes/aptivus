@@ -14,7 +14,8 @@
     "db:migrate": "node scripts/migrate.mjs",
     "db:seed": "node scripts/seed.mjs",
     "db:import": "node scripts/import-problems.mjs && node scripts/import-companies.mjs && node scripts/import-courses.mjs",
-    "test:tracks": "node scripts/test-tracks.mjs"
+    "test:tracks": "node scripts/test-tracks.mjs",
+    "test:coach": "node scripts/test-coach.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0",
