@@ -18,6 +18,12 @@ import type { Lesson } from "./track-gen";
  * Python runs through the same core/engine.py the browser uses, loaded into
  * Pyodide here, so a lesson verified on the server behaves identically in the
  * learner's tab.
+ *
+ * That identity is load-bearing and it is NOT automatic: the pyodide npm
+ * package must stay pinned to the same version public/engine-worker.js loads
+ * from the CDN. They were 0.26.4 and 314.0.5 for a while, which meant we were
+ * certifying lessons against Python 3.14 and running them on 3.12. Bump both
+ * or neither.
  */
 export type VerifyResult =
   | { ok: true }

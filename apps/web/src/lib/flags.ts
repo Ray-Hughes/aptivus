@@ -15,6 +15,7 @@ export const FLAGS = {
   achievements: "achievements",
   multiLanguage: "multi_language",
   adminPanel: "admin_panel",
+  languageTracks: "language_tracks",
 } as const;
 
 export type FlagKey = (typeof FLAGS)[keyof typeof FLAGS];

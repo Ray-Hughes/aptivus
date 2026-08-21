@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { db } from "@/db";
 import { companies, profiles } from "@/db/schema";
 import { summary } from "@/lib/entitlements";
+import { normalizeExpertise } from "@/lib/expertise";
 import { FLAGS, isEnabled } from "@/lib/flags";
 import { SettingsForm } from "./SettingsForm";
 
@@ -31,6 +32,7 @@ export default async function SettingsPage() {
           initialCompany={profile[0]?.targetCompany ?? ""}
           initialRole={profile[0]?.targetRole ?? ""}
           initialLanguage={profile[0]?.primaryLanguage ?? "python"}
+          initialExpertise={normalizeExpertise(profile[0]?.expertise)}
           companies={companyList}
         />
 

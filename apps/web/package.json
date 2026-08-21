@@ -13,7 +13,8 @@
     "prebuild": "node scripts/check-engine-sync.mjs",
     "db:migrate": "node scripts/migrate.mjs",
     "db:seed": "node scripts/seed.mjs",
-    "db:import": "node scripts/import-problems.mjs && node scripts/import-companies.mjs && node scripts/import-courses.mjs"
+    "db:import": "node scripts/import-problems.mjs && node scripts/import-companies.mjs && node scripts/import-courses.mjs",
+    "test:tracks": "node scripts/test-tracks.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0",
@@ -28,7 +29,7 @@
     "nanoid": "^5.1.16",
     "next": "16.3.1",
     "next-auth": "^5.0.0-beta.32",
-    "pyodide": "^314.0.5",
+    "pyodide": "0.26.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "stripe": "^22.5.0",
