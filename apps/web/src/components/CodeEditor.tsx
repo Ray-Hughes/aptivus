@@ -5,6 +5,7 @@ import { sql } from "@codemirror/lang-sql";
 import { EditorView } from "@codemirror/view";
 import CodeMirror from "@uiw/react-codemirror";
 import { useMemo } from "react";
+import type { EditorView as View } from "@codemirror/view";
 
 /**
  * The editor. CodeMirror rather than a highlighted overlay on a textarea:
@@ -81,6 +82,10 @@ export function CodeEditor({
         }}
         theme="dark"
         className="h-full text-[13px]"
+        onCreateEditor={(view) => {
+          // A handle for debugging and for driving the editor in tests.
+          (window as unknown as { __editor?: View }).__editor = view;
+        }}
       />
     </div>
   );

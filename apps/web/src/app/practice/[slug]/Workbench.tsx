@@ -2,10 +2,46 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CodeEditor } from "@/components/CodeEditor";
+import { previewTables, runQuery, type SqlResult } from "@/lib/sql-client";
 import { Markdown } from "@/components/Markdown";
 import {
   getEngine, type ResultRow, type TestCase, type TraceResult,
 } from "@/lib/engine-client";
+
+type ProblemTab = "description" | "schema" | "hints" | "solution";
+
+function RowTable({ columns, rows }: { columns: string[]; rows: unknown[][] }) {
+  if (!columns.length) return <p className="text-[12.5px] text-[#8b929d]">No columns returned.</p>;
+  return (
+    <div className="max-h-64 overflow-auto rounded-lg border border-white/[0.08]">
+      <table className="w-full border-collapse font-mono text-[11.5px]">
+        <thead className="sticky top-0 bg-white/[0.06]">
+          <tr>
+            {columns.map((c) => (
+              <th key={c} className="border-b border-white/[0.08] px-2.5 py-1.5 text-left font-medium text-[#c8ccd4]">
+                {c}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr key={i} className="odd:bg-white/[0.02]">
+              {r.map((v, j) => (
+                <td key={j} className="border-b border-white/[0.04] px-2.5 py-1.5 text-[#9aa1ad]">
+                  {v === null ? <span className="text-[#5f646d]">NULL</span> : String(v)}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {rows.length === 0 && (
+        <p className="px-2.5 py-3 text-[12px] text-[#8b929d]">No rows.</p>
+      )}
+    </div>
+  );
+}
 
 type Entitlements = { pro: boolean; gems: number; hintsLeft: number; solutionsLeft: number };
 
@@ -13,7 +49,9 @@ export function Workbench(props: {
   slug: string; title: string; difficulty: string; pattern: string; minutes: number;
   prompt: string; followups: string[]; hintCount: number; starter: string; func: string;
   sampleTests: TestCase[]; hiddenCount: number; entitlements: Entitlements;
+  kind: "code" | "sql"; sqlSchema: string; sqlSeed: string; sqlOrdered: boolean;
 }) {
+  const isSql = props.kind === "sql";
   const [code, setCode] = useState(props.starter);
   const [booting, setBooting] = useState(true);
   const [busy, setBusy] = useState<null | string>(null);
@@ -23,9 +61,11 @@ export function Workbench(props: {
   const [step, setStep] = useState(0);
   const [pinned, setPinned] = useState<string[]>([]);
   const [tab, setTab] = useState<"results" | "trace">("results");
-  const [pTab, setPTab] = useState<"description" | "hints" | "solution">("description");
+  const [pTab, setPTab] = useState<ProblemTab>("description");
   const [solution, setSolution] = useState<{ code: string; explanation: string } | null>(null);
   const [solutionCost, setSolutionCost] = useState<string | null>(null);
+  const [sqlOut, setSqlOut] = useState<SqlResult | null>(null);
+  const [tables, setTables] = useState<Awaited<ReturnType<typeof previewTables>>>([]);
   const [expr, setExpr] = useState("");
   const [replLog, setReplLog] = useState<{ q: string; a: string; bad?: boolean }[]>([]);
   const [hints, setHints] = useState<string[]>([]);
@@ -34,9 +74,17 @@ export function Workbench(props: {
 
   useEffect(() => {
     let alive = true;
-    engine.current.warm().then(() => alive && setBooting(false)).catch(() => alive && setBooting(false));
+    if (isSql) {
+      previewTables(props.sqlSchema, props.sqlSeed)
+        .then((t) => { if (alive) { setTables(t); setBooting(false); } })
+        .catch(() => alive && setBooting(false));
+    } else {
+      engine.current.warm()
+        .then(() => alive && setBooting(false))
+        .catch(() => alive && setBooting(false));
+    }
     return () => { alive = false; };
-  }, []);
+  }, [isSql, props.sqlSchema, props.sqlSeed]);
 
   const guard = useCallback(async (label: string, fn: () => Promise<void>) => {
     if (busy) return;
@@ -45,6 +93,38 @@ export function Workbench(props: {
     catch (e) { setBanner({ tone: "bad", text: (e as Error).message }); }
     finally { setBusy(null); }
   }, [busy]);
+
+  /* --- SQL: run here, judged against a reference query we never send ---- */
+  const runSql = () => guard("run", async () => {
+    setTrace(null);
+    const out = await runQuery(props.sqlSchema, props.sqlSeed, code);
+    setSqlOut(out); setTab("results");
+    setBanner(out.ok
+      ? { tone: "ok", text: `${out.rows.length} row${out.rows.length === 1 ? "" : "s"} returned` }
+      : { tone: "bad", text: out.error });
+  });
+
+  const submitSql = () => guard("submit", async () => {
+    const out = await runQuery(props.sqlSchema, props.sqlSeed, code);
+    setSqlOut(out); setTab("results");
+    if (!out.ok) { setBanner({ tone: "bad", text: out.error }); return; }
+    const res = await fetch(`/api/problems/${props.slug}/submit`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ language: "sql", code, outputs: [],
+                             sqlRows: { columns: out.columns, rows: out.rows } }),
+    });
+    const data = await res.json();
+    if (!res.ok) { setBanner({ tone: "bad", text: data.error ?? "Submit failed." }); return; }
+    const solved = data.status === "solved";
+    const awarded = data.gems?.awarded ?? 0;
+    setBanner({
+      tone: solved ? "ok" : "bad",
+      text: solved
+        ? `Solved${awarded ? ` · +${awarded} gems` : ""}`
+        : (data.sqlMessage ?? "Not quite."),
+    });
+    if (data.entitlements) setEnt((e) => ({ ...e, gems: data.entitlements.gems ?? e.gems }));
+  });
 
   /* --- run sample tests in the browser -------------------------------- */
   const runSamples = () => guard("run", async () => {
@@ -199,9 +279,10 @@ export function Workbench(props: {
           <div className="flex shrink-0 gap-1 border-b border-white/[0.07] px-3 py-2">
             {([
               ["description", "Description"],
+              ...(isSql ? [["schema", "Schema & data"] as const] : []),
               ["hints", `Hints ${hints.length}/${props.hintCount}`],
               ["solution", "Solution"],
-            ] as const).map(([id, label]) => (
+            ] as [ProblemTab, string][]).map(([id, label]) => (
               <button
                 key={id}
                 onClick={() => setPTab(id)}
@@ -230,6 +311,31 @@ export function Workbench(props: {
                   </details>
                 )}
               </>
+            )}
+
+            {pTab === "schema" && (
+              <div>
+                <p className="mb-3 text-[12.5px] text-[#8b929d]">
+                  {tables.length} table{tables.length === 1 ? "" : "s"}, seeded and queryable in your browser.
+                </p>
+                {tables.map((t) => (
+                  <div key={t.table} className="mb-4">
+                    <p className="mb-1.5 text-[12.5px]">
+                      <span className="font-mono text-[#4aa3ff]">{t.table}</span>{" "}
+                      <span className="text-[#6b727e]">
+                        ({t.total} row{t.total === 1 ? "" : "s"}{t.total > 8 ? ", first 8" : ""})
+                      </span>
+                    </p>
+                    <RowTable columns={t.columns} rows={t.rows} />
+                  </div>
+                ))}
+                <details className="mt-4">
+                  <summary className="cursor-pointer text-[12.5px] text-[#4aa3ff]">CREATE TABLE statements</summary>
+                  <pre className="mt-2 overflow-x-auto rounded-lg border border-white/[0.08] bg-[#0b0c0f] p-3 font-mono text-[11.5px] text-[#c8ccd4]">
+                    {props.sqlSchema.trim()}
+                  </pre>
+                </details>
+              </div>
             )}
 
             {pTab === "hints" && (
@@ -323,7 +429,7 @@ export function Workbench(props: {
               </span>
             </div>
             <div className="min-h-0 flex-1 overflow-hidden">
-              <CodeEditor value={code} onChange={setCode} language="python" />
+              <CodeEditor value={code} onChange={setCode} language={isSql ? "sql" : "python"} />
             </div>
             <div className="flex items-center justify-between border-t border-[#24262b] px-4 py-2.5">
               <div className="flex gap-2">
@@ -336,7 +442,7 @@ export function Workbench(props: {
                   {busy === "run" ? "Running…" : "Run"}
                 </button>
               </div>
-              <button onClick={submit} disabled={!!busy || booting}
+              <button onClick={isSql ? submitSql : submit} disabled={!!busy || booting}
                       className={`${btn} bg-[#39c06c] text-[#07230f] hover:bg-[#43d179]`}>
                 {busy === "submit" ? "Checking…" : "Submit"}
               </button>
@@ -459,6 +565,32 @@ export function Workbench(props: {
                               className={`${btn} mt-4 border border-white/12 text-[#e6e8ec]`}>
                         {busy === "trace" ? "Tracing…" : "Trace this problem"}
                       </button>
+                    </div>
+                  </div>
+                )
+              ) : isSql ? (
+                sqlOut ? (
+                  sqlOut.ok ? (
+                    <>
+                      <p className="mb-2 text-[12px] text-[#8b929d]">
+                        Your result · {sqlOut.rows.length} row{sqlOut.rows.length === 1 ? "" : "s"}
+                      </p>
+                      <RowTable columns={sqlOut.columns} rows={sqlOut.rows} />
+                    </>
+                  ) : (
+                    <pre className="rounded-lg border border-[#5c2b2b] bg-[#2a1618] p-3 font-mono text-[12px] text-[#ff9d9d]">
+                      {sqlOut.error}
+                    </pre>
+                  )
+                ) : (
+                  <div className="grid h-full place-items-center text-center">
+                    <div className="max-w-sm">
+                      <p className="text-[14px] font-medium text-[#c8ccd4]">Run your query</p>
+                      <p className="mt-2 text-[13px] leading-relaxed text-[#8b929d]">
+                        It runs against a real SQLite database in your browser.{" "}
+                        <span className="text-[#c8ccd4]">Submit</span> compares your rows
+                        against a reference query kept on the server.
+                      </p>
                     </div>
                   </div>
                 )

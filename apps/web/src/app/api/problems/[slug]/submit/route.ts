@@ -24,6 +24,7 @@ import { db } from "@/db";
 import { attempts, reveals } from "@/db/schema";
 import { isResponse, json, notFound, readBody, unauthorized } from "@/lib/api";
 import { awardCleanSolve, summary } from "@/lib/entitlements";
+import { gradeSql } from "@/lib/sql-grade";
 import { findProblem, languagesOf, testCount } from "@/lib/problems";
 
 /** Engine-identical comparison, so the browser and the server agree on a pass. */
@@ -49,6 +50,11 @@ const Body = z.object({
   language: z.enum(["python", "javascript", "ruby", "sql"]),
   /** The learner's code, kept so the dashboard can show what they wrote. */
   code: z.string().max(50_000).optional(),
+  /** SQL answers come back as rows; the reference query is run server-side. */
+  sqlRows: z.object({
+    columns: z.array(z.string()).max(64).default([]),
+    rows: z.array(z.array(z.unknown()).max(64)).max(5000).default([]),
+  }).optional(),
   /** One entry per test that ran: the value produced, never a verdict. */
   outputs: z
     .array(
@@ -100,6 +106,41 @@ export async function POST(
 
   // Grade here, against values the client was never given. Distinct in-range
   // indices only, so the same test cannot be submitted twenty times.
+  // SQL is graded as one answer against the reference query, not per case.
+  if (!codeBody) {
+    const sqlSpec = found.body.kind === "sql" ? found.body.sql : null;
+    const reference = languagesOf(found.body).includes("sql")
+      ? (found.body.languages as Record<string, { solution?: string }>).sql?.solution ?? ""
+      : "";
+    if (!sqlSpec || !reference || !body.sqlRows) {
+      return json({ error: "Send the rows your query returned." }, 400);
+    }
+    const verdict = await gradeSql(
+      { schema: sqlSpec.schema, seed: sqlSpec.seed, solution: reference,
+        ordered: Boolean(sqlSpec.ordered) },
+      body.sqlRows,
+    );
+    const [attempt] = await db.insert(attempts).values({
+      userId, problemId: found.row.id, language: "sql",
+      status: verdict.passed ? "solved" : "tried",
+      code: body.code ?? null,
+      testsPassed: verdict.passed ? 1 : 0, testsTotal: 1,
+      durationMs: body.durationMs ?? null,
+    }).returning({ id: attempts.id });
+    const award = verdict.passed
+      ? await awardCleanSolve(userId, found.row.id, found.body.difficulty)
+      : { awarded: 0, reason: "not_solved" as const };
+    return json({
+      attemptId: attempt.id,
+      status: verdict.passed ? "solved" : "tried",
+      testsPassed: verdict.passed ? 1 : 0, testsTotal: 1,
+      sqlMessage: verdict.message, expectedRows: verdict.expectedRows,
+      results: [{ index: 0, passed: verdict.passed, sample: false }],
+      gems: { awarded: award.awarded, reason: award.reason },
+      entitlements: await summary(userId),
+    });
+  }
+
   const seen = new Set<number>();
   const passedIndices = new Set<number>();
   for (const o of body.outputs) {

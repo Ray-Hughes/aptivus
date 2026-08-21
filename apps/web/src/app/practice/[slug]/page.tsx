@@ -17,6 +17,8 @@ export default async function PracticePage({ params }: { params: Promise<{ slug:
   const body = row.body as Record<string, unknown>;
   const languages = (body.languages ?? {}) as Record<string, { starter?: string }>;
   const tests = (body.tests ?? []) as { sample?: boolean }[];
+  const isSql = row.kind === "sql";
+  const sqlSpec = (body.sql ?? {}) as { schema?: string; seed?: string; ordered?: boolean };
   const ent = await summary(session.user.id);
 
   // Hidden tests and reference solutions never reach the client unmetered.
@@ -31,7 +33,11 @@ export default async function PracticePage({ params }: { params: Promise<{ slug:
       prompt={String(body.prompt ?? "")}
       followups={(body.followups ?? []) as string[]}
       hintCount={((body.hints ?? []) as string[]).length}
-      starter={languages.python?.starter ?? ""}
+      kind={isSql ? "sql" : "code"}
+      sqlSchema={sqlSpec.schema ?? ""}
+      sqlSeed={sqlSpec.seed ?? ""}
+      sqlOrdered={Boolean(sqlSpec.ordered)}
+      starter={isSql ? (languages.sql?.starter ?? "SELECT\n") : (languages.python?.starter ?? "")}
       func={(body.signature as { name?: Record<string, string> })?.name?.python ?? "solve"}
       sampleTests={tests.filter((t) => t.sample)}
       hiddenCount={tests.filter((t) => !t.sample).length}
