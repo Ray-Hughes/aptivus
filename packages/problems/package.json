@@ -1,0 +1,22 @@
+{
+  "name": "@aptivus/problems",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Language-neutral problem format v2, the curated packs, and the verifier.",
+  "exports": {
+    ".": "./src/index.mjs",
+    "./schema": "./src/schema.mjs",
+    "./schema.json": "./schema.json"
+  },
+  "types": "./src/types.ts",
+  "scripts": {
+    "verify": "node verify.mjs",
+    "schema": "node scripts/gen-schema.mjs"
+  },
+  "dependencies": {
+    "pyodide": "^314.0.5",
+    "sql.js": "^1.14.2",
+    "zod": "^4.4.3"
+  }
+}

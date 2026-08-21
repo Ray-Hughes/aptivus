@@ -1,0 +1,451 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aptivus.dev/schemas/problem-v2.json",
+  "title": "Aptivus problem format v2",
+  "description": "A language-neutral practice problem: prompt, hints, tests and explanation are shared, and each language contributes only a starter, a reference solution and its own notes. Generated from packages/problems/src/schema.mjs - edit that, then run `npm run schema`.",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]*$"
+        },
+        "pack": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "const": "code"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "difficulty": {
+          "type": "string",
+          "enum": [
+            "easy",
+            "medium",
+            "hard"
+          ]
+        },
+        "pattern": {
+          "default": "",
+          "type": "string"
+        },
+        "tags": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "minutes": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "prompt": {
+          "type": "string",
+          "minLength": 1
+        },
+        "hints": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "explanation": {
+          "default": "",
+          "type": "string"
+        },
+        "complexity": {
+          "type": "string"
+        },
+        "followups": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "languages": {
+          "default": {},
+          "type": "object",
+          "properties": {
+            "python": {
+              "type": "object",
+              "properties": {
+                "starter": {
+                  "type": "string"
+                },
+                "solution": {
+                  "type": "string"
+                },
+                "notes": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "starter",
+                "solution"
+              ]
+            },
+            "javascript": {
+              "type": "object",
+              "properties": {
+                "starter": {
+                  "type": "string"
+                },
+                "solution": {
+                  "type": "string"
+                },
+                "notes": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "starter",
+                "solution"
+              ]
+            },
+            "ruby": {
+              "type": "object",
+              "properties": {
+                "starter": {
+                  "type": "string"
+                },
+                "solution": {
+                  "type": "string"
+                },
+                "notes": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "starter",
+                "solution"
+              ]
+            },
+            "sql": {
+              "type": "object",
+              "properties": {
+                "starter": {
+                  "type": "string"
+                },
+                "solution": {
+                  "type": "string"
+                },
+                "notes": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "starter",
+                "solution"
+              ]
+            }
+          }
+        },
+        "mode": {
+          "default": "function",
+          "type": "string",
+          "enum": [
+            "function",
+            "stdin"
+          ]
+        },
+        "signature": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "object",
+              "properties": {
+                "python": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "javascript": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "ruby": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "params": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "type": {
+                    "type": "string",
+                    "pattern": "^(?:int|float|number|string|bool|any|map<\\s*string\\s*,\\s*[^<>]+>)(?:\\[\\])*$"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name",
+                  "type"
+                ]
+              }
+            },
+            "returns": {
+              "type": "string",
+              "pattern": "^(?:int|float|number|string|bool|any|map<\\s*string\\s*,\\s*[^<>]+>)(?:\\[\\])*$"
+            }
+          },
+          "required": [
+            "name",
+            "params",
+            "returns"
+          ]
+        },
+        "tests": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "args": {
+                "type": "array",
+                "items": {}
+              },
+              "stdin": {
+                "type": "string"
+              },
+              "expected": {},
+              "sample": {
+                "type": "boolean"
+              },
+              "unordered": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "expected"
+            ]
+          }
+        },
+        "unordered": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "pack",
+        "kind",
+        "title",
+        "difficulty",
+        "minutes",
+        "prompt",
+        "signature",
+        "tests"
+      ]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]*$"
+        },
+        "pack": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "const": "sql"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "difficulty": {
+          "type": "string",
+          "enum": [
+            "easy",
+            "medium",
+            "hard"
+          ]
+        },
+        "pattern": {
+          "default": "",
+          "type": "string"
+        },
+        "tags": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "minutes": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "prompt": {
+          "type": "string",
+          "minLength": 1
+        },
+        "hints": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "explanation": {
+          "default": "",
+          "type": "string"
+        },
+        "complexity": {
+          "type": "string"
+        },
+        "followups": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "languages": {
+          "default": {},
+          "type": "object",
+          "properties": {
+            "python": {
+              "type": "object",
+              "properties": {
+                "starter": {
+                  "type": "string"
+                },
+                "solution": {
+                  "type": "string"
+                },
+                "notes": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "starter",
+                "solution"
+              ]
+            },
+            "javascript": {
+              "type": "object",
+              "properties": {
+                "starter": {
+                  "type": "string"
+                },
+                "solution": {
+                  "type": "string"
+                },
+                "notes": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "starter",
+                "solution"
+              ]
+            },
+            "ruby": {
+              "type": "object",
+              "properties": {
+                "starter": {
+                  "type": "string"
+                },
+                "solution": {
+                  "type": "string"
+                },
+                "notes": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "starter",
+                "solution"
+              ]
+            },
+            "sql": {
+              "type": "object",
+              "properties": {
+                "starter": {
+                  "type": "string"
+                },
+                "solution": {
+                  "type": "string"
+                },
+                "notes": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "starter",
+                "solution"
+              ]
+            }
+          }
+        },
+        "sql": {
+          "type": "object",
+          "properties": {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "seed": {
+              "type": "string",
+              "minLength": 1
+            },
+            "ordered": {
+              "default": false,
+              "type": "boolean"
+            },
+            "dialect": {
+              "default": "sqlite",
+              "type": "string",
+              "enum": [
+                "sqlite",
+                "postgres"
+              ]
+            },
+            "expectedRowCount": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "schema",
+            "seed"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "pack",
+        "kind",
+        "title",
+        "difficulty",
+        "minutes",
+        "prompt",
+        "sql"
+      ]
+    }
+  ]
+}
