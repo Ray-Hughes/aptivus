@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { and, count, desc, eq, sql } from "drizzle-orm";
+import { and, count, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { auditLog, users } from "@/db/schema";
 import { requireAdminPage } from "@/lib/admin";
@@ -63,7 +63,7 @@ export default async function AuditPage(props: PageProps<"/admin/audit">) {
       .from(auditLog)
       .leftJoin(users, eq(users.id, auditLog.actorUserId))
       .where(where)
-      .orderBy(desc(auditLog.createdAt), desc(sql`rowid`))
+      .orderBy(desc(auditLog.createdAt), desc(auditLog.id))
       .limit(PAGE_SIZE)
       .offset((page - 1) * PAGE_SIZE),
   ]);

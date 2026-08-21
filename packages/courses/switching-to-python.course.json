@@ -1,0 +1,466 @@
+{
+  "$schema": "./course-schema.json",
+  "slug": "switching-to-python",
+  "title": "Switching to Python",
+  "subtitle": "For engineers already fluent somewhere else, who now have to interview in Python",
+  "audience": "Experienced engineers whose daily language is Ruby, JavaScript, Java, C#, Go or similar, and who need Python to be reliable under time pressure within a fortnight. It is only about the deltas - it does not teach programming, and it is not a general Python course.",
+  "level": "intermediate",
+  "estimatedHours": 6.25,
+  "timeNote": "About six hours if you type everything rather than reading it. The twelve problems carry roughly two and a half hours of target time; the rest is the teaching and the recall checkpoints. Doing it as six sessions of an hour beats one long sitting, because the point is repetition rather than coverage.",
+  "prerequisites": [
+    "Fluent in at least one other programming language",
+    "You know what a hash map, a stack and a queue are for"
+  ],
+  "outcomes": [
+    "Avoid the three gotchas that produce wrong answers rather than errors: truthiness, division, and missing keys",
+    "Translate map, filter, sort-by and group-by from your own language into Python without pausing",
+    "Recognise Python's four silent mutation and laziness traps by shape",
+    "Reach for defaultdict, Counter, deque, heapq, bisect and lru_cache by reflex",
+    "Read any common stdin format from memory",
+    "Recover out loud from a forgotten method name without losing the thread"
+  ],
+  "tags": [
+    "python",
+    "language transition",
+    "syntax"
+  ],
+  "version": 1,
+  "modules": [
+    {
+      "id": "truthiness-and-arithmetic",
+      "title": "Truthiness, division, and missing keys",
+      "summary": "Three places where your instincts from another language are confidently wrong in Python, and all three fail in ways that pass the sample input.",
+      "estimatedMinutes": 60,
+      "objectives": [
+        "Predict what Python considers falsy, and write the check you actually meant",
+        "Use // for integer division without being told twice",
+        "Handle a missing key deliberately rather than by habit"
+      ],
+      "teaching": "## You are not learning to program\n\nYou already know what a hash map is, what a stack is for, and why the nested loop is\nquadratic. What you are missing is a second syntax for things you can already do, and the\nhandful of places where the language behaves differently from the one in your fingers.\n\nThat handful is short, and this module is most of it. These are the three that produce\n**wrong answers rather than errors**, which is why they are first.\n\n## Empty things are falsy\n\n```python\nif 0:      pass   # does NOT run\nif \"\":     pass   # does NOT run\nif []:     pass   # does NOT run\nif {}:     pass   # does NOT run\nif None:   pass   # does NOT run\n```\n\nFalsy in Python: `False`, `None`, `0`, `0.0`, `\"\"`, `[]`, `{}`, `set()`, `()`, and any\nobject whose `__len__` returns zero.\n\n| Language | What is falsy |\n|---|---|\n| Ruby | only `nil` and `false` - `0` and `\"\"` are **true** |\n| JavaScript | `0`, `\"\"`, `null`, `undefined`, `NaN` - but `[]` and `{}` are **true** |\n| Java / C# | only `false` - there is no truthiness to be wrong about |\n| Go | only `false` |\n| **Python** | `0`, `\"\"`, `[]`, `{}`, `set()`, `None`, `False` |\n\nTwo directions of failure, depending on where you came from. A Ruby or Java habit writes\n`if count:` meaning \"was this set\", and it silently skips a legitimate zero. A JavaScript\nhabit writes `if (items)` on an empty list expecting true, and Python takes the other\nbranch.\n\n**The fix is to say what you mean.** `if count is not None:` for \"was it set\".\n`if len(items) == 0:` if the emptiness is what you care about and you want the reader to\nsee it - although `if not items:` is idiomatic and fine once you have internalised it.\n\nThe place this actually bites in an interview: a function returning `0` as a valid answer,\nguarded by `if result:`. Sample input has a non-zero answer. Hidden test has zero.\n\n## `/` returns a float. Always.\n\n```python\n7 / 2       # 3.5      - float division, even between two ints\n7 // 2      # 3        - floor division\n-7 // 2     # -4       - floors towards negative infinity, not towards zero\n7 % 3       # 1\n-7 % 3      # 2        - the sign follows the divisor, unlike C, Java or JavaScript\n```\n\n`arr[(lo + hi) / 2]` raises `TypeError: list indices must be integers or slices, not\nfloat`. This is the most common single error made by people arriving from Ruby, Java, C,\nGo or JavaScript-with-`Math.floor`, and it appears in the middle of a binary search, which\nis exactly when you do not want to be debugging syntax.\n\nWrite `mid = (lo + hi) // 2` enough times that your fingers produce the second slash\nwithout you.\n\nThe negative modulo is a smaller trap but a nastier one, since it does not error: in\nPython `-7 % 3` is `2`, in Java and JavaScript it is `-1`. If you are hashing or wrapping\naround a circular buffer with negative indices, Python's behaviour is usually the one you\nwanted - but it is not the one you expected.\n\n## A missing key raises\n\n```python\nd = {\"a\": 1}\nd[\"nope\"]           # KeyError\nd.get(\"nope\")       # None\nd.get(\"nope\", 0)    # 0            <- reach for this constantly\n\"nope\" in d         # False        <- `in` on a dict checks KEYS\n```\n\nComing from Ruby (`h[:nope]` is `nil`) or JavaScript (`obj.nope` is `undefined`), the\nhabit of indexing something that might be absent and carrying on is deeply embedded, and\nPython punishes it immediately.\n\nThere is also **no safe navigation operator**. No `&.`, no `?.`. `None.foo` is an\n`AttributeError`, and the only ways through are an explicit check or `.get` with a default.\n\nThe good news is that this is a loud failure, not a silent one. The bad news is that it\nhappens at minute twenty-eight.\n\nTwo idioms that remove most of the need:\n\n```python\nfrom collections import defaultdict, Counter\ntotals = defaultdict(int)      # totals[k] += 1 with no initialisation\ngroups = defaultdict(list)     # groups[k].append(v) with no initialisation\ncounts = Counter(items)        # counts[missing] is 0, and it never raises\n```\n\n`Counter` is worth noting specifically: it returns `0` for a missing key rather than\nraising, which makes it safer than a plain dict for exactly the counting work you will do\nmost.\n\n## Comparison chaining, since you are here\n\nOne genuinely nice difference with no equivalent in most languages:\n\n```python\nif 0 <= i < len(arr):          # exactly what it looks like\n```\n\nUse it for bounds checks. It reads better than the `&&` version and it is idiomatic, so it\nsignals that you have written Python rather than transliterated something else.",
+      "problems": [
+        {
+          "slug": "py_01_two_sum_premium",
+          "note": "A dict, a lookup with a default, and enumerate. The smallest possible amount of Python between you and a working answer."
+        },
+        {
+          "slug": "py_08_binary_search_rate",
+          "note": "The `//` problem, in situ. If you write `/` here you will find out immediately, which is the point of doing it now rather than on the day."
+        }
+      ],
+      "checkpoint": {
+        "id": "truthiness-checkpoint",
+        "title": "Gotchas checkpoint",
+        "questions": [
+          {
+            "id": "q-falsy",
+            "kind": "choice",
+            "prompt": "Which of these prints nothing?",
+            "options": [
+              "`if 0: print('x')` and `if []: print('x')`",
+              "`if 0: print('x')` only",
+              "`if []: print('x')` only"
+            ],
+            "answer": 0,
+            "explanation": "Both. Zero, empty string, empty list, empty dict, empty set and empty tuple are all falsy in Python. In Ruby both would run; in JavaScript the empty list would run and the zero would not. Write `is not None` when you mean 'was it set'."
+          },
+          {
+            "id": "q-div",
+            "kind": "choice",
+            "prompt": "`(lo + hi) / 2` used as a list index does what?",
+            "options": [
+              "Works - Python floors integer division",
+              "Raises TypeError, because `/` always produces a float",
+              "Works but loses precision on large lists"
+            ],
+            "answer": 1,
+            "explanation": "Python 3's `/` is true division and returns a float even for two ints. `//` is floor division. It fails loudly, which is a mercy, but it fails in the middle of a binary search."
+          },
+          {
+            "id": "q-missing",
+            "kind": "choice",
+            "prompt": "`d = {'a': 1}`. What is `d['b']`?",
+            "options": [
+              "None",
+              "A KeyError",
+              "0"
+            ],
+            "answer": 1,
+            "explanation": "Indexing a missing key raises. Use `d.get('b')` for None, `d.get('b', 0)` for a default, or a defaultdict/Counter when you are accumulating. There is no safe navigation operator to fall back on."
+          },
+          {
+            "id": "q-recall-idioms",
+            "kind": "recall",
+            "prompt": "From memory: the three ways to read a possibly-missing key, and when you would use each.",
+            "modelAnswer": "`d.get(k)` when None is a meaningful answer; `d.get(k, 0)` when you want a default to feed straight into arithmetic; `defaultdict(int)` or `defaultdict(list)` when you are accumulating and want no initialisation ceremony at all. `k in d` when you only need to know whether it is there. Counter also returns 0 for missing keys without raising."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "all-required-problems",
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.75
+      },
+      "recap": "These three account for a large share of the confusion in someone's first fortnight of Python. Everything after this module is convenience rather than correctness."
+    },
+    {
+      "id": "collections-and-comprehensions",
+      "title": "Collections and comprehensions",
+      "summary": "Python's answer to blocks, streams, LINQ and lambdas is the comprehension plus a small set of builtins. Learn the four shapes and the sort key, and most of your daily vocabulary transfers.",
+      "estimatedMinutes": 75,
+      "objectives": [
+        "Write list, set, dict and generator comprehensions without hesitating",
+        "Translate map, filter, reduce and group-by from whatever language you came from",
+        "Sort by a computed key, including a multi-field descending-then-ascending order"
+      ],
+      "teaching": "## The four containers\n\n```python\nxs = [1, 2, 3]           # list   - ordered, mutable, duplicates allowed\nt  = (1, 2, 3)           # tuple  - ordered, immutable, hashable\ns  = {1, 2, 3}           # set    - unordered, unique, O(1) membership\nd  = {\"a\": 1}            # dict   - insertion-ordered since 3.7, O(1) lookup\n```\n\nTwo things worth knowing straight away.\n\n**A tuple is a frozen list, and that makes it hashable.** A list cannot be a dict key or a\nset member - `d[[1,2]] = x` raises `TypeError: unhashable type: 'list'`. `tuple(sorted(x))`\nis the standard way to build a canonical key out of a collection, and it is the answer to\na surprising number of grouping problems.\n\n**Dicts preserve insertion order**, guaranteed since Python 3.7. So `list(dict.fromkeys(xs))`\ngives you order-preserving deduplication in one expression, where `set(xs)` loses the\norder.\n\n## Comprehensions\n\nThe four shapes, which are the same expression with different brackets:\n\n```python\n[f(x) for x in xs]                  # list\n{f(x) for x in xs}                  # set\n{k(x): v(x) for x in xs}            # dict\n(f(x) for x in xs)                  # generator - lazy, no list is built\n```\n\nThe generator form is worth using when you pass it straight into a function, because it\nnever materialises the intermediate list:\n\n```python\nsum(a.premium for a in accounts)    # no brackets needed inside the call\nany(x > 3 for x in xs)\nmax((len(g) for g in groups), default=0)\n```\n\nFiltering is a trailing `if`; conditional values use the ternary at the front:\n\n```python\n[x for x in xs if x > 3]                 # filter\n[x if x > 0 else 0 for x in xs]          # map with a condition\n[y for row in grid for y in row]         # nested: reads outer-first, same order\n                                         # as `for row in grid: for y in row:`\n```\n\nThe nested ordering surprises everyone once. It is the same left-to-right order as the\nequivalent nested loops, which is the rule to remember.\n\n## The translation table\n\n| What you want | Ruby | JavaScript | Java streams | Python |\n|---|---|---|---|---|\n| map | `arr.map { \\|x\\| x*2 }` | `arr.map(x => x*2)` | `.map(x -> x*2)` | `[x*2 for x in arr]` |\n| filter | `arr.select { }` | `arr.filter(...)` | `.filter(...)` | `[x for x in arr if p(x)]` |\n| reject | `arr.reject { }` | `arr.filter(x => !p(x))` | - | `[x for x in arr if not p(x)]` |\n| sum | `arr.sum` | `arr.reduce((a,b)=>a+b,0)` | `.sum()` | `sum(arr)` |\n| any / all | `arr.any?` / `all?` | `.some()` / `.every()` | `.anyMatch()` | `any(...)` / `all(...)` |\n| find first | `arr.find { }` | `.find(...)` | `.findFirst()` | `next((x for x in arr if p(x)), None)` |\n| count matching | `arr.count { }` | `.filter(...).length` | `.filter().count()` | `sum(1 for x in arr if p(x))` |\n| sort by field | `arr.sort_by { \\|x\\| x.age }` | `.sort((a,b)=>a.age-b.age)` | `.sorted(comparing(...))` | `sorted(arr, key=lambda x: x.age)` |\n| group by | `arr.group_by { }` | `Object.groupBy(...)` | `.collect(groupingBy(...))` | `defaultdict(list)` and a loop |\n| frequency count | `arr.tally` | manual | manual | `Counter(arr)` |\n| unique | `arr.uniq` | `[...new Set(a)]` | `.distinct()` | `list(dict.fromkeys(arr))` |\n| zip | `a.zip(b)` | manual | - | `zip(a, b)` |\n| index and value | `each_with_index \\|v,i\\|` | `.forEach((v,i)=>)` | - | `for i, v in enumerate(xs)` |\n| flatten one level | `arr.flatten(1)` | `.flat()` | `.flatMap()` | `[y for r in arr for y in r]` |\n| consecutive pairs | `each_cons(2)` | manual | - | `zip(xs, xs[1:])` |\n\nTwo rows to look at twice.\n\n**`enumerate` yields `(index, value)`** - the opposite order to Ruby's\n`each_with_index { |value, index| }` and to JavaScript's `forEach((value, index) => ...)`.\nEveryone who has written Rails gets this backwards at least once, and the failure is a\nconfusing type error rather than a clear one.\n\n**There is no one-line group-by.** `itertools.groupby` is not it - it groups *consecutive*\nequal elements, so it only does what you want on already-sorted input, and it is a common\nsource of quiet wrong answers. Use the loop:\n\n```python\nfrom collections import defaultdict\ngroups = defaultdict(list)\nfor x in xs:\n    groups[key(x)].append(x)\n```\n\n## Sorting\n\n```python\nsorted(xs)                                        # new list\nsorted(xs, key=lambda x: x.age)                   # by a field\nsorted(xs, key=lambda x: (-x.count, x.name))      # count desc, then name asc\nsorted(d.items(), key=lambda kv: (-kv[1], kv[0])) # the same, over a dict\nxs.sort()                                         # in place, returns None\n```\n\n**The tuple key is the thing to memorise.** Sorting by several fields with mixed\ndirections is a comparator function in most languages; in Python it is a tuple, with a\nminus sign on the numeric fields you want descending. `reverse=True` reverses *everything*,\nwhich gets the tie-break backwards - a bug that only shows up when there is a tie.\n\nPython's sort is stable, so an alternative for non-numeric descending fields is to sort\ntwice, least significant first. Mention it if asked; the tuple is clearer.\n\n## Slicing\n\n```python\nxs[1:4]      # index 1, 2, 3 - the end is ALWAYS exclusive\nxs[:3]       # first three\nxs[-2:]      # last two\nxs[::-1]     # reversed copy\nxs[::2]      # every other element\n```\n\nEnd-exclusive everywhere, which matches Java's `subList` and JavaScript's `slice`, but not\nRuby's `arr[1..3]`. `len(xs[a:b]) == b - a` when both are in range, which is the property\nthat makes off-by-ones rare once you trust it. Slicing out of range does not raise - it\nclamps - which is convenient and occasionally hides a bug.",
+      "problems": [
+        {
+          "slug": "py_02_top_k_brokers",
+          "note": "Counter plus the tuple sort key. This is the module's two most important lines in one problem."
+        },
+        {
+          "slug": "py_03_group_anagrams",
+          "note": "defaultdict grouping and a tuple used as a canonical key. Both are things other languages give you differently."
+        }
+      ],
+      "checkpoint": {
+        "id": "collections-checkpoint",
+        "title": "Collections checkpoint",
+        "questions": [
+          {
+            "id": "q-enumerate",
+            "kind": "choice",
+            "prompt": "`for a, b in enumerate(['x','y'])` - what are a and b on the first iteration?",
+            "options": [
+              "a='x', b=0",
+              "a=0, b='x'",
+              "a=0, b=1"
+            ],
+            "answer": 1,
+            "explanation": "enumerate yields (index, value) - index first. Ruby's each_with_index and JavaScript's forEach both pass the value first, so this is a reliable source of one confusing error per newcomer."
+          },
+          {
+            "id": "q-sortkey",
+            "kind": "choice",
+            "prompt": "You want descending count with ties broken by ascending name. Which is correct?",
+            "options": [
+              "`sorted(items, key=lambda kv: (kv[1], kv[0]), reverse=True)`",
+              "`sorted(items, key=lambda kv: (-kv[1], kv[0]))`",
+              "`sorted(items, key=lambda kv: kv[1], reverse=True)`"
+            ],
+            "answer": 1,
+            "explanation": "reverse=True reverses every field, so the names come out descending too - wrong, and only visible when there is a tie. Negating the numeric field flips just that field. The third option leaves ties in arbitrary (well, stable input) order, which makes the output unreproducible."
+          },
+          {
+            "id": "q-groupby",
+            "kind": "choice",
+            "prompt": "Why is `itertools.groupby` not the equivalent of Ruby's group_by or Java's groupingBy?",
+            "options": [
+              "It only accepts sorted keys",
+              "It groups only *consecutive* equal keys, so unsorted input produces several groups for the same key",
+              "It returns a list rather than a dict"
+            ],
+            "answer": 1,
+            "explanation": "It is a run-length grouper, like Unix uniq. On unsorted input it happily returns three separate groups for the same key and no error. Sort first, or - simpler and clearer under pressure - use defaultdict(list) and a loop."
+          },
+          {
+            "id": "q-recall-comp",
+            "kind": "recall",
+            "prompt": "From memory: the four comprehension shapes, and one place where the lazy one matters.",
+            "modelAnswer": "[..] list, {..} set, {k: v ..} dict, (..) generator. The generator matters when it is passed straight to a consumer - sum(x.premium for x in accounts) never builds the intermediate list, which is both faster and the idiomatic form inside a function call."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "all-required-problems",
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.75
+      }
+    },
+    {
+      "id": "mutation-aliasing-and-laziness",
+      "title": "Mutation, aliasing, and things that are lazy",
+      "summary": "Methods that return None, iterators that can only be walked once, default arguments evaluated once ever, and multiplication that shares references. Four silent bugs in one module.",
+      "estimatedMinutes": 70,
+      "objectives": [
+        "Know which operations mutate and which return a new object",
+        "Recognise a consumed iterator before it produces a mystery empty result",
+        "Never write a mutable default argument again",
+        "Build a 2D grid without aliasing the rows"
+      ],
+      "teaching": "## In-place methods return None\n\n```python\nxs.sort()               # sorts in place, returns None\nxs.reverse()            # in place, returns None\nxs.append(1)            # in place, returns None\nnew = sorted(xs)        # returns a NEW list\nnew = list(reversed(xs))\nnew = xs + [1]\n```\n\n```python\nresult = xs.sort()      # result is None. No error. Silent.\n```\n\nRuby distinguishes these with a `!` suffix and returns the array either way. JavaScript's\n`sort` mutates *and* returns the array, so chaining works. Python's convention is that a\nmethod mutating in place returns `None`, deliberately, to stop you chaining and to make\nthe mutation visible.\n\nThe rule to carry: **if it changes the object, it returns None. If it returns something,\nit left the original alone.** `sorted`/`sort`, `reversed`/`reverse`, `x + [1]`/`append`.\n\n## Iterators are lazy and single-use\n\n```python\nm = map(int, [\"1\", \"2\"])\nlist(m)      # [1, 2]\nlist(m)      # []          <- already consumed\n```\n\n`map`, `filter`, `zip`, `enumerate`, `reversed`, `range`-like objects and every generator\nare lazy. They produce values on demand and they are exhausted afterwards.\n\nThis has no analogue in Ruby's Enumerable, which is eager, and it differs from a\nJavaScript array method, which returns a fresh array. It is closest to a Java stream, which\nalso cannot be reused.\n\n**Wrap it in `list(...)` the moment you need to index it, reuse it, take its `len`, or\niterate it twice.** The symptom when you do not is a second loop that silently does\nnothing, which reads like a logic bug and is not.\n\n`zip` has a second trap: it stops at the shortest input, silently. If the inputs should be\nthe same length, `zip(a, b, strict=True)` (Python 3.10+) raises instead - worth knowing,\nbecause a silently truncated zip is exactly the kind of thing that produces a plausible\nwrong answer.\n\n## Mutable default arguments are evaluated once, ever\n\n```python\ndef collect(item, into=[]):     # NEVER\n    into.append(item)\n    return into\n\ncollect(1)      # [1]\ncollect(2)      # [1, 2]        <- the same list, shared across calls\n```\n\nDefault arguments are evaluated **once, when the function is defined**, not on each call.\nSo every call shares one list. This is Python's single most notorious footgun, and it turns\nup most often in recursive helpers that thread an accumulator - exactly the shape you write\nwhen flattening a nested payload.\n\n```python\ndef collect(item, into=None):\n    into = [] if into is None else into\n```\n\n## `[[0] * 3] * 3` shares rows\n\n```python\ngrid = [[0] * 3] * 3\ngrid[0][0] = 9\n# [[9,0,0], [9,0,0], [9,0,0]]   - three references to ONE list\n\ngrid = [[0] * 3 for _ in range(3)]     # correct: three distinct lists\n```\n\n`[0] * 3` is fine, because ints are immutable and rebinding an element replaces it rather\nthan mutating it. The multiplication only becomes dangerous when the element is itself\nmutable, because `*` copies the *reference*, not the object.\n\nSame idea, different disguise: `dict.fromkeys(keys, [])` gives every key the same list.\n\n## Assignment never copies\n\n```python\na = [1, 2, 3]\nb = a\nb.append(4)          # a is now [1, 2, 3, 4]\n\nb = a[:]             # shallow copy\nb = list(a)          # shallow copy\nimport copy\nb = copy.deepcopy(a) # deep copy, when the elements are themselves mutable\n```\n\nThis is familiar from every reference-semantics language, but it is worth the reminder\nbecause a function that sorts its argument in place has changed its caller's data, and in\nan interview that shows up as test two failing after test one passed. If you mutate an\ninput, say so - *\"I am sorting in place; let me copy first in case the caller needs the\noriginal.\"*\n\n## Strings and tuples are immutable\n\n```python\ns = \"abc\"\ns[0] = \"z\"              # TypeError\ns = \"z\" + s[1:]         # build a new one\n\nparts = []\nfor x in xs:\n    parts.append(str(x))\nresult = \"\".join(parts)     # NOT s += str(x) in a loop\n```\n\nRepeated `+=` on a string builds a new string every time, which is quadratic. `\"\".join`\nis the idiom, and reaching for it unprompted is a small, genuine signal - it is the same\ninstinct as `StringBuilder` in Java or an array-and-join in JavaScript.",
+      "problems": [
+        {
+          "slug": "py_07_merge_intervals",
+          "note": "Sorting, and mutating the last element of a result list in place. Notice whether you sorted the input or a copy."
+        },
+        {
+          "slug": "py_15_flatten_payload",
+          "note": "Recursion threading an accumulator - the exact shape where a mutable default argument bites. Write it with `out=None`."
+        }
+      ],
+      "checkpoint": {
+        "id": "mutation-checkpoint",
+        "title": "Mutation and laziness checkpoint",
+        "questions": [
+          {
+            "id": "q-sort-none",
+            "kind": "choice",
+            "prompt": "`ranked = items.sort()` - what is `ranked`?",
+            "options": [
+              "The sorted list",
+              "None",
+              "A copy of items, unsorted"
+            ],
+            "answer": 1,
+            "explanation": "`.sort()` sorts in place and returns None, by convention, so that the mutation is visible and chaining is impossible. `sorted(items)` returns the new list. The bug is silent - you get None and a TypeError several lines later."
+          },
+          {
+            "id": "q-lazy",
+            "kind": "choice",
+            "prompt": "`z = zip(a, b)`, then `list(z)` twice. What comes back the second time?",
+            "options": [
+              "The same pairs again",
+              "An empty list",
+              "A TypeError"
+            ],
+            "answer": 1,
+            "explanation": "zip is a lazy single-use iterator; the first list() consumed it. Wrap it in list() once and reuse that. The failure mode is a second loop that silently does nothing, which reads like a logic bug."
+          },
+          {
+            "id": "q-grid",
+            "kind": "choice",
+            "prompt": "Why is `[[0] * 3] * 3` wrong for a 3x3 grid?",
+            "options": [
+              "It produces a flat list of nine zeros",
+              "The outer multiplication copies the reference, so all three rows are the same list object",
+              "It is fine - the problem is only with strings"
+            ],
+            "answer": 1,
+            "explanation": "`*` on a list repeats references. `[0] * 3` is safe because ints are immutable and assigning to an index rebinds rather than mutates. The outer repetition gives three names for one row, so writing to one writes to all. Use a comprehension."
+          },
+          {
+            "id": "q-default",
+            "kind": "recall",
+            "prompt": "Write the safe form of a recursive helper that accumulates into a dict.",
+            "modelAnswer": "def walk(obj, out=None):\n    out = {} if out is None else out\n    ...\n    return out\n\nNever `out={}` in the signature: defaults are evaluated once at definition time, so every call shares one dict and the second call starts with the first call's results."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "all-required-problems",
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.75
+      },
+      "recap": "Four silent bugs, and all four are recognisable by shape rather than by debugging. That is the point of learning them deliberately rather than one at a time by accident."
+    },
+    {
+      "id": "the-stdlib-you-actually-need",
+      "title": "The standard library you actually need",
+      "summary": "Six imports cover nearly everything a timed round asks for. Knowing which one to reach for is worth more than knowing any of them deeply.",
+      "estimatedMinutes": 70,
+      "objectives": [
+        "Reach for the right container without thinking: defaultdict, Counter, deque, heapq, bisect",
+        "Memoise a recursion with one decorator",
+        "Know that heapq is a min-heap and how to get a max-heap out of it"
+      ],
+      "teaching": "## The import line\n\n```python\nfrom collections import defaultdict, Counter, deque\nimport heapq, bisect, math, re, json, sys\nfrom functools import lru_cache\nfrom itertools import combinations, permutations, accumulate\n```\n\nType that from memory a few times. Four seconds saved at the top of a round is worth more\nthan it sounds, because it is four seconds at the moment when you are least composed.\n\n## What each one is for\n\n| Tool | Reach for it when |\n|---|---|\n| `defaultdict(int)` | counting, without initialising each key |\n| `defaultdict(list)` | grouping, without checking whether the key exists |\n| `Counter(iterable)` | frequencies; `.most_common(k)`; missing keys return 0 |\n| `deque()` | a BFS queue, or anything needing O(1) at both ends |\n| `heapq` | \"the k largest\", \"always take the smallest next\" |\n| `bisect` | a position in a sorted list |\n| `lru_cache` | memoising a recursive function |\n| `re` | `findall`, `sub`, `match` - do not hand-roll parsing |\n| `math` | `inf`, `gcd`, `isqrt`, `ceil` |\n\n### defaultdict and Counter\n\n```python\ntotals = defaultdict(int)\nfor name, amount in records:\n    totals[name] += amount            # no initialisation\n\ngroups = defaultdict(list)\nfor x in xs:\n    groups[key(x)].append(x)          # no existence check\n\ncounts = Counter(x.status for x in items)\ncounts.most_common(3)                 # [(value, count), ...] sorted by count desc\ncounts[\"never seen\"]                  # 0, not a KeyError\n```\n\nOne caveat that catches people: **reading a missing key from a defaultdict creates it.**\n`if groups[k]:` inserts an empty list as a side effect, which matters if you later iterate\nthe keys. Use `if k in groups:` when you only want to test.\n\n### deque\n\n```python\nq = deque([start])\nq.popleft()          # O(1)\nq.append(x)          # O(1)\nq.appendleft(x)      # O(1)\n```\n\n**`list.pop(0)` is O(n)** - every remaining element shifts down - which quietly makes a\nBFS quadratic. Using a deque and saying why is one of the cheapest genuine signals\navailable in a round.\n\n### heapq\n\n```python\nh = []\nheapq.heappush(h, 3)\nsmallest = heapq.heappop(h)\nheapq.heapify(xs)                      # in place, O(n)\nheapq.nlargest(3, xs)\nheapq.nlargest(3, counts.items(), key=lambda kv: kv[1])\n```\n\n**heapq is always a min-heap.** For a max-heap, push negated values and negate again on\nthe way out. For objects, push tuples: `(-count, name)` gives you \"largest count first,\nalphabetical within a tie\" for free - and note that the tuple must be comparable all the\nway down, so if two entries tie on both fields and the third element is not comparable,\nPython raises. Pushing `(-count, name, obj)` is a common fix: the name breaks the tie\nbefore the object is ever compared.\n\nComplexity worth being able to say: top-k with a heap is O(n log k), against O(n log n) for\na full sort. It matters when k is small and n is large, and not otherwise - so say which\nyou are choosing and why rather than defaulting to the heap because it sounds better.\n\n### bisect\n\n```python\nimport bisect\ni = bisect.bisect_left(xs, x)     # insertion point before equal values\nj = bisect.bisect_right(xs, x)    # insertion point after them\nidx = bisect.bisect_right(xs, x) - 1     # rightmost value <= x\nbisect.insort(xs, x)                     # insert, keeping sorted (O(n) - it shifts)\n```\n\nUsing bisect and then converting to the index you actually want demonstrates that you know\nwhat it returns. Be prepared to write the loop by hand if asked, because some interviewers\nwill ask precisely because you used the library.\n\n### lru_cache\n\n```python\nfrom functools import lru_cache\n\n@lru_cache(maxsize=None)\ndef ways(n):\n    if n <= 1:\n        return 1\n    return ways(n - 1) + ways(n - 2)\n```\n\nOne line turns exponential recursion into linear. Two constraints: **the arguments must be\nhashable**, so pass tuples rather than lists, and it does nothing about the recursion depth\nlimit, which is around 1000 frames.\n\n`functools.cache` is the same thing without the size argument, from Python 3.9. Either is\nfine; know that `lru_cache` works on older versions.\n\n## Small things worth knowing\n\n```python\nfloat(\"inf\")                    # the initial value for a minimum\nmath.inf                        # the same\na, b = b, a                     # swap, no temporary\nfirst, *rest = xs               # unpacking with a rest\nlist(accumulate(xs))            # running totals, from itertools\ncombinations(xs, 2)             # every unordered pair\n```\n\nThe walrus operator `:=` exists and is occasionally handy, mainly in `while (line :=\nf.readline()):`. Do not go hunting for opportunities to use it in an interview - it reads\nas showing off, and it costs you a moment of the interviewer's attention that you would\nrather spend elsewhere.",
+      "problems": [
+        {
+          "slug": "py_09_broker_hierarchy",
+          "note": "defaultdict for the adjacency list, and a deliberate choice between recursion and an explicit stack."
+        },
+        {
+          "slug": "py_13_min_layers",
+          "note": "Write it top-down with lru_cache first, then convert to a bottom-up loop. The conversion is the exercise."
+        }
+      ],
+      "checkpoint": {
+        "id": "stdlib-checkpoint",
+        "title": "Standard library checkpoint",
+        "questions": [
+          {
+            "id": "q-heap",
+            "kind": "choice",
+            "prompt": "You need the three largest values from a list of numbers using heapq directly. What do you push?",
+            "options": [
+              "The values, and use heappop three times",
+              "The negated values, because heapq is a min-heap",
+              "Nothing - heapq cannot do this"
+            ],
+            "answer": 1,
+            "explanation": "heapq is always a min-heap. Negate on the way in and on the way out for a max-heap. In practice `heapq.nlargest(3, xs)` does it for you, and knowing both is the right answer to give."
+          },
+          {
+            "id": "q-deque",
+            "kind": "choice",
+            "prompt": "Why does using a list as a BFS queue make the traversal quadratic?",
+            "options": [
+              "Lists reallocate on every append",
+              "`list.pop(0)` is O(n), because every remaining element shifts down one position",
+              "Lists cannot hold more than a few thousand items efficiently"
+            ],
+            "answer": 1,
+            "explanation": "Appending to a list is amortised O(1); removing from the front is not, because a list is a contiguous array. deque is a linked structure of blocks with O(1) at both ends. Naming this unprompted is a cheap and genuine signal."
+          },
+          {
+            "id": "q-defaultdict-read",
+            "kind": "choice",
+            "prompt": "`groups = defaultdict(list)`. What does `if groups['x']:` do?",
+            "options": [
+              "Tests whether 'x' is present, changing nothing",
+              "Creates `groups['x'] = []` as a side effect, then tests it",
+              "Raises KeyError"
+            ],
+            "answer": 1,
+            "explanation": "Reading a missing key from a defaultdict invokes the factory and inserts the result. If you later iterate the keys you will find entries you never meant to add. Use `if 'x' in groups:` to test without inserting."
+          },
+          {
+            "id": "q-recall-imports",
+            "kind": "recall",
+            "prompt": "From memory: the import line you would type at the top of a blank editor.",
+            "modelAnswer": "from collections import defaultdict, Counter, deque\nimport heapq, bisect, sys\nfrom functools import lru_cache\n\nAnything else is problem-specific. Being able to type this without pausing is worth practising, because it happens at the least composed moment of the round."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "all-required-problems",
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.75
+      }
+    },
+    {
+      "id": "strings-input-and-output",
+      "title": "Strings, input, and the pad",
+      "summary": "Parsing input should cost you zero thinking time. In a timed round it routinely costs four minutes, which is one whole problem.",
+      "estimatedMinutes": 50,
+      "objectives": [
+        "Read every common stdin shape from memory",
+        "Format output with f-strings and join",
+        "Keep debug output out of your answer"
+      ],
+      "teaching": "## Why this module exists\n\nMany interview pads default to a stdin/stdout skeleton rather than a function signature.\nIf you have spent years in a language where you never read from standard input, the first\nfour minutes of the round can disappear into working out how to get the numbers off the\nfirst line. That is one whole easy problem's worth of time, spent on something that is\npure recall.\n\n## Every shape you need\n\n```python\nn = int(input())                             # one integer on a line\na, b = map(int, input().split())             # two ints on one line\nnums = list(map(int, input().split()))       # a row of ints\nname, premium = input().split()              # two strings\nname, premium = input().split(maxsplit=1)    # when the second field has spaces\n\nimport sys\ndata  = sys.stdin.read().split()             # ALL whitespace-separated tokens\nlines = sys.stdin.read().splitlines()        # ALL lines, newline stripped\nfor line in sys.stdin:                       # stream until EOF\n    line = line.rstrip(\"\\n\")\n```\n\nTwo details that matter:\n\n- `input()` strips the trailing newline. `sys.stdin.readline()` does **not**, so\n  `int(sys.stdin.readline())` works but `sys.stdin.readline() == \"x\"` does not.\n- `list(map(int, ...))` rather than bare `map(...)` whenever you need to index it or use\n  `len` - `map` is a lazy single-use iterator, as in the mutation module.\n\nThe `sys.stdin.read().split()` form is the most robust when the input format is described\nloosely, because it ignores how the tokens are distributed across lines. Consume it with\nan index:\n\n```python\ndata = sys.stdin.read().split()\nidx = 0\nn = int(data[idx]); idx += 1\nfor _ in range(n):\n    name = data[idx]; amount = int(data[idx + 1]); idx += 2\n```\n\nSlightly more code, immune to the input having its line breaks in an unexpected place.\n\n## Output\n\n```python\nprint(name, total)                      # space separated, newline appended\nprint(f\"{name} {total}\")                # explicit\nprint(f\"{ratio:.2f}\")                   # two decimal places\nprint(\" \".join(map(str, xs)))           # a row of values\nprint(*xs)                              # the same thing, unpacked\n```\n\nf-strings are the modern formatting syntax and are worth using exclusively:\n`f\"{a} and {b}\"` is Ruby's `\"#{a} and #{b}\"` and JavaScript's `` `${a} and ${b}` ``.\nFormat specifiers go after a colon: `{x:.2f}`, `{x:>8}`, `{x:,}`.\n\n## Keep your debugging out of the answer\n\nAnything you `print` becomes part of your output and fails the comparison. Send debugging\nto standard error:\n\n```python\nprint(\"seen so far:\", seen, file=sys.stderr)\n```\n\nThis is worth setting up before you need it, because the moment you need it is the moment\nyou are already confused about why a test fails.\n\n## String operations you will actually use\n\n```python\ns.strip() / s.lstrip() / s.rstrip()      # whitespace, or given characters\ns.split() / s.split(\",\")                 # bare split() splits on any whitespace run\n\"\".join(parts)                            # build strings this way, not with +=\ns.lower() / s.upper()\ns.startswith(p) / s.endswith(p)\ns.replace(a, b)\nord(\"a\") / chr(97)                        # character codes\ns.isdigit() / s.isalpha()\nsorted(s)                                 # a list of characters\n```\n\n`s.split()` with no argument splits on any run of whitespace and discards empty results,\nwhich is what you want for input parsing. `s.split(\",\")` on `\"a,,b\"` returns three items\nincluding an empty one, which is what you want for CSV. Choosing the wrong one is a common\nquiet bug.\n\nA string is iterable character by character, and a single character is itself a string of\nlength one - there is no separate char type. `for ch in s:` and `s[0]` both give you\none-character strings, which is convenient but means a recursive function over a string\nnever bottoms out at a different type. Guard on `len(s)` rather than on type.",
+      "problems": [
+        {
+          "slug": "py_12_stdin_totals",
+          "note": "Do this one until it is boring. Reading input should cost zero thinking time."
+        },
+        {
+          "slug": "py_04_balanced_brackets",
+          "note": "Iterating a string, and a dict used as a lookup table. Notice that `ch` is a one-character string, not a char."
+        }
+      ],
+      "checkpoint": {
+        "id": "io-checkpoint",
+        "title": "Input and output checkpoint",
+        "questions": [
+          {
+            "id": "q-readline",
+            "kind": "choice",
+            "prompt": "What is the difference between `input()` and `sys.stdin.readline()`?",
+            "options": [
+              "None",
+              "readline keeps the trailing newline; input() strips it",
+              "input() reads all lines; readline reads one"
+            ],
+            "answer": 1,
+            "explanation": "input() strips the trailing newline, like Ruby's gets.chomp. readline does not, so string comparisons against its result fail in a way that is invisible when you print it. int() tolerates the whitespace, which is why the bug hides until you compare a string."
+          },
+          {
+            "id": "q-debug",
+            "kind": "choice",
+            "prompt": "You add a print() to debug and the tests start failing. Why?",
+            "options": [
+              "print is too slow inside a loop",
+              "Everything printed to stdout is part of your answer and the comparison now fails",
+              "print flushes the input buffer"
+            ],
+            "answer": 1,
+            "explanation": "On a stdin/stdout problem the grader compares your entire standard output. Debug to stderr - `print(..., file=sys.stderr)` - and set that up before you need it."
+          },
+          {
+            "id": "q-recall-stdin",
+            "kind": "recall",
+            "prompt": "From memory: read an integer n, then n lines each holding a name and an amount, and total the amounts per name.",
+            "modelAnswer": "import sys\nfrom collections import defaultdict\ndata = sys.stdin.read().split()\nn = int(data[0])\ntotals = defaultdict(int)\nfor i in range(n):\n    totals[data[1 + 2*i]] += int(data[2 + 2*i])\n\nOr the line-oriented version with input().split() in a loop. Either is fine; being able to produce one of them without thinking is the point."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "all-required-problems",
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.66
+      }
+    },
+    {
+      "id": "idioms-classes-and-what-to-say",
+      "title": "Idioms, classes, and what to say when you blank",
+      "summary": "The small idioms that make code read as Python rather than a transliteration, the minimum you need about classes, and the sentence that gets you past a forgotten method name.",
+      "estimatedMinutes": 55,
+      "objectives": [
+        "Use unpacking, chained comparison and tuple returns naturally",
+        "Write a small class without looking anything up",
+        "Recover out loud from a forgotten method name without losing the thread"
+      ],
+      "teaching": "## Idioms worth having in your fingers\n\n```python\na, b = b, a                          # swap\nfirst, *rest = xs                    # unpack with a remainder\nfor i, x in enumerate(xs):           # (index, value)\nfor k, v in d.items():\nif 0 <= i < len(xs):                 # chained comparison\nx = a if a > b else b                # ternary, condition in the middle\ndef f(): return 1, 2                 # returns a tuple\nlo, hi = f()                         # unpacked at the call site\nbest = float(\"inf\")\nfor _name, amount in records:        # _ for an ignored value\n\"\".join(parts)                       # never += in a loop\n{**a, **b}                           # merge dicts (b wins); or a | b in 3.9+\n```\n\nMultiple return values are just a tuple being unpacked, which means you can return three\nthings without inventing a class or an output parameter. Coming from Java or C# this is a\ngenuine change of habit and it is usually the right one in an interview.\n\n`_` for an unused variable is a convention rather than a rule, but interviewers read it -\nit says \"I know this value exists and I have deliberately ignored it\".\n\n## Classes, briefly\n\nYou will probably not need one in a forty-five minute round. When you do, it is usually a\nnode in a linked structure or a small design question:\n\n```python\nclass Node:\n    def __init__(self, val):        # the constructor\n        self.val = val\n        self.next = None\n\n    def __repr__(self):             # what you see when you print it\n        return f\"Node({self.val})\"\n```\n\nThe differences from most other languages, in four lines:\n\n- **`self` is an explicit first parameter** on every method, including the constructor.\n  Forgetting it is a `TypeError` about argument counts, which is a confusing message for\n  the actual mistake.\n- **There are no attribute declarations.** Attributes come into existence when you assign\n  them, normally in `__init__`. No `attr_accessor`, no field list, no `private`.\n- **There is no enforced privacy.** A leading underscore is a convention that means \"do not\n  touch\"; the language does nothing.\n- **`__repr__` is worth adding** when you are debugging a structure, because otherwise you\n  print `<__main__.Node object at 0x10f3c2b50>` and learn nothing.\n\nFor a plain record, `dataclasses.dataclass` gives you the constructor, repr and equality\nfor free, and mentioning it is a small signal that you know the modern standard library:\n\n```python\nfrom dataclasses import dataclass\n\n@dataclass\nclass Policy:\n    id: str\n    premium: int\n```\n\n## What to say when you blank on a method name\n\nThis is the most valuable paragraph in this course.\n\nYou will, at some point, know exactly what you want to do and not remember what Python\ncalls it. The failure mode that costs you the round is going silent and hunting for the\nword while the interviewer watches a still cursor.\n\nSay this instead:\n\n> *\"In the language I use daily I would reach for a group-by here. In Python I believe\n> that is a defaultdict and a loop - let me write it out.\"*\n\nThen write it. Three things happen. You keep the thread of the problem. You demonstrate\nthat you know the *operation* you want, which is the thing being assessed. And you tell\nthe interviewer that you are working in a second language, which reframes any syntax\nfumbling for the rest of the round as expected rather than alarming.\n\nInterviewers do not care that you are new to a syntax. They care whether you can name what\nyou are trying to do. **Naming the operation is the signal; the exact method name is\ntrivia**, and everyone looks it up in real work.\n\nThe same sentence works for the standard library - *\"I want something like a priority\nqueue; in Python I think that is heapq, and it is a min-heap so I will negate\"* - and for\nthe parts you genuinely do not know, where the honest version is simply *\"I do not\nremember the exact call; I will write it as a helper and assume it works\"* and then\ncarrying on.\n\n## What not to do\n\n- Do not apologise repeatedly. Once is context; three times is a running commentary on\n  your own weakness and it changes how everything else you say is heard.\n- Do not go quiet and search your memory. Fifteen seconds of silence is the limit.\n- Do not pick a worse approach because you are more confident of the syntax, without\n  saying so. If you do it deliberately, say it: *\"I know a heap is better here, but I want\n  to keep moving - let me sort and come back to it.\"* That is judgement. Doing it silently\n  looks like not knowing.",
+      "problems": [
+        {
+          "slug": "py_05_reconcile_feeds",
+          "note": "Set operations on dict keys, tuple unpacking, and returning several collections at once. Idiomatic Python doing something you have certainly done before in another language."
+        },
+        {
+          "slug": "py_14_lru_cache",
+          "note": "The class problem. `self`, `__init__`, and a dict paired with an ordering structure. Say the invariant out loud before you write it."
+        }
+      ],
+      "checkpoint": {
+        "id": "idioms-checkpoint",
+        "title": "Idioms checkpoint",
+        "questions": [
+          {
+            "id": "q-self",
+            "kind": "choice",
+            "prompt": "You define `def get(key):` inside a class and call `cache.get('a')`. What happens?",
+            "options": [
+              "It works - self is implicit",
+              "TypeError about the number of arguments, because 'a' is passed as `key` only after `self` is filled by the instance",
+              "It works but cannot access attributes"
+            ],
+            "answer": 1,
+            "explanation": "Python passes the instance as the first positional argument to every method. Without `self` in the signature, the instance lands in `key` and your actual argument has nowhere to go. The error message talks about argument counts, which does not point at the real cause."
+          },
+          {
+            "id": "q-blank",
+            "kind": "choice",
+            "prompt": "You cannot remember what Python calls the operation you want. What is the strongest move?",
+            "options": [
+              "Go quiet and work it out - guessing aloud looks unprepared",
+              "Name the operation you want, say what you believe the Python equivalent is, and write it out",
+              "Switch to an approach whose syntax you are sure of, without mentioning it"
+            ],
+            "answer": 1,
+            "explanation": "Naming the operation demonstrates the thing being assessed. Silence reads as being stuck on the problem rather than on a method name. Quietly switching to a worse approach is the costly one: the interviewer sees the worse approach and cannot see the reason."
+          },
+          {
+            "id": "q-recall-idioms",
+            "kind": "recall",
+            "prompt": "From memory: swap two variables, unpack a head and a tail, write a bounds check, and merge two dicts.",
+            "modelAnswer": "a, b = b, a\nfirst, *rest = xs\nif 0 <= i < len(xs):\nmerged = {**a, **b}   (or a | b on 3.9+)"
+          },
+          {
+            "id": "q-say-it",
+            "kind": "explain",
+            "prompt": "Out loud, as if in a round: you want to group records by a computed key and cannot recall the Python idiom. Say the sentence.",
+            "modelAnswer": "'In the language I use daily I would reach for group_by here. In Python I believe that is a defaultdict of lists and a loop - let me write it out.' Then write it. Practise it until it comes out flat and unbothered rather than apologetic; the tone carries as much as the words."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "all-required-problems",
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.75
+      },
+      "recap": "You now have the deltas: the three silent gotchas, the comprehension vocabulary, the mutation traps, six imports, input parsing, and a script for the moment you blank. What remains is volume - and volume means typing, not reading."
+    }
+  ]
+}

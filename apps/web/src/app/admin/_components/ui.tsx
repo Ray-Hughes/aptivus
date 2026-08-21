@@ -142,7 +142,7 @@ export function Badge({
 export function Table({ children }: { children: ReactNode }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[40rem] border-collapse text-sm">{children}</table>
+      <table className="w-full min-w-[28rem] border-collapse text-sm">{children}</table>
     </div>
   );
 }
@@ -333,8 +333,11 @@ export function Field({
   );
 }
 
-export const inputClass =
-  "w-full rounded-md border border-edge bg-ink px-3 py-2 text-sm text-fg placeholder:text-faint focus:border-accent2 focus:outline-none";
+/** Field styling without a width, for inputs that must stay narrow. */
+export const inputBaseClass =
+  "rounded-md border border-edge bg-ink px-3 py-2 text-sm text-fg placeholder:text-faint focus:border-accent2 focus:outline-none";
+
+export const inputClass = `w-full ${inputBaseClass}`;
 
 export const selectClass =
   "rounded-md border border-edge bg-ink px-3 py-2 text-sm text-fg focus:border-accent2 focus:outline-none";

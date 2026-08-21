@@ -4,7 +4,7 @@ import { featureFlags, users } from "@/db/schema";
 import { requireAdminPage } from "@/lib/admin";
 import ActionForm from "../_components/action-form";
 import AllowListEditor from "../_components/allow-list-editor";
-import { Badge, EmptyState, Notice, formatDate, inputClass } from "../_components/ui";
+import { Badge, EmptyState, Notice, formatDate, inputBaseClass } from "../_components/ui";
 import { removeFlagAllowUser, updateFlag } from "../_actions/flags";
 
 export default async function FlagsPage() {
@@ -85,7 +85,7 @@ export default async function FlagsPage() {
                         max={100}
                         step={1}
                         defaultValue={flag.rolloutPercent}
-                        className={`${inputClass} w-24`}
+                        className={`${inputBaseClass} w-24`}
                       />
                     </label>
                   </ActionForm>

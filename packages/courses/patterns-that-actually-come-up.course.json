@@ -1,0 +1,657 @@
+{
+  "$schema": "./course-schema.json",
+  "slug": "patterns-that-actually-come-up",
+  "title": "Patterns That Actually Come Up",
+  "subtitle": "The canonical set, each with the cue that tells you to reach for it",
+  "audience": "Engineers who can solve problems given the approach, but who lose the first ten minutes of a round working out which approach it is. Assumes you can write code fluently; this is about recognition and templates, not about learning to program.",
+  "level": "intermediate",
+  "estimatedHours": 9,
+  "timeNote": "About nine hours: fifteen existing problems whose target times total roughly three and a half hours, plus teaching, checkpoints, and the recall drills that are the actual point. Five problems in the two-pointers, intervals, binary search and DP modules are not written yet and are marked optional, so the course is completable today - it is just thinner in those four places.",
+  "prerequisites": [
+    "You can write code fluently in at least one language",
+    "You know what O(n log n) means and can state the complexity of a loop"
+  ],
+  "outcomes": [
+    "Name the likely pattern within thirty seconds of reading a prompt, and say which cue gave it away",
+    "Write the sliding window, topological sort and binary search boundary templates from a blank editor",
+    "Justify a complexity claim, including why a nested-looking two-pointer scan is linear",
+    "Recognise a graph problem that is not described as a graph",
+    "Reach for dynamic programming with a greedy counterexample rather than a hunch"
+  ],
+  "tags": [
+    "algorithms",
+    "data structures",
+    "patterns",
+    "python"
+  ],
+  "version": 1,
+  "modules": [
+    {
+      "id": "hash-maps",
+      "title": "Hash maps: the default weapon",
+      "summary": "Three dict shapes cover a large fraction of everything asked below hard difficulty. Learn to recognise which one a prompt is asking for.",
+      "estimatedMinutes": 90,
+      "objectives": [
+        "Recognise the seen-set, count-then-rank and group-by-derived-key shapes from a prompt",
+        "Write all three without pausing to think about syntax",
+        "Explain the space-for-time trade you are making"
+      ],
+      "teaching": "## The recognition cue\n\n> **When you see \"have I seen this before\", \"how many of each\", or \"put these into\n> buckets\" - reach for a dict.**\n\nMore precisely: whenever the brute force is a nested loop that asks *does anything else in\nthis collection satisfy a relationship with the current element*, a dict turns the inner\nloop into a lookup. That is the trade you are making and it is the sentence to say:\n**O(n) extra space to remove a factor of n from the time.**\n\n## Shape 1: the seen-set\n\nThe prompt asks whether something has occurred, or asks you to find the partner of an\nelement.\n\n```python\nseen = {}                          # value -> index\nfor i, x in enumerate(xs):\n    need = target - x\n    if need in seen:               # check BEFORE inserting\n        return [seen[need], i]\n    seen[x] = i\nreturn []\n```\n\nThe check-before-insert ordering is the entire trick, and it is where the point is scored:\ninsert first and an element pairs with itself, which passes the sample input and fails on\n`[3, 3]` with a target of 6 in one direction and on `[4]` with a target of 8 in the other.\nSay the ordering out loud when you write it.\n\nIf you only need presence and not position, use a `set`. If you need counts, read on.\n\n**Variations that use the same shape:** does any pair differ by k; is there a duplicate\nwithin a distance of k; does a prefix sum repeat (which finds a zero-sum subarray). The\nlast one is worth recognising - *\"I will store each running total in a dict; if I see the\nsame total twice, everything between them sums to zero\"* - because it looks like a\ndifferent problem entirely.\n\n## Shape 2: count, then rank\n\nThe prompt asks for most frequent, top K, or a report ordered by volume.\n\n```python\nfrom collections import Counter\ncounts = Counter(name for name, _amount in records)\nranked = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))\ntop = [name for name, _c in ranked[:k]]\n```\n\nThe tuple sort key is the reusable part. `(-count, name)` reads as \"most frequent first,\nalphabetical within a tie\". Getting a stable total ordering matters more than it looks:\nan interviewer will ask what happens on a tie, so decide before they ask, and say so.\n\n`sorted` is O(n log n). If k is much smaller than n, `heapq.nlargest(k, ...)` is\nO(n log k), and `Counter.most_common(k)` does exactly that internally. Mentioning the heap\nvariant is a good complexity-awareness signal; reaching for it unprompted when n is small\nis over-engineering. Say which one you would use and why.\n\n## Shape 3: group by a derived key\n\nThe prompt asks you to gather things that share some property, where the property is\nsomething you compute.\n\n```python\nfrom collections import defaultdict\nbuckets = defaultdict(list)\nfor w in words:\n    buckets[tuple(sorted(w))].append(w)     # canonical form\nreturn list(buckets.values())\n```\n\nThe loop is trivial. **The design decision is the key function**, and that is the answer to\nthe problem: a canonical form for anagrams, a rounded timestamp for time buckets, a\nnormalised name for near-duplicate records, `(lat // 10, lon // 10)` for spatial cells.\n\nSay the key out loud - *\"I am keying on the sorted letters, because that is identical for\nevery anagram and different for everything else\"* - because that is the insight the\nquestion was testing.\n\nTwo Python details worth having: a `list` cannot be a dict key because it is mutable, so\n`tuple(sorted(x))` is the standard way to make a canonical hashable key; and\n`defaultdict(list)` removes the \"does this key exist yet\" branch entirely.\n\n## What a dict does not solve\n\nOrder-sensitive relationships. If the question is about contiguity - the longest run, the\nbest window, the nearest smaller element - a dict alone will not do it, and you want a\nwindow or a stack. That is the next two modules.\n\nThe tell is the word **subarray**, **substring**, **consecutive** or **contiguous** in the\nprompt. If elements can be picked from anywhere, a dict is likely; if they must be next to\neach other, it is a window.",
+      "problems": [
+        {
+          "slug": "py_01_two_sum_premium",
+          "note": "Shape 1. Get the check-before-insert ordering right and say why it matters."
+        },
+        {
+          "slug": "py_02_top_k_brokers",
+          "note": "Shape 2. The tuple sort key, and one sentence about the heap alternative."
+        },
+        {
+          "slug": "py_03_group_anagrams",
+          "note": "Shape 3. The whole problem is the key function."
+        },
+        {
+          "slug": "py_05_reconcile_feeds",
+          "note": "All three at once, on data shaped like real work: two sources of truth and a diff. Set operations on dict keys do most of it."
+        }
+      ],
+      "checkpoint": {
+        "id": "hash-maps-checkpoint",
+        "title": "Hash map checkpoint",
+        "questions": [
+          {
+            "id": "q-order",
+            "kind": "choice",
+            "prompt": "In the two-sum loop, what breaks if you insert into `seen` before checking it?",
+            "options": [
+              "Nothing - the result is the same",
+              "An element can pair with itself, so a target of exactly twice a value returns the same index twice",
+              "The dict grows to twice the size"
+            ],
+            "answer": 1,
+            "explanation": "With `seen[x] = i` first, the very next line finds x when target is 2x and returns [i, i]. It passes most sample inputs, which is why the bug survives. Check, then insert."
+          },
+          {
+            "id": "q-key",
+            "kind": "choice",
+            "prompt": "Why `tuple(sorted(word))` rather than `sorted(word)` as a dict key?",
+            "options": [
+              "Tuples compare faster",
+              "A list is mutable and therefore unhashable, so it cannot be a dict key",
+              "sorted() returns None"
+            ],
+            "answer": 1,
+            "explanation": "Dict keys must be hashable, and Python refuses to hash a mutable list - `d[[1,2]] = x` raises TypeError: unhashable type. A tuple is the frozen equivalent. `''.join(sorted(word))` works too."
+          },
+          {
+            "id": "q-recall-sort",
+            "kind": "recall",
+            "prompt": "From memory: sort a Counter's items by descending count, ties broken alphabetically.",
+            "modelAnswer": "sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))\n\nNegate the count so the count descends while the name still ascends. `reverse=True` reverses both, which gets the tie-break backwards."
+          },
+          {
+            "id": "q-cue",
+            "kind": "explain",
+            "prompt": "Out loud: what in a prompt tells you it is a dict problem rather than a window problem?",
+            "modelAnswer": "Whether the elements have to be next to each other. 'Subarray', 'substring', 'consecutive', 'contiguous' point at a window. 'Any two', 'how many of each', 'group these' point at a dict. Saying the distinction out loud early is also how you avoid ten minutes spent on the wrong structure."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "all-required-problems",
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.75
+      },
+      "recap": "If you can produce the three shapes without thinking, you have covered more of the interview surface than any single algorithm you could learn instead."
+    },
+    {
+      "id": "two-pointers",
+      "title": "Two pointers",
+      "summary": "Two indices moving through a sequence under a rule. The whole family: converging from both ends, running in parallel through two sorted inputs, and the fast/slow pair.",
+      "estimatedMinutes": 40,
+      "objectives": [
+        "Recognise 'sorted input, find a pair' as the converging-pointer cue",
+        "Merge two sorted sequences without materialising a combined list",
+        "State why the technique is O(n) despite looking nested"
+      ],
+      "teaching": "## The recognition cue\n\n> **When the input is sorted and you are asked about a pair or a subrange - or when you\n> are walking two sequences at once - reach for two pointers.**\n\nThe dict solution to \"find two values summing to a target\" costs O(n) space. If the input\nis already sorted, two pointers do it in O(1) extra space, and the reason is worth being\nable to state:\n\n## Converging from both ends\n\n```python\nlo, hi = 0, len(xs) - 1\nwhile lo < hi:\n    total = xs[lo] + xs[hi]\n    if total == target:\n        return [lo, hi]\n    if total < target:\n        lo += 1          # need more; the only way up is to raise the small end\n    else:\n        hi -= 1          # need less; the only way down is to lower the big end\n```\n\nThe argument for correctness is the part to say aloud: **when the sum is too small, no\npair involving `xs[lo]` can work**, because `xs[hi]` is already the largest available\npartner. So `lo` can be discarded entirely, not just skipped. Each step eliminates one\nelement permanently, which is why n steps suffice.\n\nThat is a genuine proof and it takes one sentence. Interviewers ask \"how do you know you\nhave not missed a pair\" precisely to see whether you have it or are pattern-matching.\n\nSame shape solves: reversing in place, checking a palindrome, container-with-most-water,\nand three-sum (fix one element, two-pointer the rest, which is O(n squared) rather than\nO(n cubed)).\n\n## Running in parallel through two sequences\n\n```python\ni = j = 0\nout = []\nwhile i < len(a) and j < len(b):\n    if a[i] <= b[j]:\n        out.append(a[i]); i += 1\n    else:\n        out.append(b[j]); j += 1\nout.extend(a[i:])          # one of these is empty\nout.extend(b[j:])\n```\n\nThis is the merge step of merge sort, and it is also how you intersect two sorted lists,\ndiff two ordered feeds, or find records present in one source but not the other without\nloading either into memory. The `<=` rather than `<` is what makes it stable - equal\nelements keep their original relative order - and stability is a real requirement often\nenough to be worth mentioning.\n\n**The tail handling is where bugs live.** One of the two `extend` calls is always a no-op;\nwriting both unconditionally is simpler than working out which. Under time pressure,\nsimpler wins.\n\n## The fast/slow variant\n\nTwo pointers over the *same* sequence at different speeds:\n\n```python\nwrite = 0\nfor read in range(len(xs)):\n    if keep(xs[read]):\n        xs[write] = xs[read]\n        write += 1\ndel xs[write:]\n```\n\nThe read pointer scans; the write pointer marks where the next kept element goes. This\ncompacts in place with O(1) extra space, and it is the standard answer to \"remove\nduplicates from a sorted array in place\" and its relatives.\n\nThe other fast/slow use is cycle detection in a linked list - one pointer at one step, one\nat two, and they meet if and only if there is a cycle. Worth knowing it exists; it is\nrarely the point of a round unless the topic is linked lists.\n\n## Complexity\n\nEvery variant here is O(n) time and O(1) extra space, and in every one the argument is the\nsame: **each pointer only ever moves forward, and never moves more than n times.** A\n`while` inside a `for` looks quadratic from the outside, so say the invariant out loud - it\nis a common place for an interviewer to test whether you can justify your own complexity\nclaim.",
+      "problems": [
+        {
+          "slug": "py_16_sorted_pair_sum",
+          "planned": true,
+          "optional": true,
+          "note": "The converging-pointer version of two-sum, on a sorted input, in O(1) space.",
+          "plannedSpec": {
+            "title": "Two accounts hitting a target, on a sorted book",
+            "pattern": "two pointers",
+            "difficulty": "easy",
+            "minutes": 10,
+            "brief": "Sorted list of premiums and a target; return the two indices, O(1) extra space. Follow-ups: return all distinct pairs; what changes if the list is not sorted (sort first, and now it is O(n log n) but still O(1) space, versus the dict at O(n) time and O(n) space)."
+          }
+        },
+        {
+          "slug": "py_17_merge_sorted_feeds",
+          "planned": true,
+          "optional": true,
+          "note": "Parallel pointers over two sorted sequences: merge, and then the intersection and difference variants.",
+          "plannedSpec": {
+            "title": "Merge two sorted policy feeds",
+            "pattern": "two pointers",
+            "difficulty": "easy",
+            "minutes": 12,
+            "brief": "Merge two lists sorted by effective date into one sorted list, stably, without concatenate-then-sort. Follow-ups: only the records present in both; only those present in the first; what changes when the feeds are too large to hold in memory (the answer is: nothing, this streams)."
+          }
+        }
+      ],
+      "checkpoint": {
+        "id": "two-pointers-checkpoint",
+        "title": "Two pointers checkpoint",
+        "questions": [
+          {
+            "id": "q-why-discard",
+            "kind": "choice",
+            "prompt": "Converging pointers on a sorted array: the sum is too small, so you advance `lo`. Why is it safe to discard `xs[lo]` entirely rather than trying it with other partners?",
+            "options": [
+              "Because the array is sorted, so xs[lo] cannot appear again",
+              "Because xs[hi] is already the largest available partner, so no remaining pair involving xs[lo] can reach the target",
+              "It is not safe in general - it only works when values are distinct"
+            ],
+            "answer": 1,
+            "explanation": "Every remaining candidate partner for xs[lo] is at most xs[hi], and xs[lo] + xs[hi] is already below the target. So xs[lo] is eliminated, not merely skipped. That argument is what makes the linear scan complete, and it is what an interviewer is listening for."
+          },
+          {
+            "id": "q-stability",
+            "kind": "choice",
+            "prompt": "In the merge step, why `if a[i] <= b[j]` rather than `<`?",
+            "options": [
+              "To avoid an infinite loop on equal values",
+              "To keep the merge stable, so equal elements from the first sequence stay ahead of equal elements from the second",
+              "There is no difference"
+            ],
+            "answer": 1,
+            "explanation": "Either comparison terminates and both produce a sorted result. With `<=` a tie is resolved in favour of the first sequence, which preserves relative order - the definition of a stable merge. It matters whenever the elements carry a payload you can distinguish."
+          },
+          {
+            "id": "q-recall-merge",
+            "kind": "recall",
+            "prompt": "From memory: merge two sorted lists, including the tails.",
+            "modelAnswer": "Loop while both indices are in range, appending the smaller and advancing that index; then extend with both remainders unconditionally, since one of them is empty. Forgetting the tails is the standard bug, and it only shows up when the sequences have different lengths or ranges."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "checkpoint-only",
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.66,
+        "notes": "Both problems for this module are still to be written. Until they exist, the module is teaching plus the checkpoint - and the sliding window module immediately afterwards gives you two-pointer code to write."
+      },
+      "recap": "Two pointers is the O(1)-space answer to problems a dict solves in O(n) space, when the input is sorted. Next module is the same machinery with a different rule for moving the pointers."
+    },
+    {
+      "id": "sliding-window",
+      "title": "Sliding window",
+      "summary": "One template, one invariant, three ways to get the details wrong. Every 'longest or shortest contiguous run with property P' problem is this shape.",
+      "estimatedMinutes": 70,
+      "objectives": [
+        "Write the template from a blank editor",
+        "Swap the invalidity condition for a new problem without rewriting the loop",
+        "Avoid the three standard bugs: if instead of while, recording too early, and stale zero counts"
+      ],
+      "teaching": "## The recognition cue\n\n> **When you see \"longest\", \"shortest\", \"maximum\" or \"at most k\" applied to a\n> *contiguous* run - a subarray, a substring, a time window - reach for a sliding\n> window.**\n\nThe word to look for is contiguity. If elements may be selected from anywhere, this is not\na window problem.\n\n## The template\n\n```python\nfrom collections import defaultdict\n\ndef longest_ok(xs, k):\n    counts = defaultdict(int)\n    left = 0\n    best = 0\n    for right, x in enumerate(xs):\n        counts[x] += 1                        # 1. extend right\n\n        while len(counts) > k:                # 2. shrink until valid again\n            counts[xs[left]] -= 1\n            if counts[xs[left]] == 0:\n                del counts[xs[left]]\n            left += 1\n\n        best = max(best, right - left + 1)    # 3. record, now that it is valid\n    return best\n```\n\nLearn this shape once. To solve a different problem, change **only the invalidity\ncondition** in the `while`:\n\n| Problem | The `while` condition |\n|---|---|\n| longest run of distinct values | `counts[x] > 1` (or `len(counts) < right-left+1`) |\n| at most k distinct values | `len(counts) > k` |\n| sum at most s (non-negative values) | `total > s` |\n| at most k zeros flipped | `zeros > k` |\n\n## The three bugs\n\n**`while`, not `if`.** One new element can force several out of the window. With an `if`\nyou shrink at most one position per iteration, so a window that became badly invalid stays\ninvalid and your answer comes out too large. In problems where the window can only ever\nbreak by one - longest distinct run, for instance - an `if` happens to work, which is\nexactly why the bug survives casual testing and then fails on a different problem.\n\n**Record after shrinking, not before.** Recording inside or above the `while` measures a\nwindow that is still invalid. It is the classic off-by-one and it only shows up on inputs\nwhere the window actually has to shrink.\n\n**Delete keys that reach zero.** If your validity test is `len(counts) > k`, a key sitting\nat zero still counts towards `len`, and the window refuses to grow. If your test is on a\ntotal rather than a key count, you can skip the deletion - but be deliberate about it\nrather than lucky.\n\n## Length, and why to compute it rather than track it\n\nThe window is `right - left + 1` long. Write that expression; do not maintain a separate\n`size` variable that has to be adjusted in two places. One source of truth is one fewer\nthing to get wrong at minute thirty.\n\n## Shortest, rather than longest\n\nFor a shortest-window problem, the structure inverts: extend right until the window is\n**valid**, then shrink while it *stays* valid, recording each time.\n\n```python\nwhile window_is_valid():\n    best = min(best, right - left + 1)\n    remove(xs[left]); left += 1\n```\n\nThe clue in the prompt is \"smallest\" or \"minimum length\". Notice that the recording moves\ninside the `while` - a difference of two lines that changes the answer completely, so read\nthe prompt carefully before you pick.\n\n## When the window cannot slide\n\nA window only works if extending the right end can be undone by moving the left end - that\nis, if the property is monotone in the window's extent. With negative numbers, \"subarray\nsum at most s\" is not monotone: adding an element can *decrease* the sum, so shrinking\nfrom the left may not help. That problem needs prefix sums and a dict instead.\n\nBeing able to say *\"this only works because all the values are non-negative, so extending\nthe window can only increase the sum\"* is a strong signal, and it is also the exact\nfollow-up an interviewer reaches for after you solve the easy version.\n\n## Windows over events rather than indices\n\nSometimes the window is defined by a value rather than a count of elements - \"any 30-day\nperiod\", \"any run within a 5-unit range\". Sort by that value first, then run the same two\npointers with the condition expressed in the value rather than the index:\n\n```python\nevents.sort()\nwhile events[right][0] <= events[left][0] + window - 1:\n    ...\n```\n\nThe sort is the insight, and stating it is most of the answer.",
+      "problems": [
+        {
+          "slug": "py_06_longest_unique_run",
+          "note": "The canonical version. Do it, then close everything and write the template again from memory."
+        },
+        {
+          "slug": "py_11_accumulation_window",
+          "note": "A window defined by a date range rather than an element count. The sort is the insight; the pointers are the same."
+        }
+      ],
+      "checkpoint": {
+        "id": "sliding-window-checkpoint",
+        "title": "Sliding window checkpoint",
+        "questions": [
+          {
+            "id": "q-while",
+            "kind": "choice",
+            "prompt": "Why must the shrink step be a `while` rather than an `if`?",
+            "options": [
+              "Style - they are equivalent here",
+              "Because one new element can require removing several from the left before the window is valid",
+              "Because the left pointer must move on every iteration"
+            ],
+            "answer": 1,
+            "explanation": "With an `if` you shrink by at most one per new element, so a window that has become badly invalid never recovers and the recorded best is too large. On 'longest distinct run' it happens to work, because the window can only break by one - which is why this bug survives testing on the obvious problem and fails on the next one."
+          },
+          {
+            "id": "q-record",
+            "kind": "choice",
+            "prompt": "Where does `best = max(best, right - left + 1)` belong?",
+            "options": [
+              "Immediately after extending the right edge",
+              "Inside the shrink loop",
+              "After the shrink loop, when the window is valid again"
+            ],
+            "answer": 2,
+            "explanation": "Recording before or during the shrink measures a window that violates the constraint. It only shows up on inputs where the window actually has to shrink, which is why it survives the sample and fails the hidden tests."
+          },
+          {
+            "id": "q-monotone",
+            "kind": "explain",
+            "prompt": "Out loud: why does the sliding window approach fail for 'longest subarray with sum at most s' when the array can contain negative numbers?",
+            "modelAnswer": "The window relies on the property being monotone: extending right must push you towards invalid, and shrinking left must push you back towards valid. With negative values, adding an element can lower the sum and removing one can raise it, so neither pointer's movement is guaranteed to help. Prefix sums with a dict, or a monotonic deque, is the right tool. Being able to say this is the difference between knowing the template and knowing why it works."
+          },
+          {
+            "id": "q-recall",
+            "kind": "recall",
+            "prompt": "Blank editor: the full template, with the zero-count deletion.",
+            "modelAnswer": "Extend right and update the counts; `while` invalid, decrement the left element, delete its key if the count reaches zero, and advance left; then record right - left + 1. Fifteen lines. If you had to look anything up, do it again tomorrow morning."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "all-required-problems",
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.75
+      }
+    },
+    {
+      "id": "intervals",
+      "title": "Intervals: sort first, then sweep",
+      "summary": "Anything with start and end pairs begins with a sort. What you sort by, and what you carry forward as you sweep, is the whole problem.",
+      "estimatedMinutes": 50,
+      "objectives": [
+        "Recognise interval problems and start with the sort",
+        "Merge overlapping intervals in one pass",
+        "Solve 'maximum concurrent' with the sweep-line counter",
+        "Ask about inclusive versus exclusive endpoints before writing the comparison"
+      ],
+      "teaching": "## The recognition cue\n\n> **When the input is pairs of start and end - dates, times, ranges, coverage periods -\n> the first line is a sort, and the algorithm is a single sweep afterwards.**\n\nAlmost nobody fails an interval question because the sweep is hard. They fail it by not\nsorting, or by sorting on the wrong field.\n\n## Merging overlaps\n\n```python\nif not periods:\n    return []\nperiods = sorted(periods)              # by start, then end\nout = [list(periods[0])]\nfor start, end in periods[1:]:\n    if start <= out[-1][1]:            # overlaps or touches the last merged interval\n        out[-1][1] = max(out[-1][1], end)\n    else:\n        out.append([start, end])\nreturn out\n```\n\nTwo details worth the sentences:\n\n**`max(out[-1][1], end)`, not `end`.** An interval fully contained in the previous one -\n`[1, 10]` then `[2, 3]` - would otherwise shrink the merged range. It is the case people\nforget and the case an interviewer tests.\n\n**`<=` or `<`?** Do intervals that merely touch count as overlapping? `[1, 5]` and `[5, 9]`\neither merge into `[1, 9]` or stay separate, and both are defensible - it depends on\nwhether the end is inclusive. **Ask.** If the interviewer says \"your call\", state your\nassumption and write it in a comment. Choosing silently is the only wrong move.\n\n## Maximum concurrent: the sweep line\n\n\"How many meetings overlap at the busiest moment\", \"how many rooms do we need\", \"what is\nthe peak exposure\" are all the same problem, and merging is the wrong tool. Split each\ninterval into two events and sort the events:\n\n```python\nevents = []\nfor start, end in intervals:\n    events.append((start, +1))\n    events.append((end, -1))\nevents.sort()                          # ties: -1 sorts before +1, so touching\n                                       # intervals do not overlap\ncur = best = 0\nfor _t, delta in events:\n    cur += delta\n    best = max(best, cur)\n```\n\nThe tie-breaking is the whole subtlety. Because `-1 < +1`, an interval ending exactly when\nanother begins produces the end before the start, so they are not counted as concurrent.\nIf your endpoints are inclusive and touching *should* count, flip the tie order. Same\nquestion as the `<=` above, appearing in a different disguise - which is worth noticing\nout loud, because it shows you understand the shape rather than two memorised snippets.\n\n## Choosing the sort key\n\n- **Merging**: sort by **start**. You need to know whether the next interval reaches back\n  into the current one.\n- **Maximum concurrency**: sort **events**, not intervals.\n- **Fitting the most non-overlapping intervals** (the classic scheduling greedy): sort by\n  **end**, and take each interval whose start is at or after the last one taken. Sorting by\n  start here gives the wrong answer, and it is the single most common mistake in interval\n  problems. The intuition to say: finishing earliest leaves the most room for whatever\n  comes next.\n\n## Inserting into a sorted set of intervals\n\nGiven non-overlapping intervals in order, insert a new one and re-merge. Three phases,\nwhich is easier to write correctly than a clever single loop:\n\n1. Copy every interval that ends before the new one starts.\n2. Absorb every interval that overlaps, widening the new one with `min` of the starts and\n   `max` of the ends.\n3. Copy the rest.\n\nUnder time pressure, three explicit phases with obvious names beat a single loop with two\nflags. Reviewers - and future you at minute thirty - can read it.\n\n## Complexity, and the honest statement\n\nThe sort dominates: O(n log n) time, O(n) output. Say it, and say the corollary: **if the\ninput arrives already sorted, the sweep alone is O(n)**, which is worth asking about,\nbecause feeds and logs often are.",
+      "problems": [
+        {
+          "slug": "py_07_merge_intervals",
+          "note": "The merge. Decide out loud whether touching counts as overlapping before you write the comparison."
+        },
+        {
+          "slug": "py_11_accumulation_window",
+          "note": "Compare this with the sweep line: it is the same 'peak concurrency' question solved with a moving window instead. Knowing both shapes and when each applies is the point.",
+          "optional": true
+        },
+        {
+          "slug": "py_18_insert_interval",
+          "planned": true,
+          "optional": true,
+          "note": "Insertion into an already-merged set, which forces the three-phase structure.",
+          "plannedSpec": {
+            "title": "Insert a coverage period into an existing schedule",
+            "pattern": "intervals",
+            "difficulty": "medium",
+            "minutes": 15,
+            "brief": "Given non-overlapping intervals sorted by start, insert a new interval and merge as needed. Tests the three-phase structure and the empty-input and insert-at-the-end cases. Follow-up: remove an interval, which can split an existing one in two."
+          }
+        }
+      ],
+      "checkpoint": {
+        "id": "intervals-checkpoint",
+        "title": "Intervals checkpoint",
+        "questions": [
+          {
+            "id": "q-contained",
+            "kind": "choice",
+            "prompt": "Merging with `out[-1][1] = end` instead of `max(out[-1][1], end)` breaks on which input?",
+            "options": [
+              "[[1,3],[4,6]] - non-overlapping",
+              "[[1,10],[2,3]] - the second is contained in the first",
+              "[[1,5],[5,9]] - touching"
+            ],
+            "answer": 1,
+            "explanation": "A fully contained interval has a smaller end, so assigning it directly shrinks the merged range from [1,10] to [1,3] and everything after it is wrong. The sort by start does not prevent this, which is why the max is not optional."
+          },
+          {
+            "id": "q-sort-key",
+            "kind": "choice",
+            "prompt": "You want the largest number of non-overlapping intervals you can schedule. What do you sort by?",
+            "options": [
+              "Start time, ascending",
+              "End time, ascending",
+              "Duration, ascending"
+            ],
+            "answer": 1,
+            "explanation": "Take the interval that finishes earliest, then the next that starts at or after it. Finishing early leaves the most room for what follows. Sorting by start lets one long early interval block several short ones; sorting by duration is intuitive and also wrong."
+          },
+          {
+            "id": "q-sweep-tie",
+            "kind": "explain",
+            "prompt": "Out loud: in the sweep line, why does `-1` need to sort before `+1` at the same timestamp, and when would you want the opposite?",
+            "modelAnswer": "Processing the end first means an interval ending at time t and one starting at time t are never counted as concurrent - correct when ends are exclusive, which is the usual meeting-room reading. If the endpoints are inclusive, so that a policy covering through the 30th and one starting on the 30th genuinely overlap on that day, flip the order. It is the same inclusive-versus-exclusive question as the `<=` in the merge, so ask it once and apply the answer to both."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "all-required-problems",
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.66
+      }
+    },
+    {
+      "id": "binary-search",
+      "title": "Binary search, including on the answer",
+      "summary": "The easy half is searching a sorted array. The half that actually gets asked is the boundary variant, and the half that separates candidates is binary searching over a range of possible answers.",
+      "estimatedMinutes": 50,
+      "objectives": [
+        "Write the boundary variants without an off-by-one",
+        "Use bisect rather than hand-rolling when a plain search will do",
+        "Recognise 'minimum x such that f(x) holds' as a binary search on the answer"
+      ],
+      "teaching": "## The recognition cue\n\n> **When the data is sorted and you need a position - or when the *answer* lies in a\n> numeric range and a candidate answer can be checked quickly - reach for binary search.**\n\nThe second half of that sentence is the one worth internalising. Most interview binary\nsearches are not over an array at all.\n\n## The variant that gets asked\n\n\"Find x\" is rare. \"Find the last band whose threshold is at or below x\", \"find the first\ndate on or after this one\", \"find the insertion point\" is common - and that is where the\noff-by-ones live.\n\n```python\ndef rightmost_le(xs, target):\n    lo, hi = 0, len(xs) - 1\n    best = -1\n    while lo <= hi:\n        mid = (lo + hi) // 2          # // not /, or you get a float index\n        if xs[mid] <= target:\n            best = mid                # a candidate; look right for a better one\n            lo = mid + 1\n        else:\n            hi = mid - 1\n    return best\n```\n\nThe pattern that makes this reliable under pressure: **record the candidate, then keep\nsearching in the direction that might improve it.** No clever termination condition to\nreason about, and the answer is whatever was last recorded. Trying to make the loop\nboundaries themselves carry the answer is the version people get wrong at minute thirty.\n\nTwo habits worth having:\n\n- `(lo + hi) // 2` - integer division. Python's `/` returns a float and a float index\n  raises `TypeError`. This is the single most common error made by people arriving from a\n  language where `/` floors integers.\n- Say the invariant out loud: *\"everything at or before `best` satisfies the condition,\n  everything after `hi` does not.\"* If you can state the invariant, the boundaries follow.\n\n## Use bisect when you can\n\n```python\nimport bisect\ni = bisect.bisect_right(xs, target)     # insertion point after any equal values\nj = bisect.bisect_left(xs, target)      # insertion point before them\n# rightmost index with xs[idx] <= target:\nidx = bisect.bisect_right(xs, target) - 1\n```\n\nReaching for the standard library is not cheating; it is what you would do in production,\nand the `- 1` conversion demonstrates that you know exactly what the function returns.\nBe ready to write the loop by hand if asked - some interviewers will ask precisely because\nyou used the library.\n\n## Binary search on the answer\n\nThis is the version that distinguishes candidates, and once you see it you see it\neverywhere.\n\n> *Minimum capacity to ship all packages in d days. Smallest divisor keeping the sum under\n> a threshold. Fewest machines to finish by a deadline.*\n\nNone of those come with a sorted array. What they have is a **monotone predicate**: some\ncandidate answer x is feasible, and every larger x is also feasible. That monotonicity is\nthe sorted structure - it is just implicit.\n\n```python\ndef feasible(capacity):\n    ...                                 # can we do it with this capacity? True/False\n\nlo, hi = min_possible, max_possible\nwhile lo < hi:\n    mid = (lo + hi) // 2\n    if feasible(mid):\n        hi = mid                        # mid might be the answer; do not exclude it\n    else:\n        lo = mid + 1\nreturn lo\n```\n\nThree things to say while writing it:\n\n1. **Name the predicate and state its monotonicity.** *\"If capacity c works, then any\n   capacity above c also works, so feasibility is monotone and I can binary search the\n   boundary.\"* This is the insight; the loop is bookkeeping.\n2. **Justify the bounds.** The lower bound is usually the largest single item (you must be\n   able to carry it at all); the upper bound is the sum of everything (one trip). Sloppy\n   bounds are where these go wrong.\n3. **State the cost.** O(n log(range)) - the log is over the *value* range, not the\n   element count, which is a different thing from ordinary binary search and worth saying\n   precisely.\n\n## When binary search is the wrong instinct\n\nIf the predicate is not monotone, this silently returns a wrong answer rather than\nfailing. Before writing the loop, actually check: does feasibility, once true, stay true?\nIf the answer is no, you need a different approach entirely.",
+      "problems": [
+        {
+          "slug": "py_08_binary_search_rate",
+          "note": "The rightmost-at-or-below variant, which is the one that comes up. Then rewrite it with bisect and check the two agree."
+        },
+        {
+          "slug": "py_19_min_capacity",
+          "planned": true,
+          "optional": true,
+          "note": "Binary search on the answer, with a feasibility check the candidate has to write themselves.",
+          "plannedSpec": {
+            "title": "Smallest capacity to clear the queue in n days",
+            "pattern": "binary search on the answer",
+            "difficulty": "medium",
+            "minutes": 18,
+            "brief": "Given a list of daily workloads that must be processed in order and a deadline in days, find the minimum per-day capacity. Tests naming the monotone predicate, justifying the bounds (max single item, and the total), and stating O(n log(range))."
+          }
+        }
+      ],
+      "checkpoint": {
+        "id": "binary-search-checkpoint",
+        "title": "Binary search checkpoint",
+        "questions": [
+          {
+            "id": "q-div",
+            "kind": "choice",
+            "prompt": "`mid = (lo + hi) / 2` in Python 3 gives you:",
+            "options": [
+              "The floor, as in most other languages",
+              "A float, so `xs[mid]` raises TypeError",
+              "A rounding error only on large inputs"
+            ],
+            "answer": 1,
+            "explanation": "Python 3's `/` is true division and always returns a float. `//` is floor division. This is the most common error made by people arriving from a language where integer division floors, and it fails immediately and loudly - which is at least better than the alternatives in this course."
+          },
+          {
+            "id": "q-monotone",
+            "kind": "choice",
+            "prompt": "What makes a problem a candidate for binary search on the answer?",
+            "options": [
+              "The input is sorted",
+              "Feasibility is monotone: if a candidate answer works, every larger one also works",
+              "The answer is an integer"
+            ],
+            "answer": 1,
+            "explanation": "The sorted structure is in the predicate, not the input. Once feasibility is monotone, the boundary between infeasible and feasible can be found in log steps by checking candidates. Without monotonicity the search silently converges on the wrong value."
+          },
+          {
+            "id": "q-recall-boundary",
+            "kind": "recall",
+            "prompt": "From memory: the rightmost index whose value is at or below the target, hand-written.",
+            "modelAnswer": "lo, hi = 0, len(xs) - 1; best = -1; while lo <= hi: mid = (lo + hi) // 2; if xs[mid] <= target: best = mid; lo = mid + 1 else: hi = mid - 1; return best.\n\nRecord the candidate then keep searching - do not try to make the final boundary values carry the answer."
+          },
+          {
+            "id": "q-bounds",
+            "kind": "explain",
+            "prompt": "Out loud: for 'minimum capacity to process all workloads in n days', what are your search bounds and why?",
+            "modelAnswer": "Lower bound is the largest single workload, because anything smaller cannot process that item at all. Upper bound is the sum of everything, which finishes in one day and is therefore certainly feasible. Both ends are justified by an argument rather than a guess, which is the part interviewers probe."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "all-required-problems",
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.75
+      }
+    },
+    {
+      "id": "graphs",
+      "title": "Graphs: BFS, DFS, and topological sort",
+      "summary": "Build the adjacency list, choose the traversal, track what you have visited. Most graph questions are about whether you can do that quickly, not about graph theory.",
+      "estimatedMinutes": 85,
+      "objectives": [
+        "Turn a list of pairs into an adjacency list in two lines",
+        "Choose BFS or DFS deliberately and say why",
+        "Write Kahn's topological sort with cycle detection",
+        "Recognise a graph problem that is not described as a graph"
+      ],
+      "teaching": "## The recognition cue\n\n> **When things depend on, contain, connect to, or report to other things - and the\n> question asks about reachability, ordering, grouping or distance - it is a graph.**\n\nThe hard part is often noticing. Prerequisites between courses, steps in a workflow, an\norg chart, currency conversions, a word ladder, cells in a grid: all graphs, none of them\ndescribed as one. Say it out loud when you spot it - *\"this is a directed graph where each\nstep points at the steps that depend on it\"* - because naming the model is the insight and\nthe rest is machinery.\n\n## The machinery\n\n```python\nfrom collections import defaultdict, deque\n\ngraph = defaultdict(list)\nfor a, b in edges:\n    graph[a].append(b)         # directed\n    # graph[b].append(a)       # add this line too if undirected\n```\n\n**BFS** - shortest path in an unweighted graph, or anything level-by-level:\n\n```python\nq = deque([start])\nseen = {start}\nwhile q:\n    node = q.popleft()\n    for nxt in graph[node]:\n        if nxt not in seen:\n            seen.add(nxt)      # mark on ENQUEUE\n            q.append(nxt)\n```\n\n**DFS** - reachability, connected components, or rolling a value up a tree:\n\n```python\ndef total(node):\n    return own[node] + sum(total(c) for c in graph[node])\n```\n\nTwo details that cost real points:\n\n- **`deque`, not a list.** `list.pop(0)` is O(n), which quietly makes your BFS quadratic.\n  Using a deque and saying why is free signal.\n- **Mark as seen when you enqueue, not when you dequeue.** Otherwise a node reachable from\n  several parents is queued several times before it is first processed. On a dense graph\n  that is a blow-up rather than a wrong answer, which makes it harder to spot in testing.\n\nFor DFS, mention the recursion limit - around 1000 frames in CPython - and that you would\nconvert to an explicit stack for deep graphs. Saying it is usually enough.\n\n## Which traversal\n\n- **Shortest path, unweighted**: BFS. The first time you reach a node is via a shortest\n  path, and that only holds because BFS expands in order of distance. DFS gives you *a*\n  path, not the shortest.\n- **All reachable nodes, or a component**: either. DFS is shorter to write.\n- **Something computed from children**: DFS, because the recursion naturally returns from\n  the leaves upwards.\n- **Weighted shortest path**: Dijkstra, which is BFS with a heap instead of a queue.\n  Recognise it; you rarely have to write it in a 45-minute round.\n\n## Topological sort\n\nThe one graph algorithm worth being able to write cold, because dependency ordering comes\nup in real systems constantly.\n\n```python\nindeg = {n: 0 for n in nodes}\ngraph = defaultdict(list)\nfor a, b in edges:                       # a must come before b\n    graph[a].append(b)\n    indeg[b] += 1\n\nq = deque([n for n in nodes if indeg[n] == 0])\norder = []\nwhile q:\n    n = q.popleft()\n    order.append(n)\n    for m in graph[n]:\n        indeg[m] -= 1\n        if indeg[m] == 0:\n            q.append(m)\n\nif len(order) != len(nodes):\n    raise ValueError(\"cycle detected\")\n```\n\nThree things to say while writing it:\n\n- **The cycle detection is free.** If you could not emit every node, the ones left behind\n  are exactly those that are inside a cycle or blocked by one. \"What if the input has a\n  cycle\" is the follow-up nearly every time, so raise it before you are asked.\n- **The output is one valid order, not the only one.** If a deterministic order is wanted,\n  swap the `deque` for a `heapq` and you get the lexicographically smallest.\n- **Kahn's, not DFS-based.** Both are correct. Kahn's gives you cycle detection and a\n  natural place to talk about \"ready to run\" - and if the round moves on to system design,\n  a queue of ready tasks is exactly the vocabulary you want.\n\n## Grids are graphs\n\nA 2D grid problem is a graph with implicit edges:\n\n```python\nfor dr, dc in ((1,0), (-1,0), (0,1), (0,-1)):\n    nr, nc = r + dr, c + dc\n    if 0 <= nr < rows and 0 <= nc < cols and grid[nr][nc] != WALL:\n        ...\n```\n\nThe bounds check written as a chained comparison, and the directions as a tuple of tuples,\nare worth having memorised - flood fill, island counting and shortest-path-through-a-maze\nare all this plus BFS or DFS.",
+      "problems": [
+        {
+          "slug": "py_09_broker_hierarchy",
+          "note": "DFS rolling a value up a tree. Build the adjacency list out loud."
+        },
+        {
+          "slug": "py_10_workflow_order",
+          "note": "Kahn's topological sort with cycle detection. Worth extra attention: it is also the bridge into a system design conversation about pipelines and DAGs."
+        }
+      ],
+      "checkpoint": {
+        "id": "graphs-checkpoint",
+        "title": "Graphs checkpoint",
+        "questions": [
+          {
+            "id": "q-seen",
+            "kind": "choice",
+            "prompt": "When should a node be added to the seen set in BFS?",
+            "options": [
+              "When dequeued, so it records actual visit order",
+              "When enqueued, before it is ever dequeued",
+              "Either - as long as you check membership before enqueuing"
+            ],
+            "answer": 1,
+            "explanation": "Marking on dequeue lets a node reachable from several parents be enqueued several times before it is first processed. The result is still correct but the queue can blow up on a wide graph, and it is a change of complexity rather than a change of answer, which makes it easy to miss."
+          },
+          {
+            "id": "q-deque",
+            "kind": "choice",
+            "prompt": "Why `deque.popleft()` rather than `list.pop(0)` for a BFS queue?",
+            "options": [
+              "pop(0) raises on an empty list",
+              "pop(0) is O(n) because every remaining element shifts, making the whole BFS quadratic",
+              "deque preserves insertion order and a list does not"
+            ],
+            "answer": 1,
+            "explanation": "A list is a contiguous array, so removing the front shifts everything down. deque is a doubly linked block structure with O(1) at both ends. Saying this unprompted is a cheap, genuine signal."
+          },
+          {
+            "id": "q-topo-cycle",
+            "kind": "recall",
+            "prompt": "From memory: Kahn's algorithm, and how the cycle detection works.",
+            "modelAnswer": "In-degree count per node; queue every zero-in-degree node; pop, emit, decrement each successor's in-degree, and enqueue any that reach zero. If the emitted order is shorter than the node count, there is a cycle, and the un-emitted nodes are the ones in or downstream of it. No extra bookkeeping - which is why this version is the one to remember."
+          },
+          {
+            "id": "q-not-a-graph",
+            "kind": "explain",
+            "prompt": "Out loud: name three problems that are graphs but are not described as graphs.",
+            "modelAnswer": "Any of: course prerequisites, build or workflow step ordering, an org or broker hierarchy, a grid or maze, currency conversion chains, word ladders, file system trees, package dependency resolution. The skill is naming the model out loud when you spot it - 'this is a DAG of steps' - because that sentence is the insight the question is testing."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "all-required-problems",
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.75
+      }
+    },
+    {
+      "id": "dynamic-programming",
+      "title": "Dynamic programming, at interview scale",
+      "summary": "You will not be asked for anything exotic. You will be asked to define a state, write a recurrence, and say why the subproblems overlap. Do it in that order and out loud.",
+      "estimatedMinutes": 60,
+      "objectives": [
+        "State a DP as: what is the state, what is the recurrence, what are the base cases",
+        "Convert a recursion into memoised form with one decorator",
+        "Convert memoised recursion into a bottom-up table when asked",
+        "Recognise the small number of DP shapes that actually appear"
+      ],
+      "teaching": "## The recognition cue\n\n> **When the question asks for a minimum, maximum or a count of ways, and the choices at\n> each step are constrained by earlier choices - and a greedy choice can be shown to be\n> wrong - it is dynamic programming.**\n\nThe greedy check matters. \"Fewest coins to make an amount\" looks greedy: take the largest\ncoin that fits. On the denominations 1, 3, 4 and a target of 6, greedy takes 4 + 1 + 1 for\nthree coins, while 3 + 3 is two. **Producing a counterexample to the greedy approach is\nworth saying out loud**, because it is the actual justification for reaching for DP, and\ninterviewers notice candidates who reach for DP without one.\n\n## Say it in three sentences, before writing anything\n\n1. **The state.** *\"`best[a]` is the fewest layers needed to cover exactly amount a.\"*\n   Getting this wrong is what makes DP feel impossible; getting it right usually makes the\n   rest mechanical.\n2. **The recurrence.** *\"`best[a] = 1 + min(best[a - size])` over every size that fits.\"*\n3. **The base cases and the impossible cases.** *\"`best[0] = 0`. Everything else starts at\n   infinity, and if it is still infinity at the end, the amount cannot be made.\"*\n\nThen write it. Interviewers score the three sentences at least as heavily as the code, and\nif your recurrence is wrong they can tell you before you have spent fifteen minutes on it.\n\n## Top-down first\n\nThe memoised recursion is usually easier to get right, because it is a direct translation\nof the recurrence:\n\n```python\nfrom functools import lru_cache\n\n@lru_cache(maxsize=None)\ndef best(amount):\n    if amount == 0:\n        return 0\n    if amount < 0:\n        return float(\"inf\")\n    return 1 + min((best(amount - s) for s in sizes), default=float(\"inf\"))\n```\n\n`lru_cache` is one line and turns exponential into polynomial. Two caveats worth knowing:\nthe arguments must be hashable, so pass a tuple rather than a list; and deep recursion can\nstill exceed the stack limit, which is the honest reason to convert to bottom-up.\n\n## Bottom-up when asked\n\n```python\nINF = float(\"inf\")\nbest = [0] + [INF] * amount\nfor a in range(1, amount + 1):\n    for s in sizes:\n        if s <= a and best[a - s] + 1 < best[a]:\n            best[a] = best[a - s] + 1\nreturn -1 if best[amount] == INF else best[amount]\n```\n\nSame recurrence, iterative, with the loop ordering chosen so that every value it reads is\nalready final. That ordering is the only new idea in the conversion, and being able to say\n*\"I iterate amounts upward because `best[a]` depends only on smaller amounts\"* is the\nwhole justification.\n\n## The shapes that actually appear\n\nYou do not need a taxonomy. You need to recognise four:\n\n- **1D over a value or an index** - coin change, minimum layers, house robber, climbing\n  stairs. State is one number.\n- **2D over two sequences** - edit distance, longest common subsequence. State is a pair\n  of positions, and the table is a grid.\n- **Grid traversal** - paths through a grid with obstacles. State is a cell.\n- **Choose or skip over items** - knapsack. State is (item index, capacity remaining).\n\nAnything beyond these is unlikely in a general round, and if it does appear, the interview\nis testing whether you can define a state under pressure, not whether you have seen the\nproblem before.\n\n## Space, and the honest optimisation\n\nMany 1D and 2D DPs only ever look back a fixed number of rows, so the table can be reduced\nto one or two rows - O(n) instead of O(n squared) space. **Mention it, do not do it\nunprompted.** The rolling-array version is harder to read and harder to debug, and turning\na correct solution into a subtly wrong one at minute thirty-eight is a bad trade. *\"I could\nreduce this to two rows since each row only depends on the one before it, but I will keep\nthe full table for clarity unless memory is a constraint\"* is the answer that scores.\n\n## Reconstructing the choice\n\n\"What is the minimum\" is often followed by \"and which items\". You get that by keeping a\nparent pointer alongside each state - the choice that produced the best value - and walking\nit back from the end. Worth knowing the technique exists; it is the standard follow-up.",
+      "problems": [
+        {
+          "slug": "py_13_min_layers",
+          "note": "Unbounded knapsack in disguise. State, recurrence, base cases - out loud, in that order, before you type."
+        },
+        {
+          "slug": "py_20_grid_paths",
+          "planned": true,
+          "optional": true,
+          "note": "A 2D table, so the state is a cell rather than a number, and the loop ordering has to be argued for.",
+          "plannedSpec": {
+            "title": "Routes through a grid with blocked cells",
+            "pattern": "dynamic programming (grid)",
+            "difficulty": "medium",
+            "minutes": 15,
+            "brief": "Count paths from the top-left to the bottom-right moving only right and down, with some cells blocked. Tests the 2D state, the base row and column, and the blocked-cell zero. Follow-ups: reduce to one row of space; return one such path rather than the count."
+          }
+        }
+      ],
+      "checkpoint": {
+        "id": "dp-checkpoint",
+        "title": "Dynamic programming checkpoint",
+        "questions": [
+          {
+            "id": "q-greedy",
+            "kind": "choice",
+            "prompt": "Fewest coins from denominations 1, 3, 4 to make 6. What does greedy give, and what is optimal?",
+            "options": [
+              "2 and 2",
+              "3 (4+1+1) and 2 (3+3)",
+              "2 (3+3) and 3"
+            ],
+            "answer": 1,
+            "explanation": "Greedy takes the 4, then needs two 1s: three coins. The optimum is 3+3: two coins. This counterexample is the justification for using DP at all, and producing one unprompted is the difference between reaching for DP and reaching for it with a reason."
+          },
+          {
+            "id": "q-order",
+            "kind": "choice",
+            "prompt": "In the bottom-up version, why iterate amounts from small to large?",
+            "options": [
+              "For cache locality",
+              "Because best[a] depends only on smaller amounts, so those values must already be final",
+              "Because the answer is at the end of the array"
+            ],
+            "answer": 1,
+            "explanation": "The loop order has to make every value the recurrence reads already computed. That is the entire content of the top-down to bottom-up conversion, and it is what the interviewer is checking when they ask you to convert."
+          },
+          {
+            "id": "q-three-sentences",
+            "kind": "recall",
+            "prompt": "From memory: the three sentences you say before writing any DP.",
+            "modelAnswer": "What the state is and what it means in words; what the recurrence is; what the base cases and impossible cases are. Then the code. Saying them first means a wrong recurrence gets corrected in thirty seconds rather than fifteen minutes."
+          },
+          {
+            "id": "q-space",
+            "kind": "explain",
+            "prompt": "Out loud: your DP uses an n-by-m table and each row depends only on the previous one. What do you say, and what do you do?",
+            "modelAnswer": "Say that it can be reduced to two rows, or one with careful iteration order, for O(m) space. Then keep the full table unless memory is stated as a constraint. Naming the optimisation gets the credit; performing it costs readability and risks breaking a correct solution late in the round."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "all-required-problems",
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.75
+      }
+    },
+    {
+      "id": "recognition-drill",
+      "title": "Recognising the pattern from the prompt",
+      "summary": "The final module is not a new pattern. It is the skill the previous seven were for: reading a prompt cold and naming the shape within thirty seconds.",
+      "estimatedMinutes": 90,
+      "objectives": [
+        "Name the pattern before writing any code",
+        "Handle the leftovers - stacks, recursion over nested data, and design questions",
+        "Say what you would do differently if the constraints changed"
+      ],
+      "teaching": "## The cue table\n\nHave this available as one recall, not eight:\n\n| What the prompt says | What to reach for |\n|---|---|\n| \"have I seen\", \"any two\", \"how many of each\", \"group by\" | dict / Counter / defaultdict |\n| sorted input, \"a pair\", \"in place\", \"O(1) space\" | two pointers |\n| \"longest\", \"shortest\", \"at most k\", and **contiguous** | sliding window |\n| pairs of start and end | sort, then sweep |\n| sorted, or \"minimum x such that\" | binary search - possibly on the answer |\n| depends on / connects to / contains | graph: BFS, DFS, or topological sort |\n| min / max / count of ways, and greedy is demonstrably wrong | dynamic programming |\n| nesting, matching, \"most recent unclosed\" | stack |\n| arbitrary depth, self-similar structure | recursion |\n| \"design a thing with these operations, all O(1)\" | combine two structures |\n\nThe last three are the leftovers this module covers, and they are common enough to be\nworth their own paragraphs.\n\n## Stacks\n\nThe cue is **nesting** or **most recent unmatched**. Brackets, expression parsing, undo,\nand the whole monotonic-stack family (next greater element, largest rectangle) are the\nsame idea: push what is unresolved, pop when it resolves.\n\n```python\npairs = {\")\": \"(\", \"]\": \"[\", \"}\": \"{\"}\nstack = []\nfor ch in s:\n    if ch in pairs.values():\n        stack.append(ch)\n    elif ch in pairs:\n        if not stack or stack.pop() != pairs[ch]:\n            return False\nreturn not stack\n```\n\nThe `return not stack` at the end is the case people forget: `\"(((\"` never fails a pop, it\njust leaves things unresolved. Empty input returning True is the other one worth checking\nout loud.\n\n## Recursion over nested data\n\nFlattening a nested payload, walking a JSON tree, summing a directory - the shape is\nalways the same: handle the leaf, recurse into the branch, thread an accumulator through.\n\n```python\ndef flatten(obj, prefix=\"\", out=None):\n    out = {} if out is None else out\n    for k, v in obj.items():\n        key = f\"{prefix}{k}\" if not prefix else f\"{prefix}.{k}\"\n        if isinstance(v, dict):\n            flatten(v, key, out)\n        else:\n            out[key] = v\n    return out\n```\n\nNote `out=None` rather than `out={}`. A mutable default argument in Python is evaluated\n**once, at definition time**, and shared across every call - so the second call to the\nfunction sees the first call's results. It is one of the few Python-specific traps that\nproduces genuinely baffling behaviour, and it appears most often in exactly this kind of\naccumulator-threading recursive function.\n\nThe questions to ask before writing: how deep can it go (recursion limit), what are the\nleaf types, and what should happen with an empty container or a list in the middle.\n\n## Design questions\n\n\"Implement a cache with O(1) get and put.\" \"Design a rate limiter.\" These are not puzzles;\nthey are asking whether you can pick and combine data structures.\n\nThe method: **state the invariant first, then choose structures that maintain it.**\n\n> *\"I need O(1) lookup, which means a dict. And I need to know the least recently used item\n> in O(1), which a dict cannot give me - so I need an ordering structure with O(1) removal\n> from the middle, which is a doubly linked list. The dict maps key to node.\"*\n\nThat is the entire answer to LRU, said before a line is written. In Python, `OrderedDict`\nwith `move_to_end` gives you both, and mentioning that you know what it is doing underneath\nis better than either using it silently or refusing to use it.\n\nThe generalisable idea: **when one structure cannot give you every operation in the time\nyou need, use two and keep them in sync.** Say it that way - it applies to far more than\ncaches.\n\n## The drill\n\nFor each problem below, before writing anything: read the prompt, say the pattern out loud\nwith the cue that gave it away, then state the complexity you expect to achieve. Then\nsolve it. If your first guess at the pattern was wrong, write down which cue misled you -\nthat note is worth more than the solved problem.",
+      "problems": [
+        {
+          "slug": "py_04_balanced_brackets",
+          "note": "Stack. Do not forget the leftover check at the end."
+        },
+        {
+          "slug": "py_15_flatten_payload",
+          "note": "Recursion over nested data, and the mutable-default trap. Very close to real integration work."
+        },
+        {
+          "slug": "py_14_lru_cache",
+          "note": "A design question. Say the invariant and the two structures before writing the class."
+        },
+        {
+          "slug": "py_12_stdin_totals",
+          "note": "Not a pattern - a mechanical skill. Parsing input should cost you zero thinking time, and in a timed round it often costs four minutes."
+        }
+      ],
+      "checkpoint": {
+        "id": "recognition-checkpoint",
+        "title": "Recognition checkpoint",
+        "questions": [
+          {
+            "id": "q-cue-1",
+            "kind": "choice",
+            "prompt": "'Find the longest subarray containing at most two distinct values.' What is the cue and the pattern?",
+            "options": [
+              "'At most two distinct' - a dict of counts, scanned once",
+              "'Longest' plus 'subarray' - a sliding window, with a dict of counts inside it",
+              "'Distinct' - a set and a sort"
+            ],
+            "answer": 1,
+            "explanation": "'Subarray' means contiguous, and 'longest ... at most k' is the window's signature. The dict is inside the window, tracking what it contains; on its own it cannot answer a question about contiguity."
+          },
+          {
+            "id": "q-cue-2",
+            "kind": "choice",
+            "prompt": "'Given rates for converting between currencies, can I get from A to B, and at what rate?' What is this?",
+            "options": [
+              "Dynamic programming over the currency list",
+              "A graph problem - nodes are currencies, edges are rates - solved with DFS or BFS",
+              "A sorting problem"
+            ],
+            "answer": 1,
+            "explanation": "'Can I get from A to B' is reachability, which is a graph even though the prompt never says so. Multiply the rates along the path. Noticing and naming the model out loud is the insight being tested."
+          },
+          {
+            "id": "q-mutable-default",
+            "kind": "choice",
+            "prompt": "Why is `def flatten(obj, out={}):` a bug?",
+            "options": [
+              "Dicts cannot be default arguments",
+              "The default is evaluated once at definition time, so every call shares the same dict and results accumulate across calls",
+              "It shadows the built-in dict"
+            ],
+            "answer": 1,
+            "explanation": "Python evaluates default arguments once, when the function is defined. The same dict object is reused, so the second call starts with the first call's contents. Use `out=None` and create the dict inside. It bites hardest in recursive accumulator functions, which is exactly where people write it."
+          },
+          {
+            "id": "q-design",
+            "kind": "explain",
+            "prompt": "Out loud: the invariant and the structures for an LRU cache, before any code.",
+            "modelAnswer": "O(1) lookup by key means a dict. Knowing the least recently used item and removing it in O(1) means an ordering structure with O(1) removal from the middle, which is a doubly linked list; the dict maps key to node. On every get and put, move the node to the front; when over capacity, drop the tail. The general principle: when one structure cannot serve every operation in the required time, use two and keep them in sync."
+          },
+          {
+            "id": "q-full-table",
+            "kind": "recall",
+            "prompt": "From memory: as many rows of the cue table as you can, in the form 'when I see X, reach for Y'.",
+            "modelAnswer": "Eight or more of the ten rows is a pass. The value is not the table itself - it is that the first thirty seconds of a round become 'this is a window problem because the prompt says longest contiguous run' rather than a silent stare. If you can only produce five, review the cue line at the top of each module rather than re-solving problems."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "min-problems",
+        "minProblemsSolved": 3,
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.75,
+        "notes": "Three of the four problems. Naming the pattern out loud before starting each one is the part that matters here."
+      },
+      "recap": "Seven patterns and their cues, plus stacks, recursion and combining structures. That is the recurring surface of interview data structures. Depth beyond it has far worse returns than practising the recognition step until it is instant."
+    }
+  ]
+}

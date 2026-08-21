@@ -19,7 +19,9 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@aptivus/problems": ["../../packages/problems/src/types.ts"],
+      "@aptivus/problems/schema": ["../../packages/problems/src/schema.mjs"]
     }
   },
   "include": [
@@ -28,7 +30,8 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
-    "**/*.mts"
+    "**/*.mts",
+    "../../packages/problems/src/**/*"
   ],
   "exclude": ["node_modules"]
 }

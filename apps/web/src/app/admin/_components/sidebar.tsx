@@ -45,7 +45,11 @@ export default function Sidebar() {
     >
       <div className="brand-bar h-1 w-full" />
 
-      <div className="flex h-14 items-center gap-2 px-3">
+      <div
+        className={`flex px-3 ${
+          collapsed ? "flex-col items-center gap-2 py-3" : "h-14 items-center gap-2"
+        }`}
+      >
         <Link
           href="/admin"
           className="flex min-w-0 items-center gap-2"
@@ -60,6 +64,26 @@ export default function Sidebar() {
             </span>
           )}
         </Link>
+
+        <button
+          type="button"
+          onClick={toggle}
+          aria-expanded={hydrated ? !collapsed : undefined}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className={`grid h-8 w-8 shrink-0 place-items-center rounded-md text-muted transition hover:bg-raised hover:text-fg ${
+            collapsed ? "" : "ml-auto"
+          }`}
+        >
+          <svg
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+            fill="currentColor"
+            className={`h-4 w-4 transition-transform ${collapsed ? "rotate-180" : ""}`}
+          >
+            <path d="M15.4 7.4 14 6l-6 6 6 6 1.4-1.4-4.6-4.6 4.6-4.6Z" />
+          </svg>
+        </button>
       </div>
 
       <ul className="flex-1 space-y-1 overflow-y-auto px-2 py-2">
@@ -93,26 +117,6 @@ export default function Sidebar() {
           );
         })}
       </ul>
-
-      <div className="border-t border-edge p-2">
-        <button
-          type="button"
-          onClick={toggle}
-          aria-expanded={hydrated ? !collapsed : undefined}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-muted transition hover:bg-raised/60 hover:text-fg"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-            fill="currentColor"
-            className={`h-4 w-4 shrink-0 transition-transform ${collapsed ? "rotate-180" : ""}`}
-          >
-            <path d="M15.4 7.4 14 6l-6 6 6 6 1.4-1.4-4.6-4.6 4.6-4.6Z" />
-          </svg>
-          {!collapsed && <span>Collapse</span>}
-        </button>
-      </div>
     </nav>
   );
 }

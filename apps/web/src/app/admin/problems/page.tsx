@@ -17,8 +17,6 @@ import {
 import { setProblemPublished } from "../_actions/problems";
 
 const PAGE_SIZE = 20;
-const DIFFICULTIES = ["easy", "medium", "hard"];
-const KINDS = ["python", "sql"];
 
 function difficultyTone(d: string) {
   if (d === "easy") return "good" as const;
@@ -30,10 +28,24 @@ export default async function ProblemsPage(props: PageProps<"/admin/problems">) 
   await requireAdminPage("/admin/problems");
   const sp = await props.searchParams;
 
-  const pack = typeof sp.pack === "string" ? sp.pack : "";
-  const kind = typeof sp.kind === "string" && KINDS.includes(sp.kind) ? sp.kind : "";
+  // The vocabularies come from the table itself: packs and kinds are data, and
+  // hard-coding them here would quietly hide any row that used a new value.
+  const [packRows, kindRows, difficultyRows] = await Promise.all([
+    db.selectDistinct({ value: problems.pack }).from(problems).orderBy(problems.pack),
+    db.selectDistinct({ value: problems.kind }).from(problems).orderBy(problems.kind),
+    db
+      .selectDistinct({ value: problems.difficulty })
+      .from(problems)
+      .orderBy(problems.difficulty),
+  ]);
+  const packs = packRows.map((r) => r.value);
+  const kinds = kindRows.map((r) => r.value);
+  const difficulties = difficultyRows.map((r) => r.value);
+
+  const pack = typeof sp.pack === "string" && packs.includes(sp.pack) ? sp.pack : "";
+  const kind = typeof sp.kind === "string" && kinds.includes(sp.kind) ? sp.kind : "";
   const difficulty =
-    typeof sp.difficulty === "string" && DIFFICULTIES.includes(sp.difficulty)
+    typeof sp.difficulty === "string" && difficulties.includes(sp.difficulty)
       ? sp.difficulty
       : "";
   const published = sp.published === "yes" || sp.published === "no" ? sp.published : "";
@@ -46,8 +58,7 @@ export default async function ProblemsPage(props: PageProps<"/admin/problems">) 
   if (published) conditions.push(eq(problems.isPublished, published === "yes"));
   const where = conditions.length ? and(...conditions) : undefined;
 
-  const [packRows, [totalRow], rows] = await Promise.all([
-    db.selectDistinct({ pack: problems.pack }).from(problems).orderBy(problems.pack),
+  const [[totalRow], rows] = await Promise.all([
     db.select({ n: count() }).from(problems).where(where),
     db
       .select({
@@ -87,9 +98,9 @@ export default async function ProblemsPage(props: PageProps<"/admin/problems">) 
           <span className="text-muted">Pack</span>
           <select name="pack" defaultValue={pack} className={selectClass}>
             <option value="">Any</option>
-            {packRows.map((p) => (
-              <option key={p.pack} value={p.pack}>
-                {p.pack}
+            {packs.map((p) => (
+              <option key={p} value={p}>
+                {p}
               </option>
             ))}
           </select>
@@ -98,7 +109,7 @@ export default async function ProblemsPage(props: PageProps<"/admin/problems">) 
           <span className="text-muted">Kind</span>
           <select name="kind" defaultValue={kind} className={selectClass}>
             <option value="">Any</option>
-            {KINDS.map((k) => (
+            {kinds.map((k) => (
               <option key={k} value={k}>
                 {k}
               </option>
@@ -109,7 +120,7 @@ export default async function ProblemsPage(props: PageProps<"/admin/problems">) 
           <span className="text-muted">Difficulty</span>
           <select name="difficulty" defaultValue={difficulty} className={selectClass}>
             <option value="">Any</option>
-            {DIFFICULTIES.map((d) => (
+            {difficulties.map((d) => (
               <option key={d} value={d}>
                 {d}
               </option>

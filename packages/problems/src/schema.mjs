@@ -17,13 +17,22 @@
  */
 import { z } from "zod";
 
+/**
+ * The enums are defined as zod schemas and the plain arrays are read back off
+ * them, so `z.infer` sees literal union types rather than `string`. In a .js
+ * file there is no `as const` to reach for; this is the equivalent.
+ */
+
 /** Languages that can carry a starter/solution/notes binding. */
-export const LANGUAGES = ["python", "javascript", "ruby", "sql"];
+export const LanguageEnum = z.enum(["python", "javascript", "ruby", "sql"]);
+export const LANGUAGES = LanguageEnum.options;
 
 /** The languages a `kind: "code"` problem can be solved in. */
-export const CODE_LANGUAGES = ["python", "javascript", "ruby"];
+export const CodeLanguageEnum = z.enum(["python", "javascript", "ruby"]);
+export const CODE_LANGUAGES = CodeLanguageEnum.options;
 
-export const DIFFICULTIES = ["easy", "medium", "hard"];
+export const DifficultyEnum = z.enum(["easy", "medium", "hard"]);
+export const DIFFICULTIES = DifficultyEnum.options;
 
 /**
  * A parameter type, written in a small language-neutral grammar:
@@ -120,7 +129,7 @@ const Base = z.object({
    */
   kind: z.enum(["code", "sql"]),
   title: z.string().min(1),
-  difficulty: z.enum(DIFFICULTIES),
+  difficulty: DifficultyEnum,
   pattern: z.string().default(""),
   tags: z.array(z.string()).default([]),
   minutes: z.int().positive(),

@@ -1,0 +1,549 @@
+{
+  "$schema": "./course-schema.json",
+  "slug": "sql-for-interviews",
+  "title": "SQL for Interviews",
+  "subtitle": "From joins to window functions, and the three bugs that return a plausible wrong number",
+  "audience": "Engineers who can read SQL and write a GROUP BY, but who have not had to reason about grain, window functions or NULL semantics recently. If you write analytical SQL every day this will be too slow; skip to modules four, five and six.",
+  "level": "intermediate",
+  "estimatedHours": 7.75,
+  "timeNote": "About eight hours. The twelve problems carry roughly three hours of target time between them; the rest is teaching, checkpoints, and re-solving two queries from a blank editor at the end. Two sittings of four hours works; so does thirty minutes a day for a fortnight.",
+  "prerequisites": [
+    "You can write a SELECT with a WHERE and a GROUP BY",
+    "You have seen a JOIN before, even if you would hesitate over LEFT versus INNER"
+  ],
+  "outcomes": [
+    "State the grain of every table before writing a query, and predict fan-out from it",
+    "Write the latest-row-per-key dedupe and top-N-per-group from a blank editor",
+    "Use running totals, moving frames and LAG instead of self-joins",
+    "Avoid the three silent wrong answers: fan-out, NOT IN with NULLs, and COUNT(*) after a LEFT JOIN",
+    "Walk a hierarchy of unknown depth with a recursive CTE, and say what you would do about cycles"
+  ],
+  "tags": [
+    "sql",
+    "window functions",
+    "joins",
+    "data"
+  ],
+  "version": 1,
+  "modules": [
+    {
+      "id": "grain-joins-and-count",
+      "title": "Grain, joins, and what COUNT actually counts",
+      "summary": "Before the first keyword: say the grain of every table. Then pick INNER or LEFT on purpose, and understand what a LEFT JOIN does to your aggregates.",
+      "estimatedMinutes": 60,
+      "objectives": [
+        "State the grain of a table in one sentence, and use it to predict fan-out",
+        "Choose INNER versus LEFT deliberately and justify it in one line",
+        "Explain the difference between COUNT(*) and COUNT(col) after a LEFT JOIN",
+        "Write a safe percentage without divide-by-zero or integer division"
+      ],
+      "teaching": "## Start with the grain, always\n\nThe first thing to do with a schema is not to read the question. It is to say, for each\ntable, **one row per what?**\n\n> *\"`submissions` is one row per submission. `quotes` is one row per quote, and a\n> submission can have several quotes, so quotes is one-to-many against submissions.\n> `policies` is one row per policy, one per bound quote.\"*\n\nTen seconds. It buys you three things: you know which joins will multiply rows, you know\nwhich columns can be summed safely, and the interviewer now knows you have done this\nbefore. Almost every wrong answer in an SQL round is a grain mistake wearing a costume.\n\n## Logical evaluation order\n\nLearn this line. It explains most of the confusing behaviour you will meet in this\ncourse:\n\n```\nFROM -> JOIN -> WHERE -> GROUP BY -> HAVING -> WINDOW -> SELECT -> ORDER BY -> LIMIT\n```\n\nThat order is why you cannot use a `SELECT` alias in `WHERE` (SELECT has not run yet),\nwhy `HAVING` needs to exist at all (you need a filter that runs after grouping), why you\ncannot filter on a window function without wrapping it (windows run after WHERE), and why\nyou *can* use a `SELECT` alias in `ORDER BY` (it runs last).\n\n## Joins, chosen on purpose\n\n```sql\nINNER JOIN   -- matching rows only; drops non-matches SILENTLY\nLEFT JOIN    -- every left row, plus matches; unmatched right side is NULL\nFULL OUTER   -- both sides (absent from MySQL and older SQLite)\nCROSS JOIN   -- every combination\n```\n\nThe choice is a statement about your output, so say it: *\"LEFT JOIN, because a broker\nwith zero submissions still needs a row with a zero in it.\"* That is one sentence and it\nis scored.\n\nMulti-column joins put every condition in the `ON`:\n\n```sql\nLEFT JOIN appetite a\n       ON a.line_of_business = s.line_of_business\n      AND a.state            = acc.state\n```\n\n### The trap that turns your LEFT JOIN into an INNER JOIN\n\n```sql\nLEFT JOIN quotes q ON q.submission_id = s.submission_id\nWHERE q.status = 'bound'\n```\n\nEvery unmatched submission has `q.status` NULL. `NULL = 'bound'` is UNKNOWN, not true, so\nthe `WHERE` drops exactly the rows the LEFT JOIN existed to keep. You have written an\nINNER JOIN with extra steps.\n\nThe rule: **a condition about which right-hand rows are eligible to join belongs in the\n`ON`. A condition about which result rows you keep belongs in the `WHERE`.**\n\n```sql\nLEFT JOIN quotes q ON q.submission_id = s.submission_id AND q.status = 'bound'\n```\n\nInterviewers watch for this specifically, because it is the difference between someone\nwho has memorised join keywords and someone who knows what a join does.\n\n## What COUNT counts\n\n```sql\nCOUNT(*)             -- rows, including the all-NULL phantom row a LEFT JOIN produces\nCOUNT(col)           -- rows where col IS NOT NULL\nCOUNT(DISTINCT col)  -- distinct non-null values\n```\n\nAfter a LEFT JOIN, a parent with no children still produces one row. `COUNT(*)` sees it\nand reports **1**. `COUNT(child.id)` skips it and reports **0**. You want 0 nearly every\ntime, and getting this wrong produces a report where nobody has zero of anything - which\nis exactly the sort of quietly wrong number that destroys trust in a dataset.\n\n## Conditional aggregation\n\n\"Of these, how many were X\" comes up in nearly every SQL round:\n\n```sql\nSUM(CASE WHEN status = 'bound' THEN 1 ELSE 0 END)            AS bound_count\nCOUNT(CASE WHEN status = 'bound' THEN 1 END)                 AS identical\nCOUNT(DISTINCT CASE WHEN status = 'bound' THEN sub_id END)   AS distinct_bound\nAVG(CASE WHEN days > 0 THEN days END)                        AS avg_over_positives\n```\n\n`CASE` with no `ELSE` yields NULL, and every aggregate except `COUNT(*)` skips NULLs.\nThat single fact is the whole mechanism, and it is why the `AVG` line above averages only\nthe positive values without a `WHERE`.\n\n## Safe arithmetic\n\nWrite this as one unit until your fingers produce it whole:\n\n```sql\nROUND(100.0 * numerator / NULLIF(denominator, 0), 1)\n```\n\n- `100.0` forces floating-point division. In several engines integer division floors, so\n  `100 * 3 / 4` is `0` and your conversion rate is a column of zeroes.\n- `NULLIF(d, 0)` turns a zero denominator into NULL rather than an error or an infinity.\n  A broker with no submissions gets a NULL bind rate, which is honest - it is not zero\n  percent, it is undefined.\n- `COALESCE(x, 0)` where you genuinely do want a zero.\n\n## NULL, in five lines\n\n- `NULL = NULL` is UNKNOWN, not true. Use `IS NULL` / `IS NOT NULL`.\n- Any arithmetic involving NULL is NULL. `5 + NULL` is NULL.\n- Aggregates skip NULLs, except `COUNT(*)`.\n- `NOT IN (subquery that contains a NULL)` returns **zero rows**. More on this shortly.\n- NULL sort position differs by engine. Postgres offers `NULLS FIRST` / `NULLS LAST`.",
+      "problems": [
+        {
+          "slug": "sql_01_appetite_join",
+          "note": "One LEFT JOIN, one GROUP BY, one COALESCE. Say the grain of both tables before typing."
+        },
+        {
+          "slug": "sql_02_broker_conversion",
+          "note": "LEFT JOIN, COUNT(*) versus COUNT(col), conditional aggregation and NULLIF, all in one query. This is the module in a single problem."
+        }
+      ],
+      "checkpoint": {
+        "id": "grain-checkpoint",
+        "title": "Grain and joins checkpoint",
+        "questions": [
+          {
+            "id": "q-count",
+            "kind": "choice",
+            "prompt": "submissions LEFT JOIN quotes, grouped by submission. For a submission with no quotes, COUNT(*) and COUNT(q.quote_id) return:",
+            "options": [
+              "0 and 0",
+              "1 and 0",
+              "1 and 1",
+              "NULL and 0"
+            ],
+            "answer": 1,
+            "explanation": "The LEFT JOIN emits one row with all quote columns NULL. COUNT(*) counts that row: 1. COUNT(q.quote_id) skips NULLs: 0. Reporting 1 quote for an unquoted submission is the classic version of this bug."
+          },
+          {
+            "id": "q-on-where",
+            "kind": "choice",
+            "prompt": "You want every broker with a count of their bound quotes, including brokers with none. Where does the status filter go?",
+            "options": [
+              "WHERE q.status = 'bound'",
+              "ON ... AND q.status = 'bound'",
+              "HAVING q.status = 'bound'"
+            ],
+            "answer": 1,
+            "explanation": "In the WHERE, unmatched brokers have status NULL, the comparison is UNKNOWN, and they are dropped - your LEFT JOIN has become an INNER JOIN. In the ON, only bound quotes are eligible to match, and unmatched brokers survive with a NULL row that counts as zero. HAVING filters groups by aggregate and is unrelated here."
+          },
+          {
+            "id": "q-percent",
+            "kind": "recall",
+            "prompt": "Write the expression for 'bound as a percentage of total, one decimal place, safe when total is zero'.",
+            "modelAnswer": "ROUND(100.0 * bound / NULLIF(total, 0), 1)\n\nMark yourself down for a bare 100 (integer division risk) or for omitting NULLIF (division by zero, or an engine-specific surprise)."
+          },
+          {
+            "id": "q-grain",
+            "kind": "explain",
+            "prompt": "Out loud: state the grain of a submissions table, a quotes table and a policies table, and say which pairs are one-to-many.",
+            "modelAnswer": "One row per submission; one row per quote with several quotes possible per submission; one row per policy, typically one per bound quote. Quotes is one-to-many against submissions, so any query summing submission-level values across quotes will fan out. Practise saying it fluently - it is the sentence that opens the SQL half of a round well."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "all-required-problems",
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.75
+      },
+      "recap": "You should now open every SQL question the same way: read the schema, say the grain aloud, and pick the join before you write a keyword."
+    },
+    {
+      "id": "filtering-and-dates",
+      "title": "WHERE, HAVING, and dates that sort correctly",
+      "summary": "Where a filter goes and why it matters, plus the date bucketing that every trend question needs and the string format that quietly breaks it.",
+      "estimatedMinutes": 55,
+      "objectives": [
+        "Choose WHERE or HAVING correctly, and know which is faster",
+        "Bucket dates by month in whichever engine is in front of you",
+        "Avoid the date-format bug that makes chronological ordering wrong"
+      ],
+      "teaching": "## WHERE filters rows, HAVING filters groups\n\n```sql\nSELECT underwriter, AVG(days_to_quote) AS avg_days\nFROM quotes\nWHERE status <> 'withdrawn'          -- rows, before grouping\nGROUP BY underwriter\nHAVING AVG(days_to_quote) > 5        -- groups, after aggregation\n```\n\nThe test is mechanical: **does your condition mention an aggregate?** If yes, it has to\nbe `HAVING`, because the aggregate does not exist until after `GROUP BY`. If no, prefer\n`WHERE`, because filtering before grouping is both faster and clearer about intent.\n\nTwo details worth knowing when they come up:\n\n- Some engines let you write `HAVING avg_days > 5` using the SELECT alias, and some do\n  not, because `SELECT` officially runs after `HAVING`. Repeating the aggregate\n  expression works everywhere.\n- `HAVING` without `GROUP BY` is legal - it treats the whole result as one group. It is\n  rarely what you want, but it is not an error.\n\nA `WHERE` that could have been written as a `HAVING`, or the reverse, is one of the\nquickest things for an interviewer to spot, and one of the quickest to justify: *\"the\nwithdrawn filter is row-level so it goes in the WHERE; the average threshold is\ngroup-level so it has to be HAVING.\"*\n\n## Date bucketing\n\nEvery trend question is \"bucket by month, then aggregate\". The function differs by\nengine, which is why the first thing to ask is which engine you are in:\n\n| | SQLite | Postgres | MySQL |\n|---|---|---|---|\n| month bucket | `strftime('%Y-%m', d)` | `date_trunc('month', d)` | `DATE_FORMAT(d, '%Y-%m')` |\n| day difference | `julianday(a) - julianday(b)` | `a - b` (integer for dates) | `DATEDIFF(a, b)` |\n| add an interval | `date(d, '+1 month')` | `d + interval '1 month'` | `DATE_ADD(d, INTERVAL 1 MONTH)` |\n| today | `date('now')` | `current_date` | `CURDATE()` |\n\nAsking *\"is this Postgres or MySQL? The date functions differ\"* and then saying what you\nwould write in the other one reads as experience rather than hedging. It takes four\nseconds and it is one of the cheapest good impressions available in an SQL round.\n\n## The format bug worth knowing\n\n`'YYYY-MM'` sorts correctly as a string, because it is fixed-width and most-significant\nfirst. `'MM/YYYY'` does not: `'01/2026'` sorts before `'12/2025'`, so your chart runs\nbackwards through the year boundary and nobody notices until January.\n\nThis is a real production bug, not a puzzle. If you are formatting a date for display and\nalso ordering by it, either order by the underlying date or use a big-endian format.\n\n## Gaps in a trend\n\nA `GROUP BY` over your data can only produce buckets that have rows. A month with no\nsubmissions is not a zero in your output - it is **absent**, and the chart drawn from it\ndraws a straight line across the gap.\n\nIf the question implies a continuous series, say this out loud. The fix is to generate the\ncalendar (a dates table, `generate_series` in Postgres, a recursive CTE elsewhere) and\nLEFT JOIN the data onto it. You will not always be asked to write it, but noticing it is\nthe point - it is the same category of thinking as `COUNT(*)` versus `COUNT(col)`:\nabsence has to be represented deliberately, or it disappears.\n\n## Combining the two ideas\n\nConditional aggregation inside a date bucket is the shape of nearly every funnel-over-time\nquestion:\n\n```sql\nSELECT strftime('%Y-%m', s.received_at)                              AS month,\n       COUNT(*)                                                       AS submissions,\n       COUNT(CASE WHEN p.policy_id IS NOT NULL THEN 1 END)            AS bound\nFROM submissions s\nLEFT JOIN policies p ON p.submission_id = s.submission_id\nGROUP BY month\nORDER BY month;\n```\n\nNote the `ORDER BY month` on a `'YYYY-MM'` string - correct because of the format, and\nworth a sentence when you write it.",
+      "problems": [
+        {
+          "slug": "sql_06_monthly_trend",
+          "note": "Date bucketing plus conditional aggregation. Say which engine's function you are using and what the other two call it."
+        },
+        {
+          "slug": "sql_07_turnaround_having",
+          "note": "A computed aggregate in a HAVING. Notice which filters you were able to push down into the WHERE."
+        }
+      ],
+      "checkpoint": {
+        "id": "filtering-checkpoint",
+        "title": "Filtering checkpoint",
+        "questions": [
+          {
+            "id": "q-having",
+            "kind": "choice",
+            "prompt": "Which of these must be in a HAVING rather than a WHERE?",
+            "options": [
+              "status <> 'withdrawn'",
+              "AVG(days_to_quote) > 5",
+              "received_at >= '2026-01-01'"
+            ],
+            "answer": 1,
+            "explanation": "Only the aggregate. The other two are row-level conditions and belong in the WHERE, where they reduce the rows before grouping. The test is simply whether the condition mentions an aggregate."
+          },
+          {
+            "id": "q-format",
+            "kind": "choice",
+            "prompt": "Why does formatting a month as 'MM/YYYY' break an ORDER BY on that column?",
+            "options": [
+              "Because slashes sort before digits",
+              "Because string ordering compares left to right, so the month dominates the year",
+              "Because it is not a valid date type"
+            ],
+            "answer": 1,
+            "explanation": "String comparison is left to right, so '01/2026' sorts before '12/2025'. 'YYYY-MM' is fixed-width and most-significant-first, so lexical order matches chronological order. Otherwise, order by the underlying date."
+          },
+          {
+            "id": "q-gap",
+            "kind": "explain",
+            "prompt": "Out loud: what does a month with no submissions look like in a GROUP BY month result, and what would you say about it in an interview?",
+            "modelAnswer": "It is missing entirely, not zero. Say so: 'this gives one row per month that has data; if the consumer is charting a continuous series, a month with no submissions vanishes rather than showing zero, so I would generate the calendar and LEFT JOIN onto it.' Noticing it is the signal, whether or not you are asked to write it."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "all-required-problems",
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.66
+      }
+    },
+    {
+      "id": "absence-and-anti-joins",
+      "title": "Absence: anti-joins and the NOT IN trap",
+      "summary": "Rows in A with nothing in B. Three ways to write it, one of which returns nothing at all when the data contains a NULL.",
+      "estimatedMinutes": 40,
+      "objectives": [
+        "Write an anti-join three ways and pick the right one",
+        "Explain exactly why NOT IN with a NULL returns zero rows",
+        "Recognise 'never', 'no', 'without' and 'missing' in a prompt as anti-join cues"
+      ],
+      "teaching": "## The cue\n\n*Accounts that submitted but never got a quote. Brokers with no bound business. Policies\nwithout a claim.* When the question contains **never, no, without, missing, yet to**, you\nare being asked for an anti-join, and there are three ways to write it.\n\n## The three forms\n\n```sql\n-- 1. NOT EXISTS - the default choice\nSELECT a.*\nFROM accounts a\nWHERE NOT EXISTS (\n  SELECT 1 FROM quotes q WHERE q.account_id = a.account_id\n);\n\n-- 2. LEFT JOIN ... IS NULL - fine, and sometimes clearer\nSELECT a.*\nFROM accounts a\nLEFT JOIN quotes q ON q.account_id = a.account_id\nWHERE q.quote_id IS NULL;\n\n-- 3. NOT IN - avoid\nSELECT * FROM accounts\nWHERE account_id NOT IN (SELECT account_id FROM quotes);\n```\n\nForms 1 and 2 are equivalent in result and usually in plan. Form 3 is a trap.\n\n## Why NOT IN is a trap\n\n`x NOT IN (1, 2, NULL)` expands to `x <> 1 AND x <> 2 AND x <> NULL`. That last comparison\nis UNKNOWN, never true, so the whole conjunction can never be true - it can only be false\nor unknown. **A single NULL anywhere in the subquery makes the entire query return zero\nrows.**\n\nNot an error. Not a warning. Zero rows, which reads as \"there are no such accounts\", which\nis a perfectly plausible answer. This is the most dangerous NULL behaviour in SQL,\nbecause the failure is silent and the wrong answer is believable.\n\n`NOT EXISTS` uses row-existence rather than value comparison, so NULLs cannot poison it.\nUse it by default, and say why:\n\n> *\"I will use NOT EXISTS rather than NOT IN, because NOT IN returns nothing at all if the\n> subquery contains a NULL.\"*\n\nThat is one sentence and it tells an interviewer you have been bitten by NULL semantics in\nproduction, which is the thing they are trying to work out.\n\n## Form 2's one detail\n\nWith `LEFT JOIN ... IS NULL`, test a column that is **NOT NULL in the child table** -\nusually its primary key. If you test a nullable column, a matched row whose column happens\nto be NULL looks identical to an unmatched row, and you get false positives.\n\n## The mirror image: EXISTS\n\nThe same shape without the NOT gives you \"has at least one\", and it is better than a join\nwhen you do not need any columns from the child:\n\n```sql\nWHERE EXISTS (SELECT 1 FROM quotes q WHERE q.account_id = a.account_id)\n```\n\nThe advantage over `JOIN` is that it cannot fan out. A join to a one-to-many table\nduplicates the parent row once per child; `EXISTS` stops at the first match and returns\neach parent once. When the question is \"which parents have any child\", `EXISTS` is both\ncorrect and free of the fan-out risk you will meet in module six.\n\n`SELECT 1` versus `SELECT *` inside `EXISTS` makes no difference to any modern planner.\nWrite `SELECT 1` because it says clearly that the columns are irrelevant.",
+      "problems": [
+        {
+          "slug": "sql_03_no_quote_accounts",
+          "note": "Write it with NOT EXISTS, then rewrite it as LEFT JOIN ... IS NULL and confirm the two agree. Then say out loud why you did not use NOT IN."
+        }
+      ],
+      "checkpoint": {
+        "id": "absence-checkpoint",
+        "title": "Anti-join checkpoint",
+        "questions": [
+          {
+            "id": "q-notin",
+            "kind": "choice",
+            "prompt": "`WHERE id NOT IN (SELECT account_id FROM quotes)` and account_id is nullable, with one NULL present. What comes back?",
+            "options": [
+              "Every account, since NULL matches nothing",
+              "Zero rows",
+              "The correct answer, with a warning"
+            ],
+            "answer": 1,
+            "explanation": "NOT IN expands to a chain of <> comparisons ANDed together. Comparing to NULL yields UNKNOWN, so the conjunction can never be true, and no row qualifies. Silent, plausible and wrong - which is why NOT EXISTS is the default."
+          },
+          {
+            "id": "q-isnull-col",
+            "kind": "choice",
+            "prompt": "Writing an anti-join as LEFT JOIN ... WHERE <col> IS NULL, which column should you test?",
+            "options": [
+              "Any column from the child table",
+              "A column that is NOT NULL in the child table, typically its primary key",
+              "The join key from the parent table"
+            ],
+            "answer": 1,
+            "explanation": "If you test a nullable child column, a matched row whose value happens to be NULL is indistinguishable from an unmatched row, and it is included wrongly. The child's primary key can only be NULL when the join found nothing."
+          },
+          {
+            "id": "q-exists-fanout",
+            "kind": "explain",
+            "prompt": "Out loud: why is EXISTS often better than a JOIN when the question is 'which parents have at least one child'?",
+            "modelAnswer": "A join to a one-to-many child duplicates the parent once per matching child, so you need a DISTINCT or a GROUP BY to get back to one row per parent, and any aggregate over parent columns is now inflated. EXISTS stops at the first match and never changes the row count. Same answer, no fan-out to reason about."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "all-required-problems",
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.66
+      }
+    },
+    {
+      "id": "window-functions-i",
+      "title": "Window functions I: ROW_NUMBER, RANK, and top-N per group",
+      "summary": "The single highest-value pattern in interview SQL: number the rows within a group, then filter on the number. Deduplication and top-N are the same query with two words changed.",
+      "estimatedMinutes": 75,
+      "objectives": [
+        "Explain what OVER (PARTITION BY ... ORDER BY ...) does without using the word 'group'",
+        "Write the latest-row-per-key dedupe from a blank editor, with a tie-break",
+        "Choose between ROW_NUMBER, RANK and DENSE_RANK and justify it",
+        "Say why filtering a window function needs a CTE"
+      ],
+      "teaching": "## What a window function actually is\n\n`GROUP BY` collapses rows. A window function does not: it computes a value **for every\nrow**, using a set of rows related to that row. You keep all your detail and gain a\nderived column.\n\n```sql\n<fn>() OVER (PARTITION BY g ORDER BY d [frame])\n```\n\n- `PARTITION BY g` - restart the calculation for each value of `g`. It is not a\n  `GROUP BY`; nothing is collapsed.\n- `ORDER BY d` **inside** `OVER` - the sequence the function walks. This is what turns\n  `SUM` into a running total, and it is unrelated to the query's own `ORDER BY`.\n\nIf you can say *\"it computes something per row from a window of related rows, without\ncollapsing them\"*, you have said the thing interviewers listen for.\n\n## The ranking family\n\n| Function | On values 10, 10, 9 | Use it when |\n|---|---|---|\n| `ROW_NUMBER()` | 1, 2, 3 | you need exactly one row per group |\n| `RANK()` | 1, 1, 3 | ties should genuinely share a place |\n| `DENSE_RANK()` | 1, 1, 2 | ties share, and you want no gaps in the numbering |\n\nChoose deliberately. \"Top 2 brokers per region\" with `ROW_NUMBER` gives you exactly two\neven when the second and third are level on premium, and picks between them arbitrarily.\nWith `RANK` you get three rows, and that may be the honest answer. Ask which the consumer\nwants - *\"if two brokers tie for second, do you want both?\"* - because that question is\nthe actual content of the problem.\n\n## Pattern one: the latest row per key\n\nDeduplicating a feed is the most commonly needed real query in this entire course:\n\n```sql\nWITH ranked AS (\n  SELECT *,\n         ROW_NUMBER() OVER (PARTITION BY natural_key\n                            ORDER BY updated_at DESC, id DESC) AS rn\n  FROM feed\n)\nSELECT * FROM ranked WHERE rn = 1;\n```\n\nTwo things separate a good answer from a working one.\n\n**The tie-break.** `ORDER BY updated_at DESC` alone is not a total ordering: two rows with\nthe same timestamp are ranked arbitrarily, and the query can return a different row on\ndifferent runs. Adding `, id DESC` makes it deterministic. Feeds resent within the same\nsecond are common, so this is a real bug, not a technicality. Say it out loud when you\nwrite it.\n\n**Why the CTE is not optional.** `WHERE` is evaluated before window functions, so\n`WHERE ROW_NUMBER() OVER (...) = 1` is rejected by every engine. The number has to be\nmaterialised by an inner query first. This is the evaluation-order line from module one\npaying off - and \"why can't I just filter it\" is a common interview follow-up precisely\nbecause the answer shows whether you understand the order or have memorised a template.\n\n## Pattern two: top-N per group\n\nSame machinery, two words changed:\n\n```sql\nWITH totals AS (\n  SELECT region, broker, SUM(bound_premium) AS total\n  FROM policies GROUP BY region, broker\n),\nranked AS (\n  SELECT *, RANK() OVER (PARTITION BY region ORDER BY total DESC) AS r\n  FROM totals\n)\nSELECT region, broker, total FROM ranked WHERE r <= 2 ORDER BY region, r, broker;\n```\n\nNote the shape: **aggregate first, then rank the aggregate.** You cannot rank by a `SUM`\nin the same `SELECT` that computes it, because the window runs after `GROUP BY` but you\nwould be referring to an alias that `SELECT` has not produced yet. Two CTEs, in the order\nyou would say them aloud: *\"first total by broker and region, then rank within region,\nthen keep the top two.\"*\n\nAlso note `ORDER BY region, r, broker` at the end. Making the final ordering total means\nthe output is reproducible, which is worth a sentence: *\"I have added broker as a\ntie-break so the result is stable.\"*\n\n## Before window functions existed\n\nOccasionally you will be asked for top-N without windows, or you will be in an engine\nthat lacks them. The correlated-subquery form is worth recognising:\n\n```sql\nSELECT * FROM totals t1\nWHERE (SELECT COUNT(*) FROM totals t2\n       WHERE t2.region = t1.region AND t2.total > t1.total) < 2;\n```\n\n\"How many rows in my group beat me? Fewer than two, so I am in the top two.\" It is\nquadratic and harder to read. Know it exists, then use the window function.",
+      "problems": [
+        {
+          "slug": "sql_04_dedupe_submissions",
+          "note": "The dedupe. Do it, then close everything and write it again from an empty editor. It is the query most worth having in your fingers."
+        },
+        {
+          "slug": "sql_05_topn_per_group",
+          "note": "Top-N per group. Decide between RANK and ROW_NUMBER on purpose and be ready to defend it."
+        }
+      ],
+      "checkpoint": {
+        "id": "windows-i-checkpoint",
+        "title": "Window functions I checkpoint",
+        "questions": [
+          {
+            "id": "q-filter",
+            "kind": "choice",
+            "prompt": "Why must a window function be wrapped in a CTE or subquery before you can filter on it?",
+            "options": [
+              "Because window functions return a set, not a scalar",
+              "Because WHERE is evaluated before window functions are computed",
+              "Because PARTITION BY conflicts with WHERE"
+            ],
+            "answer": 1,
+            "explanation": "Logical order: FROM, JOIN, WHERE, GROUP BY, HAVING, window, SELECT, ORDER BY. At WHERE time the window function has not run, so there is nothing to compare. Materialise it in an inner query, then filter the resulting column."
+          },
+          {
+            "id": "q-rank-choice",
+            "kind": "choice",
+            "prompt": "Top 2 brokers per region, and two brokers are exactly level in second place. Which function returns three rows for that region?",
+            "options": [
+              "ROW_NUMBER()",
+              "RANK()",
+              "Neither - both return two"
+            ],
+            "answer": 1,
+            "explanation": "RANK gives both tied brokers rank 2, so `r <= 2` keeps three rows. ROW_NUMBER assigns 1, 2, 3 arbitrarily among ties and returns exactly two, silently dropping one of the tied brokers. Which is correct depends on the consumer - ask."
+          },
+          {
+            "id": "q-dedupe-recall",
+            "kind": "recall",
+            "prompt": "Blank editor: keep only the latest row per natural_key from `feed`, deterministically.",
+            "modelAnswer": "WITH ranked AS (\n  SELECT *, ROW_NUMBER() OVER (PARTITION BY natural_key\n                               ORDER BY updated_at DESC, id DESC) AS rn\n  FROM feed\n)\nSELECT * FROM ranked WHERE rn = 1;\n\nNo tie-break in the ORDER BY means no marks: the query is non-deterministic on same-timestamp rows, which is exactly what a resent feed produces."
+          },
+          {
+            "id": "q-topn-shape",
+            "kind": "explain",
+            "prompt": "Out loud: why does top-N-per-group need two CTEs rather than one?",
+            "modelAnswer": "The ranking is over an aggregate, and the aggregate does not exist until after GROUP BY has run. So: one step to produce one row per group-and-key with its total, a second to rank within the group, then the filter. Narrating those three steps before typing is also how you keep the interviewer with you."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "all-required-problems",
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.75
+      },
+      "recap": "If you take one query from this course into an interview, take the dedupe. Retype it from memory at the start of your next session."
+    },
+    {
+      "id": "window-functions-ii",
+      "title": "Window functions II: running totals, frames, and LAG",
+      "summary": "Aggregates over a moving frame, and comparing a row to its neighbour. Includes the ROWS versus RANGE distinction that changes your answer on tied dates.",
+      "estimatedMinutes": 70,
+      "objectives": [
+        "Write a running total and a moving average with an explicit frame",
+        "Explain the difference between ROWS and RANGE and when it changes the result",
+        "Use LAG and LEAD to compare a row with its predecessor",
+        "Recognise the gap-detection shape"
+      ],
+      "teaching": "## Aggregates as window functions\n\nAny aggregate becomes a window function by adding `OVER`. What the `OVER` clause contains\ndecides what you get:\n\n```sql\nSUM(x) OVER ()                              -- grand total, on every row\nSUM(x) OVER (PARTITION BY g)                -- the group's total, on every row of it\nSUM(x) OVER (ORDER BY d)                    -- running total\nSUM(x) OVER (PARTITION BY g ORDER BY d)     -- running total, restarting per group\n```\n\nThe third form is the one that surprises people: **adding `ORDER BY` inside `OVER`\nchanges the default frame** from \"the whole partition\" to \"everything up to and including\nthis row\". That is not an ordering hint, it is a semantic change.\n\n`SUM(x) OVER (PARTITION BY g)` next to `x` gives you \"this row's share of its group's\ntotal\" without a self-join, which is a genuinely useful thing to be able to produce\nquickly:\n\n```sql\nROUND(100.0 * premium / SUM(premium) OVER (PARTITION BY region), 1) AS pct_of_region\n```\n\n## Frames: ROWS versus RANGE\n\nThe full form is:\n\n```sql\nSUM(x) OVER (ORDER BY d ROWS BETWEEN 2 PRECEDING AND CURRENT ROW)\n```\n\n- `ROWS` counts **physical rows**: the two rows before this one, whatever their values.\n- `RANGE` works on **values**: every row whose `ORDER BY` value ties with this one is a\n  peer, and they all get the same result.\n\nWith `ORDER BY d` and no explicit frame, the default is `RANGE BETWEEN UNBOUNDED PRECEDING\nAND CURRENT ROW`. So if three policies were written on the same date, all three show the\nsame running total - the total including all three. With `ROWS BETWEEN UNBOUNDED PRECEDING\nAND CURRENT ROW` you get three different increasing values.\n\nNeither is wrong. Which one you want depends on whether the sequence is meaningful within\na tied date. But being able to say *\"I have specified ROWS explicitly because the default\nis RANGE, and with several policies on the same day those would all share a running\ntotal\"* is one of the strongest single sentences available in an SQL round: it shows you\nknow the default exists and that you chose against it deliberately.\n\nA moving average is the same idea with a bounded start:\n\n```sql\nAVG(amount) OVER (ORDER BY month ROWS BETWEEN 2 PRECEDING AND CURRENT ROW)\n```\n\nWatch the first rows: with only one predecessor available, the window is shorter and the\naverage is over fewer values. If the consumer wants NULL until the window is full, you\nneed a `CASE` on `ROW_NUMBER()`. Saying so is better than silently shipping a three-month\naverage computed from one month.\n\n## LAG and LEAD\n\n`LAG(x)` gives you the previous row's value within the partition; `LEAD(x)` the next.\nThis is how you compare a row to its neighbour without a self-join:\n\n```sql\nSELECT account_id, period_start, period_end,\n       LAG(period_end) OVER (PARTITION BY account_id ORDER BY period_start) AS prev_end\nFROM coverage\n```\n\nBoth accept a default: `LAG(x, 1, 0)` returns `0` rather than NULL for the first row of\neach partition, which often saves a `COALESCE`.\n\n### The gap-detection shape\n\nGiven the previous row's end, a gap is arithmetic:\n\n```sql\nWITH with_prev AS (\n  SELECT account_id, period_start,\n         LAG(period_end) OVER (PARTITION BY account_id ORDER BY period_start) AS prev_end\n  FROM coverage\n)\nSELECT * FROM with_prev\nWHERE prev_end IS NOT NULL AND period_start > prev_end;\n```\n\nThe `prev_end IS NOT NULL` guard excludes the first period of each account, which has no\npredecessor and therefore no gap. Forgetting it is the standard bug here, and it reports\nevery account's first policy as a gap - a wrong answer that looks like a data problem\nrather than a query problem.\n\nNote also that this shape assumes the periods do not overlap. Overlapping periods need a\nrunning maximum of the end date (`MAX(period_end) OVER (... ROWS BETWEEN UNBOUNDED\nPRECEDING AND 1 PRECEDING)`), which is worth mentioning even if you do not write it - it\nis the SQL equivalent of the interval-merging sweep.\n\n## The general cue\n\n**Whenever a question compares a row to its neighbour, its group, or its running history,\nthe answer is a window function, not a self-join.** Difference from last month, percentage\nof group total, rank within region, days since the previous event, first and last value in\na partition - all one `OVER` clause, all without joining a table to itself.",
+      "problems": [
+        {
+          "slug": "sql_08_running_exposure",
+          "note": "A running total. Write the frame explicitly and say why."
+        },
+        {
+          "slug": "sql_10_coverage_gaps",
+          "note": "LAG plus a guard on the first row of each partition. The guard is the whole problem."
+        }
+      ],
+      "checkpoint": {
+        "id": "windows-ii-checkpoint",
+        "title": "Window functions II checkpoint",
+        "questions": [
+          {
+            "id": "q-rows-range",
+            "kind": "choice",
+            "prompt": "Three policies are written on the same date. `SUM(premium) OVER (ORDER BY written_date)` with no explicit frame gives those three rows:",
+            "options": [
+              "Three increasing running totals",
+              "The same running total, including all three policies",
+              "An error, because the ordering is not unique"
+            ],
+            "answer": 1,
+            "explanation": "The default frame with ORDER BY is RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW, and RANGE treats equal ORDER BY values as peers. All three get the total through the end of that date. ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW gives three distinct values."
+          },
+          {
+            "id": "q-lag-guard",
+            "kind": "choice",
+            "prompt": "Detecting coverage gaps with LAG, why do you need `prev_end IS NOT NULL`?",
+            "options": [
+              "To exclude accounts with only one period",
+              "Because the first period in each partition has no predecessor, and without the guard it is reported as a gap",
+              "Because LAG returns NULL when the values are equal"
+            ],
+            "answer": 1,
+            "explanation": "LAG returns NULL for the first row of each partition. Any comparison against NULL is UNKNOWN, so the row is excluded from a `>` test but the guard makes the intent explicit - and if you had used LAG's default argument instead, say LAG(period_end, 1, '1900-01-01'), the first row would compare as a gap. State the boundary condition rather than relying on NULL semantics to hide it."
+          },
+          {
+            "id": "q-share",
+            "kind": "recall",
+            "prompt": "From memory: each row's premium as a percentage of its region's total, one decimal place.",
+            "modelAnswer": "ROUND(100.0 * premium / SUM(premium) OVER (PARTITION BY region), 1)\n\nNo ORDER BY inside the OVER, because you want the whole partition, not a running total. Adding one silently turns this into a cumulative share."
+          },
+          {
+            "id": "q-cue",
+            "kind": "explain",
+            "prompt": "Out loud: name three question shapes that should make you reach for a window function rather than a self-join.",
+            "modelAnswer": "Comparing a row to the previous or next row (LAG/LEAD); a row's share of, or rank within, its group (PARTITION BY); and anything cumulative over time (running total, moving average). All three are self-joins in the pre-window era, all three are one OVER clause now."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "all-required-problems",
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.75
+      }
+    },
+    {
+      "id": "fan-out-and-multi-grain",
+      "title": "The fan-out trap and multi-grain queries",
+      "summary": "The most valuable SQL bug to be able to see before you write it: joining a one-to-many table multiplies rows, and every aggregate above it inflates. No error, just a wrong number that looks right.",
+      "estimatedMinutes": 75,
+      "objectives": [
+        "Predict fan-out from the grain of the tables, before running anything",
+        "Pre-aggregate a child table to the parent's grain in a CTE",
+        "Sanity-check a total against a known figure and say so out loud",
+        "Build a multi-stage query as named steps you can run individually"
+      ],
+      "teaching": "## The bug\n\n```sql\n-- WRONG\nSELECT SUM(p.written_premium) AS premium,\n       SUM(c.incurred)        AS incurred\nFROM policies p\nJOIN claims c ON c.policy_id = p.policy_id;\n```\n\nA policy with two claims appears twice after the join, so its premium enters the `SUM`\ntwice. A policy with five claims contributes five times. The premium total comes out\nperhaps 30-40% high, the loss ratio comes out correspondingly low, and **nothing errors,\nnothing is NULL, and the number is entirely plausible**.\n\nThis is the SQL mistake most worth being able to see coming, because it is invisible in\nreview. A `NULL` in your output makes someone look. A believable number does not.\n\n## Why it happens\n\nA join to a one-to-many table **multiplies** rows on the \"one\" side. That is not a\nmistake in the join - it is what a join does, and it is correct when you want claim-level\nrows. It becomes a bug the moment you aggregate a parent column across the result,\nbecause the parent's value is now present more than once.\n\nThe general statement is worth memorising as a rule:\n\n> **Never aggregate two different grains in one query.**\n\nIf you are summing columns from two tables that are each one-to-many relative to your\ngrouping key, both of them need collapsing to the target grain first. With two child\ntables joined at once, the fan-out is multiplicative: three claims and two endorsements\nproduce six rows, and your premium is counted six times.\n\n## The fix\n\nCollapse the child to the parent's grain in its own CTE, then join one-to-one:\n\n```sql\nWITH claim_totals AS (\n  SELECT policy_id, SUM(incurred) AS incurred\n  FROM claims\n  GROUP BY policy_id\n)\nSELECT s.line_of_business,\n       SUM(p.written_premium)                         AS premium,\n       SUM(COALESCE(ct.incurred, 0))                  AS incurred,\n       ROUND(100.0 * SUM(COALESCE(ct.incurred, 0))\n             / NULLIF(SUM(p.written_premium), 0), 2)  AS loss_ratio_pct\nFROM policies p\nJOIN quotes q      ON q.quote_id      = p.quote_id\nJOIN submissions s ON s.submission_id = q.submission_id\nLEFT JOIN claim_totals ct ON ct.policy_id = p.policy_id\nGROUP BY s.line_of_business\nORDER BY loss_ratio_pct DESC;\n```\n\nThree deliberate choices in there, and each is worth a sentence out loud:\n\n- `claim_totals` is **one row per policy**, so joining it cannot fan out.\n- `LEFT JOIN` to it, so policies with no claims keep contributing their premium. An\n  `INNER JOIN` here would quietly exclude every clean policy and make your loss ratio far\n  worse than reality - a second silent wrong answer stacked on the first.\n- `COALESCE(ct.incurred, 0)` because those policies have NULL incurred, and `SUM` skipping\n  NULLs is fine but the row-level arithmetic is clearer with a zero.\n\n## Say it before you write it\n\n> *\"Claims are one-to-many against policies, so joining them directly would fan out my\n> premium sum. I will roll claims up to one row per policy in a CTE first.\"*\n\nThat sentence is worth more than the query. Interviewers use fan-out problems specifically\nbecause the naive answer runs and returns something - so the only way to distinguish\ncandidates is whether they saw it coming.\n\n## Prove it to yourself, out loud\n\nThe habit that goes with the rule is **sanity-checking a total against a known figure**:\n\n```sql\nSELECT SUM(written_premium) FROM policies;      -- the number your answer must not exceed\n```\n\nThen run the joined version and compare. In an interview, do this narration:\n*\"there are 24 submissions in the table and my groups sum to 24, good\"*, or *\"total\npremium standalone is 487,000 and my query gives 487,000, so I have not fanned out.\"*\n\nIt takes ten seconds and it is the habit that separates people who write SQL from people\nyou would trust with a customer's numbers. It is also how you would catch this in real\nwork, so it is honest signal rather than interview theatre.\n\n## Multi-stage queries\n\nOnce you are pre-aggregating, queries become several named steps. Lean into it:\n\n```sql\nWITH submitted AS ( ... ),\n     quoted    AS ( ... ),\n     bound     AS ( ... )\nSELECT ... FROM submitted\nLEFT JOIN quoted ON ...\nLEFT JOIN bound  ON ...;\n```\n\nThree readable steps beat one nested expression, especially under time pressure, and each\nCTE can be run on its own to check its row count and grain. Narrate the plan before\ntyping - *\"first the submissions per line of business, then the ones that got a quote,\nthen the ones that bound, then join them\"* - so that if step one is wrong you find out\nwhile it is still cheap to fix.\n\nA funnel is the canonical version of this: each stage is a count at a different point of\nthe same process, each stage is a different grain, and every stage after the first is an\nopportunity to fan out. Counting distinct ids at each stage (`COUNT(DISTINCT s.submission_id)`)\nis the defensive version, and worth mentioning as a belt-and-braces check even when your\ngrains are right.",
+      "problems": [
+        {
+          "slug": "sql_09_loss_ratio",
+          "note": "The fan-out trap in full. Write the naive version first and compare its premium total to the standalone SUM - seeing the inflation yourself is the lesson."
+        },
+        {
+          "slug": "sql_11_funnel_cte",
+          "note": "A multi-stage funnel. Narrate the plan out loud before typing, and check each CTE's row count as you go."
+        }
+      ],
+      "checkpoint": {
+        "id": "fanout-checkpoint",
+        "title": "Fan-out checkpoint",
+        "questions": [
+          {
+            "id": "q-fanout-effect",
+            "kind": "choice",
+            "prompt": "policies JOIN claims (one-to-many), then SUM(p.written_premium). What do you get?",
+            "options": [
+              "An error - the grains do not match",
+              "Each policy's premium counted once per claim, silently inflating the total",
+              "Each policy's premium divided across its claims"
+            ],
+            "answer": 1,
+            "explanation": "The join duplicates the policy row once per claim, so the premium enters the SUM once per claim. No error, no NULL, just a plausible number that is too high. Pre-aggregate the claims to one row per policy first."
+          },
+          {
+            "id": "q-inner-left",
+            "kind": "choice",
+            "prompt": "In the corrected query, why LEFT JOIN to the claim_totals CTE rather than INNER JOIN?",
+            "options": [
+              "Performance - LEFT JOIN avoids a sort",
+              "Because policies with no claims must still contribute their premium to the denominator",
+              "Because the CTE might contain NULL policy_ids"
+            ],
+            "answer": 1,
+            "explanation": "An INNER JOIN would drop every claim-free policy, removing their premium from the total and making the loss ratio look far worse than it is. That is a second silent wrong answer sitting on top of the first."
+          },
+          {
+            "id": "q-two-children",
+            "kind": "explain",
+            "prompt": "Out loud: you need premium, claims and endorsements totals by line of business, and claims and endorsements are both one-to-many against policies. What is your plan?",
+            "modelAnswer": "Two CTEs, each aggregating its child to one row per policy, then join both to policies. Joining both children directly is multiplicative - three claims and two endorsements give six rows per policy - so the premium would be counted six times and each child's own total would be inflated by the other child's row count. State the plan before writing it."
+          },
+          {
+            "id": "q-sanity",
+            "kind": "recall",
+            "prompt": "What do you run, and what do you say, to prove you have not fanned out?",
+            "modelAnswer": "Run the standalone total first - SELECT SUM(written_premium) FROM policies - then compare it to the aggregate in your query, and say the comparison out loud: 'standalone premium is 487,000, my query totals 487,000, so no fan-out.' The habit matters as much as the check."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "all-required-problems",
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.75
+      },
+      "recap": "Fan-out, NOT IN with NULLs, and COUNT(*) after a LEFT JOIN are the three silent wrong answers in SQL. You have now met all three. Naming one while you avoid it is worth more than a clever query."
+    },
+    {
+      "id": "recursive-ctes",
+      "title": "Hierarchies and recursive CTEs",
+      "summary": "Walking a parent-child tree of unknown depth: the anchor, the recursive term, and the cycle guard you should mention even when the data is clean.",
+      "estimatedMinutes": 45,
+      "objectives": [
+        "Write a recursive CTE with an anchor and a recursive term",
+        "Explain why it must be UNION ALL and not UNION",
+        "Carry depth and a root label down the tree",
+        "Say what you would do about cycles in customer data"
+      ],
+      "teaching": "## The cue\n\n*Roll everything up through the org chart. Find all descendants of this node. How deep is\nthis chain?* When the relationship is parent-to-child and the depth is not known in\nadvance, a join cannot do it - you would need one join per level and you do not know how\nmany levels there are.\n\n```sql\nWITH RECURSIVE tree AS (\n    -- anchor: where the walk starts\n    SELECT broker_id, name, name AS root, 0 AS depth\n    FROM brokers\n    WHERE parent_id IS NULL\n\n    UNION ALL\n\n    -- recursive term: joins the table back to the rows produced so far\n    SELECT c.broker_id, c.name, p.root, p.depth + 1\n    FROM brokers c\n    JOIN tree p ON p.broker_id = c.parent_id\n)\nSELECT * FROM tree ORDER BY root, depth, name;\n```\n\nRead it as a loop. The anchor produces the first generation. The recursive term is applied\nto whatever was produced last time, over and over, until an iteration produces no rows.\nThat termination condition - **an iteration that yields nothing** - is the whole control\nflow, and it is why a cycle in the data loops forever.\n\n## The details that matter\n\n**`UNION ALL`, not `UNION`.** `UNION` deduplicates, which costs a sort on every iteration\nand can also mask a genuine repeat that you wanted to see. Use `UNION ALL` and handle\nduplicates deliberately if they arise.\n\n**Carry what you need down with you.** `root` and `depth` are computed in the anchor and\npropagated in the recursive term. This is the trick that makes recursive CTEs useful\nrather than merely clever: you can attach any label from the top of the tree to every\ndescendant, which is how you answer \"total premium under each top-level broker\".\n\n**The direction is your choice.** The example walks downwards - anchor at the roots, join\nchildren. Flip the join to walk upwards from a leaf to its ancestors: anchor at the node\nyou care about, join to its parent. Same shape, opposite arrow.\n\n**Some engines require the keyword, some do not.** Postgres and SQLite want\n`WITH RECURSIVE`. SQL Server uses plain `WITH`. Ask, or write `WITH RECURSIVE` and adapt.\n\n## Cycles\n\nIf the data contains a cycle - broker A's parent is B and B's parent is A - the recursion\nnever produces an empty iteration and the query runs until the engine's recursion limit,\nor until someone kills it. Real customer hierarchies acquire cycles surprisingly often,\nusually through a data-entry error or a bad merge.\n\nThe standard guard is a depth cap:\n\n```sql\nWHERE p.depth < 20\n```\n\nBetter, if the engine supports arrays, is to carry the visited path and refuse to revisit:\n\n```sql\n-- Postgres\nSELECT ..., p.path || c.broker_id\nFROM brokers c JOIN tree p ON p.broker_id = c.parent_id\nWHERE NOT c.broker_id = ANY(p.path)\n```\n\nYou will rarely be asked to write the path version. Saying *\"on customer data I would add\na depth cap, because hierarchies acquire cycles and I would rather return a truncated\nanswer than hang the query\"* is the senior answer and takes one sentence.\n\n## When not to use it\n\nRecursive CTEs are the right tool for arbitrary depth. They are not the right tool for a\nfixed, shallow hierarchy - if it is always exactly three levels, three joins are clearer\nand faster, and saying so shows judgement rather than enthusiasm. And if you are walking\nthe same tree constantly in production, the real answer is often to store a materialised\npath or a closure table so the walk becomes a range scan.",
+      "problems": [
+        {
+          "slug": "sql_12_recursive_hierarchy",
+          "note": "Anchor, recursive term, and something carried down from the root. Then say out loud what you would do about cycles."
+        }
+      ],
+      "checkpoint": {
+        "id": "recursive-checkpoint",
+        "title": "Recursive CTE checkpoint",
+        "questions": [
+          {
+            "id": "q-union-all",
+            "kind": "choice",
+            "prompt": "Why UNION ALL rather than UNION in a recursive CTE?",
+            "options": [
+              "UNION is not permitted in recursive CTEs",
+              "UNION deduplicates, which costs a sort on every iteration and can hide genuine repeats",
+              "UNION cannot carry a depth column"
+            ],
+            "answer": 1,
+            "explanation": "UNION is legal in most engines but does distinct processing at every step. UNION ALL is the default choice; if duplicates are possible, handle them deliberately rather than letting the set operator do it invisibly."
+          },
+          {
+            "id": "q-terminate",
+            "kind": "choice",
+            "prompt": "What makes a recursive CTE stop?",
+            "options": [
+              "A LIMIT clause",
+              "An iteration of the recursive term that produces no rows",
+              "Reaching the maximum depth column value"
+            ],
+            "answer": 1,
+            "explanation": "The recursive term is applied repeatedly to the rows produced by the previous iteration. When an iteration returns nothing, there is nothing to feed the next one and the recursion ends. This is why a cycle never terminates on its own, and why a depth cap is a sensible guard on customer data."
+          },
+          {
+            "id": "q-recall-shape",
+            "kind": "recall",
+            "prompt": "From memory: the skeleton of a recursive CTE that labels every node with its root and its depth.",
+            "modelAnswer": "WITH RECURSIVE tree AS (\n  SELECT id, name, name AS root, 0 AS depth FROM t WHERE parent_id IS NULL\n  UNION ALL\n  SELECT c.id, c.name, p.root, p.depth + 1\n  FROM t c JOIN tree p ON p.id = c.parent_id\n)\nSELECT * FROM tree;\n\nThe root and depth being computed in the anchor and propagated in the recursive term is the part worth having in your fingers."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "all-required-problems",
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.66
+      }
+    },
+    {
+      "id": "under-the-clock",
+      "title": "Under the clock: habits, dialects, and cold recall",
+      "summary": "The last module is not new material. It is the six habits that get scored, the dialect differences worth naming, and a cold re-solve of the two queries most worth owning.",
+      "estimatedMinutes": 45,
+      "objectives": [
+        "Run an SQL question in the order that scores best: schema, grain, plan, build, check",
+        "Name the engine differences that matter and say what you would use elsewhere",
+        "Reproduce the dedupe and the pre-aggregation pattern with nothing open"
+      ],
+      "teaching": "## The six habits that get scored\n\nNone of these are about knowing more SQL. All of them are visible to an interviewer within\nthe first two minutes.\n\n1. **Read the schema before the question, and say the grain of each table out loud.**\n2. **Say which join you are using and why**, in one clause. *\"LEFT, because brokers with\n   no submissions still need a row.\"*\n3. **Build incrementally.** Write the `FROM` and the joins, run it, look at the rows. Then\n   add the aggregate. Then the filter. Twenty lines written before the first run is how\n   you end up debugging three mistakes at once with nine minutes left.\n4. **Sanity-check totals against a known figure**, out loud. *\"24 submissions, my groups\n   sum to 24.\"*\n5. **Make the ORDER BY total.** Add a tie-break so the output is reproducible, and say\n   that is why you added it.\n6. **Name the trap when you avoid it.** *\"NOT EXISTS rather than NOT IN, because of NULLs.\"*\n   *\"Pre-aggregating first so I do not fan out.\"* Avoiding a trap silently earns nothing,\n   because the interviewer cannot tell whether you knew or were lucky.\n\n## Ask which engine\n\n*\"Is this Postgres, MySQL or SQLite? The date functions differ.\"* Then, when you use one,\nsay what the others call it. Four seconds, and it reads as experience rather than hedging.\n\nThe differences that actually come up:\n\n| | SQLite | Postgres | MySQL |\n|---|---|---|---|\n| month bucket | `strftime('%Y-%m', d)` | `date_trunc('month', d)` | `DATE_FORMAT(d, '%Y-%m')` |\n| day difference | `julianday(a) - julianday(b)` | `a - b` | `DATEDIFF(a, b)` |\n| string concat | `\\|\\|` | `\\|\\|` | `CONCAT()` |\n| FULL OUTER JOIN | recent versions only | yes | no - emulate with UNION |\n| NULL ordering control | no | `NULLS FIRST` / `NULLS LAST` | no |\n| window functions | 3.25+ | yes | 8.0+ |\n\n`ROW_NUMBER`, `RANK`, `LAG`, `LEAD` and frames are standard across all three of those\nmodern versions, which is why this course leans on them so heavily: they are the portable\npart of advanced SQL.\n\n## Time management within the round\n\nIf SQL is half of a mixed round, it is normally the half that finishes early, because a\nquery is shorter than an algorithm. Do not fill the silence with elaboration nobody asked\nfor. Say *\"I am happy with that, shall I move on?\"*\n\nIf you are running out of time on a complicated query, write the CTEs you are sure of,\nsay what the final `SELECT` would do, and move on. A named, partial pipeline with a stated\nplan reads far better than a single expression that does not run.\n\n## Cold recall\n\nClose everything. Empty editor. These two, from memory:\n\n```sql\n-- the latest row per key\nWITH ranked AS (\n  SELECT *, ROW_NUMBER() OVER (PARTITION BY k ORDER BY ts DESC, id DESC) AS rn\n  FROM feed\n)\nSELECT * FROM ranked WHERE rn = 1;\n\n-- do not fan out\nWITH totals AS (\n  SELECT parent_id, SUM(x) AS total FROM child GROUP BY parent_id\n)\nSELECT p.*, COALESCE(t.total, 0)\nFROM parent p LEFT JOIN totals t ON t.parent_id = p.id;\n```\n\nIf either needed a reference, do it again tomorrow. Those two shapes cover a\ndisproportionate amount of what gets asked, and both of them are twelve lines.",
+      "problems": [
+        {
+          "slug": "sql_04_dedupe_submissions",
+          "note": "Re-solve from a blank editor with nothing open. Time it: under six minutes is the target."
+        },
+        {
+          "slug": "sql_09_loss_ratio",
+          "note": "Re-solve from a blank editor. Say the fan-out sentence out loud before you type."
+        }
+      ],
+      "checkpoint": {
+        "id": "final-checkpoint",
+        "title": "Final checkpoint",
+        "questions": [
+          {
+            "id": "q-order",
+            "kind": "recall",
+            "prompt": "The logical evaluation order, in full, from memory.",
+            "modelAnswer": "FROM, JOIN, WHERE, GROUP BY, HAVING, window functions, SELECT, ORDER BY, LIMIT. It explains why a SELECT alias works in ORDER BY but not in WHERE, why HAVING exists, and why a window function cannot be filtered without a wrapping query."
+          },
+          {
+            "id": "q-three-traps",
+            "kind": "recall",
+            "prompt": "Name the three silent wrong answers in this course and the fix for each.",
+            "modelAnswer": "Fan-out from a one-to-many join - pre-aggregate the child to the parent's grain in a CTE. NOT IN over a subquery containing NULL returning zero rows - use NOT EXISTS. COUNT(*) after a LEFT JOIN reporting 1 for a parent with no children - count the child's key instead. All three run without error, which is what makes them worth memorising."
+          },
+          {
+            "id": "q-habits",
+            "kind": "explain",
+            "prompt": "Out loud: run the opening ninety seconds of an SQL question, on a schema of your choosing, from reading it to writing the first line.",
+            "modelAnswer": "Grain of each table; which relationships are one-to-many; which join and why; a one-sentence plan of the steps; then the FROM and joins only, run, and look at the rows. If that came out as a fluent monologue you are ready. If it came out as a list of things you know you should do, say it three more times."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "all-required-problems",
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.75,
+        "notes": "Both problems here are deliberate re-solves. Solving them again from a blank editor is the point; you have already 'done' them."
+      },
+      "recap": "Twelve problems, three silent traps, two patterns worth memorising. If you retain nothing else: say the grain out loud, and pre-aggregate before you join."
+    }
+  ]
+}

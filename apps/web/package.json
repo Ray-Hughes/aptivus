@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "problems:verify": "node ../../packages/problems/verify.mjs",
+    "problems:import": "node scripts/import-problems.mjs"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.3",

@@ -61,29 +61,39 @@ export function Workbench(props: {
   const submit = () => guard("submit", async () => {
     setTrace(null);
     const started = Date.now();
-    const tRes = await fetch(`/api/practice/${props.slug}/tests`);
+    const tRes = await fetch(`/api/problems/${props.slug}/tests`);
     if (!tRes.ok) { setBanner({ tone: "bad", text: "Could not load the tests." }); return; }
-    const { tests } = (await tRes.json()) as { tests: TestCase[] };
+    const { tests } = (await tRes.json()) as { tests: (TestCase & { index: number })[] };
 
     const { results: local } = await engine.current.run(code, tests, "function", props.func);
-    const outputs = local.map((r) => (
-      r.error ? { ok: false, error: r.error } : { ok: true, value: r.got }
+    // Send the values produced, never a verdict: the server decides.
+    const outputs = local.map((r, i) => (
+      r.error
+        ? { index: tests[i]?.index ?? i, ok: false, error: r.error }
+        : { index: tests[i]?.index ?? i, ok: true, value: r.got }
     ));
 
-    const res = await fetch(`/api/practice/${props.slug}/submit`, {
+    const res = await fetch(`/api/problems/${props.slug}/submit`, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ code, language: "python", outputs, durationMs: Date.now() - started }),
     });
     const data = await res.json();
     if (!res.ok) { setBanner({ tone: "bad", text: data.error ?? "Submit failed." }); return; }
-    setResults(data.results ?? null);
+    const solved = data.status === "solved";
+    const awarded = data.gems?.awarded ?? 0;
+    setResults((data.results ?? []).map((r: { index: number; passed: boolean; sample: boolean }) => ({
+      input: `test ${r.index + 1}`, expected: null, got: null,
+      passed: r.passed, error: "", sample: r.sample, index: r.index,
+    })));
     setBanner({
-      tone: data.solved ? "ok" : "bad",
-      text: data.solved
-        ? `Solved — ${data.passed}/${data.total} tests${data.gemsAwarded ? ` · +${data.gemsAwarded} gems` : ""}`
-        : `${data.passed}/${data.total} tests passed`,
+      tone: solved ? "ok" : "bad",
+      text: solved
+        ? `Solved — ${data.testsPassed}/${data.testsTotal} tests${awarded ? ` · +${awarded} gems` : ""}`
+        : `${data.testsPassed}/${data.testsTotal} tests passed`,
     });
-    if (typeof data.gems === "number") setEnt((e) => ({ ...e, gems: data.gems }));
+    if (data.entitlements) {
+      setEnt((e) => ({ ...e, gems: data.entitlements.gems ?? e.gems }));
+    }
   });
 
   /* --- trace ---------------------------------------------------------- */
@@ -106,7 +116,7 @@ export function Workbench(props: {
 
   /* --- metered hint --------------------------------------------------- */
   const getHint = () => guard("hint", async () => {
-    const res = await fetch(`/api/practice/${props.slug}/hint`, {
+    const res = await fetch(`/api/problems/${props.slug}/hint`, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ level: hints.length }),
     });

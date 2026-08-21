@@ -624,7 +624,7 @@ function flatten(payload) {
     notes: `### Ruby to JavaScript notes
 - **\`typeof null === "object"\`.** It is the language's oldest bug and it is never being fixed, so every type check on an object has to exclude \`null\` first. In this problem \`null\` is a leaf value, and a check that forgets it will recurse into it and crash.
 - **Arrays are objects too.** \`typeof [] === "object"\`, so \`Array.isArray\` is the only reliable test -- and it has to be checked *before* the object branch, not after. Ruby's \`is_a?(Hash)\` versus \`is_a?(Array)\` needs no such care.
-- Template literals \`\\\`\${prefix}.\${k}\\\`\` are Ruby's \`"#{prefix}.#{k}"\`, backticks instead of quotes.
+- Template literals \`\` \`\${prefix}.\${k}\` \`\` are Ruby's \`"#{prefix}.#{k}"\`, backticks instead of quotes.
 - \`Object.keys(o)\` returns own enumerable string keys, in insertion order for non-numeric keys. \`for...in\` would also walk the prototype chain, which is how a stray \`toString\` ends up in your warehouse table.
 - \`node.forEach((v, i) => ...)\` yields \`(value, index)\` -- the same order as Ruby's \`each_with_index\`, and the opposite of \`enumerate\` in Python. One fewer thing to unlearn.
 
