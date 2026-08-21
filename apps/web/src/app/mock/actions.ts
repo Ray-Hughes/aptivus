@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
@@ -102,14 +103,20 @@ export async function beginRound(raw: z.input<typeof Input>): Promise<{ ok: fals
   redirect(`/mock/${round.id}`);
 }
 
-/** Abandon an open round without scoring it. Used by the "not now" escape. */
-export async function abandonRound(roundId: string): Promise<void> {
+/**
+ * Throw an open round away without scoring it.
+ *
+ * A round nobody ever ended would otherwise block every future one, and an
+ * abandoned round deliberately gets no scorecard: it is not a result.
+ */
+export async function abandonRound(formData: FormData): Promise<void> {
   const session = await auth();
   if (!session?.user?.id) return;
-  const id = z.string().trim().min(1).max(64).safeParse(roundId);
+  const id = z.string().trim().min(1).max(64).safeParse(formData.get("roundId"));
   if (!id.success) return;
   await db
     .update(mockRounds)
     .set({ status: "abandoned", endedAt: Math.floor(Date.now() / 1000) })
     .where(and(eq(mockRounds.id, id.data), eq(mockRounds.userId, session.user.id), eq(mockRounds.status, "in_progress")));
+  revalidatePath("/mock");
 }

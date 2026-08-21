@@ -40,8 +40,10 @@ export default async function ScorecardPage({ params }: { params: Promise<{ id: 
 
   const [round] = await db.select().from(mockRounds).where(eq(mockRounds.id, id)).limit(1);
   if (!round || round.userId !== userId) notFound();
-  // A round still running has an editor, not a scorecard.
+  // A round still running has an editor, not a scorecard. A round thrown away
+  // has neither: it was never a result and it does not get written up as one.
   if (round.status === "in_progress") redirect(`/mock/${id}`);
+  if (round.status !== "ended") redirect("/mock");
 
   const slots = await db
     .select()

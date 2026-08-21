@@ -65,11 +65,11 @@ export function Timeline({ S }: { S: Summary }) {
     <div className="overflow-x-auto">
       <svg
         viewBox={`0 0 ${W} ${H}`}
-        width={W}
-        height={H}
         role="img"
         aria-label={`Timeline of the round: ${mmss(S.total)} across ${S.P.length} problems.`}
-        className="block min-w-[720px]"
+        /* Scales with the column, but never below the width the labels need —
+           at which point the wrapper scrolls rather than the page. */
+        className="block w-full min-w-[640px]"
       >
         <defs>
           <pattern id="tlRead" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">

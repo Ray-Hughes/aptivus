@@ -7,6 +7,7 @@ import { mockRoundProblems, mockRounds } from "@/db/schema";
 import { AppHeader } from "@/components/AppHeader";
 import { listSources } from "@/lib/mock";
 import { userStats } from "@/lib/stats";
+import { abandonRound as discard } from "./actions";
 import { PreRound } from "./PreRound";
 
 export const metadata = { title: "Mock Interview — Aptivus" };
@@ -59,12 +60,21 @@ export default async function MockPage() {
         <div className="border-b border-[#4a3a1a] bg-[#251c0d]">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-2.5 text-[13px] text-[#e6b455]">
             <span>A round of yours is still running. The clock has not stopped.</span>
-            <Link
-              href={`/mock/${open.id}`}
-              className="rounded-lg border border-[#6a5320] px-3 py-1.5 text-[12.5px] font-medium transition hover:bg-white/[0.06]"
-            >
-              Go back to it
-            </Link>
+            <span className="flex shrink-0 items-center gap-2">
+              {/* Without this a stale round would block every future one. */}
+              <form action={discard}>
+                <input type="hidden" name="roundId" value={open.id} />
+                <button className="rounded-lg px-3 py-1.5 text-[12.5px] text-[#c9a94a] transition hover:text-[#e6b455]">
+                  Discard it
+                </button>
+              </form>
+              <Link
+                href={`/mock/${open.id}`}
+                className="rounded-lg border border-[#6a5320] px-3 py-1.5 text-[12.5px] font-medium transition hover:bg-white/[0.06]"
+              >
+                Go back to it
+              </Link>
+            </span>
           </div>
         </div>
       )}

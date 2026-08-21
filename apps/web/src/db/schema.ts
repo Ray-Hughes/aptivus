@@ -479,3 +479,74 @@ export type User = typeof users.$inferSelect;
 export type Problem = typeof problems.$inferSelect;
 export type Attempt = typeof attempts.$inferSelect;
 export type FeatureFlag = typeof featureFlags.$inferSelect;
+
+
+/* ------------------------------------------------------------------ */
+/* language tracks                                                     */
+/* ------------------------------------------------------------------ */
+
+/**
+ * A language roadmap generated for one person's actual job.
+ *
+ * The complaint this answers: books teach a language in the order the language
+ * is built, not the order a job needs it. Someone moving from Rails to a Go
+ * infrastructure team needs goroutines, channels and error handling in week
+ * one, and does not need a tour of the standard library first.
+ */
+export const languageTracks = sqliteTable(
+  "language_tracks",
+  {
+    id: id(),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    targetLanguage: text("target_language").notNull(),
+    knownLanguages: text("known_languages", { mode: "json" }).$type<string[]>(),
+    jobTitle: text("job_title").notNull(),
+    /** Free text from the user: the posting, the team, what they will build. */
+    jobContext: text("job_context"),
+    companySlug: text("company_slug"),
+    /** Why this roadmap looks the way it does, shown to the learner. */
+    rationale: text("rationale"),
+    status: text("status").notNull().default("generating"), // generating | ready | failed
+    error: text("error"),
+    createdAt: integer("created_at").notNull().default(now),
+    readyAt: integer("ready_at"),
+  },
+  (t) => ({ userIdx: index("language_tracks_user_idx").on(t.userId, t.createdAt) }),
+);
+
+export const trackLessons = sqliteTable(
+  "track_lessons",
+  {
+    id: id(),
+    trackId: text("track_id").notNull().references(() => languageTracks.id, { onDelete: "cascade" }),
+    position: integer("position").notNull(),
+    title: text("title").notNull(),
+    /** One line naming why this lesson earns its place in THIS job's roadmap. */
+    relevance: text("relevance").notNull(),
+    estimatedMinutes: integer("estimated_minutes").notNull().default(8),
+    /** teaching, scaffold, tests, hints, solution - see lesson schema. */
+    body: text("body", { mode: "json" }).notNull(),
+    /** Generated lessons are only shown once the reference solution has been
+        run against the lesson's own tests and passed. */
+    verifiedAt: integer("verified_at"),
+    verifyError: text("verify_error"),
+    createdAt: integer("created_at").notNull().default(now),
+  },
+  (t) => ({ trackIdx: index("track_lessons_track_idx").on(t.trackId, t.position) }),
+);
+
+export const trackProgress = sqliteTable(
+  "track_progress",
+  {
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    lessonId: text("lesson_id").notNull().references(() => trackLessons.id, { onDelete: "cascade" }),
+    status: text("status").notNull().default("started"), // started | complete
+    code: text("code"),
+    hintsUsed: integer("hints_used").notNull().default(0),
+    solutionRevealed: integer("solution_revealed", { mode: "boolean" }).notNull().default(false),
+    attempts: integer("attempts").notNull().default(0),
+    completedAt: integer("completed_at"),
+    updatedAt: integer("updated_at").notNull().default(now),
+  },
+  (t) => ({ pk: primaryKey({ columns: [t.userId, t.lessonId] }) }),
+);
