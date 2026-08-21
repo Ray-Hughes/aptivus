@@ -36,41 +36,86 @@ TIMEOUT_SEC = 8
 # --------------------------------------------------------------------------
 # Problem loading
 # --------------------------------------------------------------------------
+def _from_v2(doc, pack):
+    """Map a format-v2 problem onto what the local UI expects.
+
+    The v2 packs are the single source of truth - the web app, the verifier and
+    the importer all read them. Without this the local tool would quietly fall
+    behind: the five newest problems exist only in v2, so `./aptivus` was
+    serving 27 while the site served 32.
+    """
+    langs = doc.get("languages", {})
+    py = langs.get("python", {})
+    common = {
+        "id": doc["id"],
+        "title": doc["title"],
+        "difficulty": doc.get("difficulty", "medium"),
+        "pattern": doc.get("pattern", ""),
+        "tags": doc.get("tags", []),
+        "minutes": doc.get("minutes", 15),
+        "prompt": doc.get("prompt", ""),
+        "hints": doc.get("hints", []),
+        "followups": doc.get("followups", []),
+        "explanation": (doc.get("explanation", "") + "\n\n" + py.get("notes", "")).strip(),
+        "complexity": doc.get("complexity", ""),
+        "pack": pack,
+    }
+
+    if doc.get("kind") == "sql":
+        sql = doc.get("sql", {})
+        return {
+            **common,
+            "kind": "sql",
+            "schema": sql.get("schema", ""),
+            "seed": sql.get("seed", ""),
+            "ordered": bool(sql.get("ordered")),
+            "solution": langs.get("sql", {}).get("solution", ""),
+            "starter": langs.get("sql", {}).get("starter", "SELECT\n"),
+        }
+
+    if not py:
+        return None  # nothing this local runner can execute yet
+    return {
+        **common,
+        "kind": "python",
+        "mode": doc.get("mode", "function"),
+        "func": doc.get("signature", {}).get("name", {}).get("python", ""),
+        "starter": py.get("starter", ""),
+        "solution": py.get("solution", ""),
+        "tests": doc.get("tests", []),
+        "unordered": bool(doc.get("unordered")),
+    }
+
+
 def load_problems():
-    """Scan packs/<pack>/{python,sql}/*.py. Each file defines a PROBLEM dict."""
+    """Load format-v2 packs from packages/problems/packs/<pack>/*.json."""
     problems = {}
-    if not os.path.isdir(PACKS_DIR):
+    root = os.path.join(REPO, "packages", "problems", "packs")
+    if not os.path.isdir(root):
+        print("No packs found at %s" % root)
         return problems
-    for pack in sorted(os.listdir(PACKS_DIR)):
-        pack_dir = os.path.join(PACKS_DIR, pack)
+
+    for pack in sorted(os.listdir(root)):
+        pack_dir = os.path.join(root, pack)
         if not os.path.isdir(pack_dir) or pack.startswith("."):
             continue
-        for kind in ("python", "sql"):
-            d = os.path.join(pack_dir, kind)
-            if not os.path.isdir(d):
+        for fn in sorted(os.listdir(pack_dir)):
+            if not fn.endswith(".json") or fn == "pack.json":
                 continue
-            for fn in sorted(os.listdir(d)):
-                if not fn.endswith(".py") or fn.startswith("_"):
-                    continue
-                path = os.path.join(d, fn)
-                spec = importlib.util.spec_from_file_location(pack + "_" + fn[:-3], path)
-                mod = importlib.util.module_from_spec(spec)
-                try:
-                    spec.loader.exec_module(mod)
-                except Exception:
-                    print("Failed to load %s:\n%s" % (path, traceback.format_exc()))
-                    continue
-                p = dict(mod.PROBLEM)
-                p["kind"] = kind
-                p["pack"] = pack
-                p.setdefault("id", fn[:-3])
-                p.setdefault("tags", [])
-                p.setdefault("minutes", 15)
-                if p["id"] in problems:
-                    print("Duplicate problem id %r (%s) -- ids must be unique "
-                          "across packs. Skipping." % (p["id"], path))
-                    continue
-                problems[p["id"]] = p
+            path = os.path.join(pack_dir, fn)
+            try:
+                with open(path) as f:
+                    doc = json.load(f)
+                mapped = _from_v2(doc, pack)
+            except Exception:
+                print("Failed to load %s:\n%s" % (path, traceback.format_exc()))
+                continue
+            if not mapped:
+                continue
+            if mapped["id"] in problems:
+                print("Duplicate problem id %r (%s). Skipping." % (mapped["id"], path))
+                continue
+            problems[mapped["id"]] = mapped
     return problems
 
 

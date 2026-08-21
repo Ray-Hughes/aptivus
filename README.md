@@ -13,7 +13,7 @@ Python standard library, and needs no accounts, no network, and no signup.
 
 ```
 $ ./aptivus
-Loaded 27 problems (15 python, 12 sql)
+Loaded 32 problems (15 python, 12 sql)
 
   ==>  http://localhost:8777
 ```
@@ -112,7 +112,7 @@ packs/
     pack.json
 ```
 
-The shipped `federato` pack is 27 problems for a Forward Deployed Engineer round that is
+The shipped `federato` pack is 32 problems for a Forward Deployed Engineer round that is
 part SQL, part data structures and algorithms, written in P&C insurance vocabulary:
 submissions, quotes, appetite tiers, portfolio accumulation, loss ratio. The algorithms
 are the canonical patterns; the SQL is genuinely the kind of thing you write on the job.
