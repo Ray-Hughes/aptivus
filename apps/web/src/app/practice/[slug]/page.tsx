@@ -18,6 +18,12 @@ export default async function PracticePage({ params }: { params: Promise<{ slug:
   const languages = (body.languages ?? {}) as Record<string, { starter?: string }>;
   const tests = (body.tests ?? []) as { sample?: boolean }[];
   const isSql = row.kind === "sql";
+  // Only offer languages this problem actually has a binding for. 14 problems
+  // carry JavaScript; offering it on the rest would be a dead option.
+  const signature = (body.signature as { name?: Record<string, string> }) ?? {};
+  const available = (["python", "javascript"] as const).filter(
+    (l) => Boolean(languages[l]?.starter) && Boolean(signature.name?.[l]),
+  );
   const sqlSpec = (body.sql ?? {}) as { schema?: string; seed?: string; ordered?: boolean };
   const ent = await summary(session.user.id);
 
@@ -34,6 +40,9 @@ export default async function PracticePage({ params }: { params: Promise<{ slug:
       followups={(body.followups ?? []) as string[]}
       hintCount={((body.hints ?? []) as string[]).length}
       kind={isSql ? "sql" : "code"}
+      languages={isSql ? [] : available}
+      starters={Object.fromEntries(available.map((l) => [l, languages[l]?.starter ?? ""]))}
+      funcs={Object.fromEntries(available.map((l) => [l, signature.name?.[l] ?? ""]))}
       sqlSchema={sqlSpec.schema ?? ""}
       sqlSeed={sqlSpec.seed ?? ""}
       sqlOrdered={Boolean(sqlSpec.ordered)}

@@ -1,5 +1,6 @@
 "use client";
 
+import { javascript } from "@codemirror/lang-javascript";
 import { python } from "@codemirror/lang-python";
 import { sql } from "@codemirror/lang-sql";
 import { EditorView } from "@codemirror/view";
@@ -52,12 +53,15 @@ export function CodeEditor({
 }: {
   value: string;
   onChange: (v: string) => void;
-  language: "python" | "sql";
+  language: "python" | "sql" | "javascript";
   readOnly?: boolean;
   ariaLabel?: string;
 }) {
   const extensions = useMemo(
-    () => [language === "sql" ? sql() : python(), theme, highlight, EditorView.lineWrapping],
+    () => [
+      language === "sql" ? sql() : language === "javascript" ? javascript() : python(),
+      theme, highlight, EditorView.lineWrapping,
+    ],
     [language],
   );
 

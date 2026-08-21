@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CodeEditor } from "@/components/CodeEditor";
+import { getJsEngine } from "@/lib/js-client";
 import { previewTables, runQuery, type SqlResult } from "@/lib/sql-client";
 import { Markdown } from "@/components/Markdown";
 import {
@@ -50,9 +51,22 @@ export function Workbench(props: {
   prompt: string; followups: string[]; hintCount: number; starter: string; func: string;
   sampleTests: TestCase[]; hiddenCount: number; entitlements: Entitlements;
   kind: "code" | "sql"; sqlSchema: string; sqlSeed: string; sqlOrdered: boolean;
+  languages: readonly ("python" | "javascript")[];
+  starters: Record<string, string>;
+  funcs: Record<string, string>;
 }) {
   const isSql = props.kind === "sql";
-  const [code, setCode] = useState(props.starter);
+  const [lang, setLang] = useState<"python" | "javascript">(
+    props.languages.includes("python") ? "python" : (props.languages[0] ?? "python"),
+  );
+  const jsEngine = useRef(getJsEngine());
+  const [drafts, setDrafts] = useState<Record<string, string>>(() => ({
+    ...props.starters, sql: props.starter,
+  }));
+  const codeKey = isSql ? "sql" : lang;
+  const code = drafts[codeKey] ?? props.starter;
+  const setCode = (v: string) => setDrafts((d) => ({ ...d, [codeKey]: v }));
+  const func = isSql ? "" : (props.funcs[lang] ?? props.func);
   const [booting, setBooting] = useState(true);
   const [busy, setBusy] = useState<null | string>(null);
   const [results, setResults] = useState<ResultRow[] | null>(null);
@@ -129,7 +143,9 @@ export function Workbench(props: {
   /* --- run sample tests in the browser -------------------------------- */
   const runSamples = () => guard("run", async () => {
     setTrace(null);
-    const { results } = await engine.current.run(code, props.sampleTests, "function", props.func);
+    const { results } = lang === "javascript"
+      ? await jsEngine.current.run(code, props.sampleTests, func, false)
+      : await engine.current.run(code, props.sampleTests, "function", func);
     setResults(results); setTab("results");
     const passed = results.filter((r) => r.passed).length;
     setBanner({
@@ -151,7 +167,9 @@ export function Workbench(props: {
     if (!tRes.ok) { setBanner({ tone: "bad", text: "Could not load the tests." }); return; }
     const { tests } = (await tRes.json()) as { tests: (TestCase & { index: number })[] };
 
-    const { results: local } = await engine.current.run(code, tests, "function", props.func);
+    const { results: local } = lang === "javascript"
+      ? await jsEngine.current.run(code, tests, func, false)
+      : await engine.current.run(code, tests, "function", func);
     // Send the values produced, never a verdict: the server decides.
     const outputs = local.map((r, i) => (
       r.error
@@ -161,7 +179,7 @@ export function Workbench(props: {
 
     const res = await fetch(`/api/problems/${props.slug}/submit`, {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code, language: "python", outputs, durationMs: Date.now() - started }),
+      body: JSON.stringify({ code, language: lang, outputs, durationMs: Date.now() - started }),
     });
     const data = await res.json();
     if (!res.ok) { setBanner({ tone: "bad", text: data.error ?? "Submit failed." }); return; }
@@ -184,7 +202,7 @@ export function Workbench(props: {
 
   /* --- trace ---------------------------------------------------------- */
   const runTrace = () => guard("trace", async () => {
-    const t = await engine.current.trace(code, props.sampleTests[0] ?? {}, "function", props.func);
+    const t = await engine.current.trace(code, props.sampleTests[0] ?? {}, "function", func);
     if (!t.steps?.length) {
       setBanner({ tone: "bad", text: t.error || "Nothing to trace — is the function written?" });
       return;
@@ -220,7 +238,7 @@ export function Workbench(props: {
   const getSolution = () => guard("solution", async () => {
     const res = await fetch(`/api/problems/${props.slug}/solution`, {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ language: "python" }),
+      body: JSON.stringify({ language: lang }),
     });
     const data = await res.json();
     if (res.status === 402) { setSolutionCost(data.error ?? "You are out of solutions today."); return; }
@@ -423,13 +441,34 @@ export function Workbench(props: {
         <section className="flex min-h-0 flex-col gap-4">
           <div className={`${card} flex min-h-0 flex-[3] flex-col overflow-hidden`}>
             <div className="flex items-center justify-between border-b border-[#24262b] px-4 py-2.5">
-              <span className="text-[12.5px] text-[#8b8f96]">Python 3</span>
+              {isSql ? (
+                <span className="text-[12.5px] text-[#8b8f96]">SQLite</span>
+              ) : props.languages.length > 1 ? (
+                <div className="flex gap-0.5 rounded-lg bg-white/[0.05] p-0.5" role="group" aria-label="Language">
+                  {props.languages.map((l) => (
+                    <button
+                      key={l}
+                      onClick={() => setLang(l)}
+                      aria-pressed={lang === l}
+                      className={`rounded-md px-2.5 py-1 text-[12px] transition ${
+                        lang === l ? "bg-white/[0.12] text-white" : "text-[#8b8f96] hover:text-white"
+                      }`}
+                    >
+                      {l === "python" ? "Python" : "JavaScript"}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <span className="text-[12.5px] text-[#8b8f96]">
+                  {lang === "javascript" ? "JavaScript" : "Python 3"}
+                </span>
+              )}
               <span className="text-[11.5px] text-[#6f747c]">
                 {booting ? "starting engine…" : "runs in your browser"}
               </span>
             </div>
             <div className="min-h-0 flex-1 overflow-hidden">
-              <CodeEditor value={code} onChange={setCode} language={isSql ? "sql" : "python"} />
+              <CodeEditor value={code} onChange={setCode} language={isSql ? "sql" : lang === "javascript" ? "javascript" : "python"} />
             </div>
             <div className="flex items-center justify-between border-t border-[#24262b] px-4 py-2.5">
               <div className="flex gap-2">

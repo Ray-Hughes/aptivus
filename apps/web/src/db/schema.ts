@@ -258,6 +258,162 @@ export const reveals = sqliteTable(
 );
 
 /* ------------------------------------------------------------------ */
+/* courses                                                             */
+/* ------------------------------------------------------------------ */
+
+/**
+ * A course is an opinion about the order the problems should be done in, plus
+ * the teaching that goes between them. The whole authored document - modules,
+ * teaching markdown, checkpoints, completion rules - lives in `body`, exactly
+ * as `problems.body` holds the whole problem.
+ *
+ * The denormalised counts exist so the catalogue can be rendered without
+ * parsing five 60KB JSON documents to answer "how many modules".
+ */
+export const courses = sqliteTable(
+  "courses",
+  {
+    id: id(),
+    slug: text("slug").notNull(),
+    title: text("title").notNull(),
+    subtitle: text("subtitle").notNull(),
+    audience: text("audience").notNull(),
+    level: text("level"), // foundational | intermediate | advanced
+    estimatedHours: real("estimated_hours").notNull().default(0),
+    timeNote: text("time_note"),
+    version: integer("version").notNull().default(1),
+    /** Denormalised from `body` at import time, for the catalogue. */
+    moduleCount: integer("module_count").notNull().default(0),
+    problemCount: integer("problem_count").notNull().default(0),
+    tags: text("tags", { mode: "json" }).$type<string[]>(),
+    /** The full course document, validated by the importer before it lands. */
+    body: text("body", { mode: "json" }).notNull(),
+    isPublished: integer("is_published", { mode: "boolean" }).notNull().default(true),
+    createdAt: integer("created_at").notNull().default(now),
+    updatedAt: integer("updated_at").notNull().default(now),
+  },
+  (t) => ({ slugIdx: uniqueIndex("courses_slug_idx").on(t.slug) }),
+);
+
+/**
+ * One row per (user, course, module). Keyed by the *slugs* rather than by the
+ * course row id, because the format's whole point is that a course can be
+ * re-imported - or edited underneath a learner - without invalidating what they
+ * have done. Renaming a module id silently resets it; that is documented and
+ * deliberate.
+ *
+ * Nothing here is ever written from a client-supplied "done" flag. `status` is
+ * set by a Server Action that re-derives the completion rule from the stored
+ * course, and the checkpoint score is graded server-side from the stored answer
+ * key for `choice` questions.
+ */
+export const courseProgress = sqliteTable(
+  "course_progress",
+  {
+    id: id(),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    courseSlug: text("course_slug").notNull(),
+    moduleId: text("module_id").notNull(),
+    /** started | complete. A row exists as soon as the module is opened. */
+    status: text("status").notNull().default("started"),
+    completedAt: integer("completed_at"),
+    /** 0..1. Auto-graded for `choice`, self-marked for `recall` and `explain`. */
+    checkpointScore: real("checkpoint_score"),
+    checkpointAt: integer("checkpoint_at"),
+    /** Latest attempt only: `{ [questionId]: { correct: boolean } }`. */
+    checkpointAnswers: text("checkpoint_answers", { mode: "json" })
+      .$type<Record<string, { correct: boolean }>>(),
+    /** Problems the learner ticked off inside this module, for work done off-platform. */
+    markedProblems: text("marked_problems", { mode: "json" }).$type<string[]>(),
+    /** For `self-attested` modules: the learner says they did the work. */
+    attested: integer("attested", { mode: "boolean" }).notNull().default(false),
+    startedAt: integer("started_at").notNull().default(now),
+    updatedAt: integer("updated_at").notNull().default(now),
+  },
+  (t) => ({
+    uniq: uniqueIndex("course_progress_uniq_idx").on(t.userId, t.courseSlug, t.moduleId),
+    userIdx: index("course_progress_user_idx").on(t.userId, t.updatedAt),
+  }),
+);
+
+/* ------------------------------------------------------------------ */
+/* mock interview rounds                                               */
+/* ------------------------------------------------------------------ */
+
+/**
+ * A timed round: one clock across two problems, no hints, no solutions.
+ *
+ * `startedAt` and `endedAt` are written from the **server** clock and never
+ * from the request body. That is the whole integrity story for the feature -
+ * a client that closes its laptop for twenty minutes cannot come back and
+ * claim a better time, because the elapsed clock is `ended_at - started_at`
+ * and neither end of that subtraction is anything the browser said.
+ *
+ * `activity` is the one thing the client is the only witness to: the
+ * per-second reading / writing / debugging / idle trace behind the timeline.
+ * It arrives from the browser and is clamped to the server's elapsed before it
+ * is stored, so it can shape the picture but never inflate the total.
+ */
+export const mockRounds = sqliteTable(
+  "mock_rounds",
+  {
+    id: id(),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    /** Whichever of the two the round was drawn against; exactly one is set. */
+    companySlug: text("company_slug"),
+    pack: text("pack"),
+    /** split | sql | algo - what the learner asked the composer for. */
+    shape: text("shape").notNull().default("split"),
+    /** The length of the clock in seconds. Zero is not a hard stop. */
+    durationSeconds: integer("duration_seconds").notNull().default(2700),
+    /** in_progress | ended | abandoned. */
+    status: text("status").notNull().default("in_progress"),
+    startedAt: integer("started_at").notNull().default(now),
+    endedAt: integer("ended_at"),
+    /** `{ blocks: [{p,a,d}], events: [{at,p,k,pass,total}] }`, clamped on write. */
+    activity: text("activity", { mode: "json" }).$type<{
+      blocks: { p: number; a: string; d: number }[];
+      events: { at: number; p: number; k: string; pass?: number; total?: number }[];
+    }>(),
+    createdAt: integer("created_at").notNull().default(now),
+  },
+  (t) => ({
+    userIdx: index("mock_rounds_user_idx").on(t.userId, t.startedAt),
+  }),
+);
+
+/** One row per slot in the round, in the order they were presented. */
+export const mockRoundProblems = sqliteTable(
+  "mock_round_problems",
+  {
+    id: id(),
+    roundId: text("round_id").notNull().references(() => mockRounds.id, { onDelete: "cascade" }),
+    problemId: text("problem_id").notNull(),
+    /** 0-based slot. "order" is reserved in SQL, hence the name. */
+    orderIndex: integer("order_index").notNull().default(0),
+    /** Only ever set by the server-side grader, never by a client flag. */
+    solved: integer("solved", { mode: "boolean" }).notNull().default(false),
+    /** Clamped against the round's server-measured elapsed on every write. */
+    timeSpentMs: integer("time_spent_ms").notNull().default(0),
+    attempts: integer("attempts").notNull().default(0),
+    firstRunAt: integer("first_run_at"),
+    solvedAt: integer("solved_at"),
+    /** The learner deliberately called time on this one. Not a failure. */
+    stopped: integer("stopped", { mode: "boolean" }).notNull().default(false),
+    /** Kept so a reload mid-round does not cost the work. */
+    code: text("code"),
+    scratch: text("scratch"),
+    /** Best run so far, for the scorecard when nothing was ever submitted. */
+    checksPassed: integer("checks_passed"),
+    checksTotal: integer("checks_total"),
+  },
+  (t) => ({
+    roundIdx: index("mock_round_problems_round_idx").on(t.roundId, t.orderIndex),
+    uniq: uniqueIndex("mock_round_problems_uniq_idx").on(t.roundId, t.orderIndex),
+  }),
+);
+
+/* ------------------------------------------------------------------ */
 /* achievements                                                        */
 /* ------------------------------------------------------------------ */
 export const achievements = sqliteTable(
