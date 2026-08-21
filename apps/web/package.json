@@ -28,6 +28,7 @@
     "@libsql/client": "^0.17.4",
     "@node-rs/argon2": "^2.1.0",
     "@uiw/react-codemirror": "^4.25.11",
+    "@vercel/analytics": "^2.0.1",
     "drizzle-orm": "^0.45.2",
     "nanoid": "^5.1.16",
     "next": "16.3.1",

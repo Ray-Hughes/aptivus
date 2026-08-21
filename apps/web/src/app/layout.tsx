@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -16,7 +17,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-ink text-fg">{children}</body>
+      <body className="min-h-full flex flex-col bg-ink text-fg">
+        {children}
+        {/* Last in the body so it never delays first paint. It injects its own
+            script tag and renders nothing, and is inert outside Vercel. */}
+        <Analytics />
+      </body>
     </html>
   );
 }
