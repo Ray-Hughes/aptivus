@@ -285,12 +285,16 @@ the coverage question.
 
 ## Open work
 
-- The five planned problems (`node validate.mjs` lists them): two-pointer pair sum,
   merging two sorted feeds, interval insertion, binary search on the answer, and a 2D grid
   DP. All are marked optional, so the courses work without them; the two-pointers module is
   the thinnest as a result.
 - No JavaScript or Ruby course yet. When the problem format v2 in `docs/multi-language.md`
   lands, `switching-to-python` is the template for `switching-to-javascript`, and the
   language-neutral courses should gain a way to express "this module in your language".
-- Nothing here renders. The schema is designed for a reader that shows teaching, then the
-  problem list with solved state, then the checkpoint - but no UI consumes it yet.
+- The web app renders these at `/courses`, `/courses/<slug>` and
+  `/courses/<slug>/<module>`: teaching, then the problem list with solved state pulled
+  from the learner's attempts, then the checkpoint, then the completion rule.
+  `apps/web/scripts/import-courses.mjs` loads the JSON into the `courses` table and runs
+  `validate.mjs` first, so a course that fails validation never reaches the database.
+  Progress lives in `course_progress`, keyed by course slug and module id exactly as
+  described above.

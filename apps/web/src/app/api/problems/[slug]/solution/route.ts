@@ -21,6 +21,7 @@ import { db } from "@/db";
 import { attempts, reveals } from "@/db/schema";
 import { isResponse, json, notFound, readBody, unauthorized } from "@/lib/api";
 import { COST, spend, summary } from "@/lib/entitlements";
+import { lockedByLiveRound, wasInFinishedRound } from "@/lib/mock";
 import { bindingOf, findProblem, languagesOf } from "@/lib/problems";
 
 const Body = z.object({
@@ -38,6 +39,19 @@ export async function POST(
   const { slug } = await params;
   const found = await findProblem(slug);
   if (!found) return notFound("No such problem.");
+
+  // Closed for the duration of a round, and closed to a curl too. See
+  // `lockedByLiveRound` - the promise is only worth making if it is enforced
+  // somewhere the UI cannot be edited around.
+  if (await lockedByLiveRound(userId, found.row.id)) {
+    return json(
+      {
+        error: "Solutions are closed for the duration of a mock round. They unlock free on the scorecard.",
+        locked: "mock_round",
+      },
+      403,
+    );
+  }
 
   const body = await readBody(request, Body);
   if (isResponse(body)) return body;
@@ -63,8 +77,13 @@ export async function POST(
     )
     .limit(1);
 
+  // After a mock round, both write-ups are free whatever the outcome. The
+  // moment after a round you just lost is the highest-learning moment in the
+  // product; charging for it monetises giving up at exactly the wrong time.
+  const finishedMock = solved ? false : await wasInFinishedRound(userId, found.row.id);
+
   let paidWith: string;
-  if (solved) {
+  if (solved || finishedMock) {
     await db
       .insert(reveals)
       .values({ userId, problemId: found.row.id, kind: "solution", level: 0, paidWith: "earned" })

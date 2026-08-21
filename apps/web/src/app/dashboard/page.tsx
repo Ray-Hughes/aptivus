@@ -6,6 +6,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { db } from "@/db";
 import { companies, profiles } from "@/db/schema";
 import { listAchievements } from "@/lib/achievements";
+import { continueCourse } from "@/lib/courses";
 import { summary } from "@/lib/entitlements";
 import { userStats } from "@/lib/stats";
 
@@ -29,12 +30,15 @@ export default async function Dashboard() {
   if (!session?.user?.id) redirect("/signin?next=/dashboard");
   const userId = session.user.id;
 
-  const [stats, ent, badges, profileRow, companyRows] = await Promise.all([
+  const [stats, ent, badges, profileRow, companyRows, resume] = await Promise.all([
     userStats(userId),
     summary(userId),
     listAchievements(userId),
     db.select().from(profiles).where(eq(profiles.userId, userId)).limit(1),
     db.select({ slug: companies.slug, name: companies.name }).from(companies),
+    // Null unless they have actually started something. A dashboard that tells
+    // you to continue a course you never opened is noise.
+    continueCourse(userId),
   ]);
 
   const xp = stats.solved * 40 + stats.cleanSolves * 25;
@@ -94,13 +98,52 @@ export default async function Dashboard() {
             </div>
           </div>
 
+          {/* One primary action a view. When a course is underway it is the
+              course, and practice steps back to a secondary. */}
           <Link
             href="/problems"
-            className="rounded-xl bg-gradient-to-r from-[#00E5FF] to-[#9E7BFF] px-5 py-2.5 text-[13.5px] font-semibold text-[#0b0c0f] transition hover:brightness-110"
+            className={
+              resume
+                ? "rounded-xl border border-white/12 bg-white/[0.04] px-5 py-2.5 text-[13.5px] outline-none ring-offset-2 ring-offset-[#0b0c0f] transition hover:bg-white/[0.09] focus-visible:ring-2 focus-visible:ring-[#4aa3ff]"
+                : "rounded-xl bg-gradient-to-r from-[#00E5FF] to-[#9E7BFF] px-5 py-2.5 text-[13.5px] font-semibold text-[#0b0c0f] outline-none ring-offset-2 ring-offset-[#0b0c0f] transition hover:brightness-110 focus-visible:ring-2 focus-visible:ring-[#4aa3ff]"
+            }
           >
             {stats.solved ? "Resume practice →" : "Start practising →"}
           </Link>
         </section>
+
+        {/* course in progress */}
+        {resume && (
+          <section className={`${card} mt-4 flex flex-wrap items-center gap-6 p-5`}>
+            <div className="min-w-[240px] flex-1">
+              <p className="text-[12px] uppercase tracking-[0.08em] text-[#7f8794]">
+                Continue your course
+              </p>
+              <p className="mt-1.5 text-[17px] font-medium text-white">{resume.courseTitle}</p>
+              <p className="mt-0.5 text-[13px] text-[#9aa1ad]">
+                Module {resume.moduleNumber} of {resume.moduleCount}: {resume.moduleTitle}
+                <span className="text-[#6b727e]"> · about {resume.estimatedMinutes} minutes</span>
+              </p>
+              <div className="mt-3 flex items-center gap-3">
+                <div className="h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-white/[0.07]">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-[#00E5FF] to-[#9E7BFF]"
+                    style={{ width: `${Math.round(resume.fraction * 100)}%` }}
+                  />
+                </div>
+                <span className="whitespace-nowrap font-mono text-[11.5px] text-[#7f8794]">
+                  {resume.modulesComplete}/{resume.moduleCount} modules
+                </span>
+              </div>
+            </div>
+            <Link
+              href={`/courses/${resume.courseSlug}/${resume.moduleId}`}
+              className="rounded-xl bg-gradient-to-r from-[#00E5FF] to-[#9E7BFF] px-5 py-2.5 text-[13.5px] font-semibold text-[#0b0c0f] outline-none ring-offset-2 ring-offset-[#0b0c0f] transition hover:brightness-110 focus-visible:ring-2 focus-visible:ring-[#4aa3ff]"
+            >
+              Continue →
+            </Link>
+          </section>
+        )}
 
         {/* stat tiles */}
         <section className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

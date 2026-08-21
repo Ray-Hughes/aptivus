@@ -21,7 +21,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { db } from "@/db";
-import { attempts, reveals } from "@/db/schema";
+import { attempts, mockRoundProblems, mockRounds, reveals } from "@/db/schema";
 import { isResponse, json, notFound, readBody, unauthorized } from "@/lib/api";
 import { awardCleanSolve, summary } from "@/lib/entitlements";
 import { gradeSql } from "@/lib/sql-grade";
@@ -68,7 +68,49 @@ const Body = z.object({
     .max(500)
     .default([]),
   durationMs: z.int().nonnegative().max(24 * 60 * 60 * 1000).optional(),
+  /** Set when the submission came from inside a mock round. */
+  roundId: z.string().trim().min(1).max(64).optional(),
 });
+
+/**
+ * Record a graded verdict against a mock round.
+ *
+ * Deliberately the only writer of `solved` on a round: the client says what
+ * its code produced, this file decides whether that was right, and the round
+ * row learns it from here. `solved_at` is the server's clock, so a scorecard
+ * cannot be given a better finishing time than the one that happened.
+ */
+async function recordAgainstRound(opts: {
+  roundId: string; userId: string; problemId: string;
+  solved: boolean; passed: number; total: number;
+}) {
+  const [round] = await db
+    .select({ id: mockRounds.id, startedAt: mockRounds.startedAt, status: mockRounds.status })
+    .from(mockRounds)
+    .where(and(eq(mockRounds.id, opts.roundId), eq(mockRounds.userId, opts.userId)))
+    .limit(1);
+  if (!round || round.status !== "in_progress") return;
+
+  const [slot] = await db
+    .select()
+    .from(mockRoundProblems)
+    .where(and(eq(mockRoundProblems.roundId, round.id), eq(mockRoundProblems.problemId, opts.problemId)))
+    .limit(1);
+  if (!slot) return;
+
+  const at = Math.floor(Date.now() / 1000);
+  const better = (slot.checksPassed ?? -1) < opts.passed;
+  await db
+    .update(mockRoundProblems)
+    .set({
+      solved: slot.solved || opts.solved,
+      solvedAt: slot.solvedAt ?? (opts.solved ? at : null),
+      firstRunAt: slot.firstRunAt ?? at,
+      attempts: slot.attempts + 1,
+      ...(better ? { checksPassed: opts.passed, checksTotal: opts.total } : {}),
+    })
+    .where(eq(mockRoundProblems.id, slot.id));
+}
 
 export async function POST(
   request: Request,
@@ -130,6 +172,12 @@ export async function POST(
     const award = verdict.passed
       ? await awardCleanSolve(userId, found.row.id, found.body.difficulty)
       : { awarded: 0, reason: "not_solved" as const };
+    if (body.roundId) {
+      await recordAgainstRound({
+        roundId: body.roundId, userId, problemId: found.row.id,
+        solved: verdict.passed, passed: verdict.passed ? 1 : 0, total: 1,
+      });
+    }
     return json({
       attemptId: attempt.id,
       status: verdict.passed ? "solved" : "tried",
@@ -184,6 +232,13 @@ export async function POST(
   const award = solved
     ? await awardCleanSolve(userId, found.row.id, found.body.difficulty)
     : { awarded: 0, reason: "not_solved" as const };
+
+  if (body.roundId) {
+    await recordAgainstRound({
+      roundId: body.roundId, userId, problemId: found.row.id,
+      solved, passed: testsPassed, total,
+    });
+  }
 
   const [{ solves = 0 } = { solves: 0 }] = await db
     .select({ solves: sql<number>`count(*)` })

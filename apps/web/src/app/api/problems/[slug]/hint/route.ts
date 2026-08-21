@@ -15,6 +15,7 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { isResponse, json, notFound, readBody, unauthorized } from "@/lib/api";
 import { COST, spend, summary } from "@/lib/entitlements";
+import { lockedByLiveRound } from "@/lib/mock";
 import { findProblem } from "@/lib/problems";
 
 const Body = z.object({ level: z.int().nonnegative().max(20).default(0) });
@@ -30,6 +31,19 @@ export async function POST(
   const { slug } = await params;
   const found = await findProblem(slug);
   if (!found) return notFound("No such problem.");
+
+  // The mock-interview contract, enforced rather than merely displayed. The
+  // pre-round screen promises no hints; hiding the button is a UI decision,
+  // this is the promise. It has to hold for a curl too, or it is not one.
+  if (await lockedByLiveRound(userId, found.row.id)) {
+    return json(
+      {
+        error: "Hints are closed for the duration of a mock round. That is the contract you started under.",
+        locked: "mock_round",
+      },
+      403,
+    );
+  }
 
   const body = await readBody(request, Body);
   if (isResponse(body)) return body;
