@@ -40,6 +40,15 @@
 }
 .usermenu-panel a:hover, .usermenu-panel button:hover { background: var(--surface-3); color: var(--text); }
 .usermenu-panel .sep { height: 1px; background: var(--border); margin: 5px 4px; }
+.usermenu-panel .menu-soon {
+  display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: var(--r-xs);
+  font-size: var(--t-sm); color: var(--text-3); cursor: default;
+}
+.usermenu-panel .menu-soon em {
+  font-style: normal; margin-left: auto; font-size: var(--t-3xs); font-weight: 650; letter-spacing: .08em;
+  text-transform: uppercase; padding: 1px 6px; border-radius: var(--r-full);
+  border: 1px solid var(--border); background: var(--surface-3);
+}
 
 /* ================= profile ================= */
 .page { max-width: 1240px; margin: 0 auto; padding: var(--sp-6) var(--sp-5) var(--sp-20); }
@@ -65,6 +74,30 @@
 .idhead h1 { font-size: var(--t-3xl); letter-spacing: -.03em; }
 .idhead .sub { color: var(--text-3); font-size: var(--t-sm); margin-top: 5px; }
 .xp-wrap { min-width: 230px; flex: 1 1 260px; max-width: 380px; }
+
+/* ---- daily allowance ---- */
+.allowance {
+  display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap;
+  margin-top: var(--sp-4); padding: var(--sp-3) var(--sp-5);
+  border-radius: var(--r-lg); background: var(--surface); border: 1px solid var(--border);
+  box-shadow: inset 0 1px 0 var(--hairline); font-size: var(--t-sm); color: var(--text-3);
+}
+.allowance .lbl { display: flex; align-items: center; gap: 7px; font-size: var(--t-xs); color: var(--text-3); }
+.allowance .amt {
+  display: inline-flex; align-items: baseline; gap: 5px; padding: 2px 10px; border-radius: var(--r-full);
+  background: var(--surface-2); border: 1px solid var(--border); color: var(--text-2);
+}
+.allowance .amt b { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text); font-size: var(--t-md); }
+.allowance .reset { display: inline-flex; align-items: center; gap: 6px; }
+.allowance .reset b { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text-2); }
+
+/* ---- next streak bonus ---- */
+.next-bonus {
+  display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px; border-radius: var(--r-full);
+  background: var(--surface); border: 1px solid var(--border); font-size: var(--t-sm); color: var(--text-2);
+}
+.next-bonus b { color: var(--text); }
+.next-bonus .dim { color: var(--text-3); }
 
 /* ---- stat tiles ---- */
 .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-3); margin-top: var(--sp-4); }
@@ -113,12 +146,12 @@
   font-size: var(--t-xs); color: var(--text-2); display: flex; align-items: center; gap: 8px;
 }
 
-.ledger { list-style: none; display: grid; gap: 2px; }
-.ledger li { display: flex; align-items: center; gap: 10px; padding: 6px 0; font-size: var(--t-sm); border-bottom: 1px solid var(--border); }
+.ledger { list-style: none; display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; }
+.ledger li { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 6px 0; font-size: var(--t-sm); border-bottom: 1px solid var(--border); }
 .ledger li:last-child { border-bottom: 0; }
 .ledger .amt { margin-left: auto; font-family: var(--font-mono); font-weight: 600; font-variant-numeric: tabular-nums; }
 .ledger .amt.plus { color: var(--success); } .ledger .amt.minus { color: var(--text-3); }
-.ledger .rs { color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ledger .rs { flex: 1 1 auto; min-width: 0; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ledger .dt { font-size: var(--t-2xs); color: var(--text-3); white-space: nowrap; }
 
 .heat { display: grid; grid-template-rows: repeat(7, 13px); grid-auto-flow: column; gap: 3px; justify-content: start; }
@@ -228,10 +261,17 @@
   .two-col { grid-template-columns: 1fr; }
 }
 @media (max-width: 720px) {
+  /* the hover tooltips are laid out at left:50% and centred with a transform, so their
+     layout overflow dragged the document sideways on a phone. Nothing hovers on a
+     phone anyway — the chips repeat their meaning in the rewards block. */
+  .tip::after { display: none; }
   .app-nav { display: none; }
   .tiles { grid-template-columns: 1fr; }
-  .rewards-grid { grid-template-columns: 1fr; }
-  .rw { border-right: 0 !important; border-top: 1px solid var(--border); }
+  /* the 12-week heatmap has a 381px min-content width; without this the whole page
+     scrolls sideways on a phone. Let the grid scroll inside its own card instead. */
+  .rewards-grid { grid-template-columns: minmax(0, 1fr); }
+  .rw { min-width: 0; border-right: 0 !important; border-top: 1px solid var(--border); }
+  .heat { overflow-x: auto; padding-bottom: 4px; }
   .rw:first-child { border-top: 0; }
   .patbar { grid-template-columns: 110px minmax(0,1fr) 50px; }
 }
@@ -263,8 +303,7 @@
   </a>
   <nav class="app-nav" aria-label="Main">
     <a href="coding.html">Problems</a>
-    <a href="coding.html">Solve</a>
-    <a href="coding.html">Mock Interview</a>
+    <a href="coding.html" title="Prototype — the Mock Interview screen is not designed yet; this opens the solve view">Mock Interview</a>
     <a href="profile.html" aria-current="page">Progress</a>
   </nav>
   <span class="spacer"></span>
@@ -285,7 +324,7 @@
     <div class="usermenu-panel" id="userPanel" hidden role="menu">
       <a href="profile.html" role="menuitem">Progress</a>
       <a href="#target" role="menuitem">Target company</a>
-      <a href="#" role="menuitem">Settings</a>
+      <span class="menu-soon" role="menuitem" aria-disabled="true">Settings <em>soon</em></span>
       <a href="landing.html#pricing" role="menuitem">Plan &amp; billing</a>
       <div class="sep"></div>
       <button role="menuitem" id="signOut">Sign out</button>
@@ -331,6 +370,18 @@
     <a class="btn btn-primary" href="coding.html">Resume practice →</a>
   </section>
 
+  <!-- ===================== DAILY ALLOWANCE ===================== -->
+  <div class="allowance">
+    <span class="lbl">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      Free plan · today
+    </span>
+    <span class="amt"><b id="allowHints">5</b> hints left</span>
+    <span class="amt"><b id="allowSols">3</b> solutions left</span>
+    <span class="spacer"></span>
+    <span class="reset">Resets in <b id="allowReset">—</b> <span class="muted">· 00:00 UTC</span></span>
+  </div>
+
   <!-- ===================== TILES ===================== -->
   <div class="tiles">
     <div class="tile">
@@ -345,7 +396,7 @@
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
         Problems solved
       </div>
-      <div class="v"><b>34</b><span>/ 91</span><span class="spacer"></span><span class="delta up">+6 this week</span></div>
+      <div class="v"><b>24</b><span>/ 32</span><span class="spacer"></span><span class="delta up">+6 this week</span></div>
     </div>
     <div class="tile">
       <div class="k">
@@ -377,10 +428,10 @@
         <h2>Level 7 · Pattern Hunter</h2>
         <span class="badge" style="background:var(--surface-2);border-color:var(--border)">7 of 14 badges earned</span>
         <span class="spacer"></span>
-        <button class="btn btn-primary btn-sm" id="claimBtn">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 2h12l4 7-10 13L2 9z"/></svg>
-          Claim daily bonus · +5
-        </button>
+        <span class="next-bonus" id="nextBonus">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--gem)"><path d="M6 2h12l4 7-10 13L2 9z"/></svg>
+          Next streak bonus <b>+10 gems</b> at 14 days <span class="dim">· 2 to go</span>
+        </span>
       </div>
 
       <div class="rewards-grid">
@@ -541,7 +592,7 @@
       </div>
       <div class="card-ft row" style="flex-wrap:wrap;gap:var(--sp-3)">
         <span class="muted" style="font-size:var(--t-sm)" id="genNote">
-          5 original problems for <b style="color:var(--text-2)">Federato · Forward Deployed Engineer</b>, verified before delivery.
+          5 original problems for <b style="color:var(--text-2)">Federato · Forward Deployed Engineer</b>, verified before delivery. <b style="color:var(--text-2)">Included with Pro</b> — 25 gems on the free plan.
         </span>
         <span class="spacer"></span>
         <button class="btn btn-secondary btn-sm" id="saveTarget">Save target</button>
@@ -668,20 +719,22 @@
   }
   renderLedger();
 
-  let claimed = false;
-  $("#claimBtn").addEventListener("click", function () {
-    if (claimed) return;
-    claimed = true;
-    setGems(gems + 5, "Daily bonus");
-    LEDGER.unshift(["+5", "Daily bonus", "just now", "plus"]);
-    renderLedger();
-    this.disabled = true;
-    this.innerHTML = "Claimed · back in 24h";
-  });
   $("#buyGems").addEventListener("click", function () { toast("Stripe Checkout would open here: 60 / 200 / 500 gem packs.", "info"); });
   $("#gemChip").addEventListener("click", function () {
     document.getElementById("rewards").scrollIntoView({ behavior: "smooth", block: "start" });
   });
+
+  /* ---------- daily allowance countdown (Phase 2 §5: say it plainly, with a countdown) ---------- */
+  function untilUtcMidnight() {
+    const now = new Date();
+    const next = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0);
+    const ms = next - now.getTime();
+    const h = Math.floor(ms / 3600000), m = Math.floor((ms % 3600000) / 60000);
+    return h + " h " + String(m).padStart(2, "0") + " m";
+  }
+  function tickAllowance() { $("#allowReset").textContent = untilUtcMidnight(); }
+  tickAllowance();
+  setInterval(tickAllowance, 30000);
 
   /* ---------- streak heatmap ---------- */
   const DAY = 86400000;
@@ -723,8 +776,8 @@
     ["◇", "Trace addict", 1, "Step through 100 trace steps in one session.", "Earned 6 Aug 2026", 100, 100],
     ["▲", "Speed run", 1, "Solve a medium in under 6 minutes.", "Earned 19 Aug 2026 — 5:41 on Merge intervals", 1, 1],
     ["■", "No safety net", 1, "Solve 10 problems with no hints and no solution.", "Earned 17 Aug 2026", 10, 10],
-    ["★", "Hard mode", 0, "Solve a hard problem with no hints.", "You have opened 2 hards. Neither is solved yet.", 0, 1],
-    ["⬟", "Full pack", 0, "Solve every problem in one pack.", "34 of 91 across all packs · 21 of 27 in Federato.", 21, 27],
+    ["★", "Hard mode", 0, "Solve a hard problem with no hints.", "3 hards solved, but every one of them with a hint. Do one clean.", 0, 1],
+    ["⬟", "Full pack", 0, "Solve every problem in one pack.", "24 of 32 in the Federato pack. Six of the eight left are hard.", 24, 32],
     ["⏱", "Under the clock", 0, "Finish a 45-minute Mock Interview with both problems passing.", "Unlocks at Level 8.", 0, 1],
     ["∞", "Month on fire", 0, "A 30-day streak.", "12 of 30 days. Do not break it now.", 12, 30],
     ["◈", "Polyglot", 0, "Solve the same problem in Python and SQL.", "Available when the multi-language runner ships.", 0, 1],
@@ -767,14 +820,16 @@
 
   /* ---------- pattern bars ---------- */
   const PATTERNS = [
-    ["hash map", 6, 6, "python"], ["sliding window", 4, 6, "python"],
-    ["intervals / sort", 3, 4, "python"], ["binary search", 2, 3, "python"],
-    ["stack", 3, 3, "python"], ["graph / BFS-DFS", 2, 5, "python"],
-    ["topological sort", 1, 3, "python"], ["dynamic programming", 1, 5, "python"],
-    ["recursion", 2, 3, "python"], ["heap / top-K", 2, 3, "python"],
-    ["LEFT JOIN + GROUP BY", 4, 4, "sql"], ["window functions", 3, 5, "sql"],
-    ["CTEs", 2, 4, "sql"], ["recursive CTE", 0, 2, "sql"],
-    ["dedupe / row_number", 2, 2, "sql"], ["HAVING + aggregates", 2, 3, "sql"]
+    /* 20 Python + 12 SQL = the 32 problems in the Federato pack. Solved sums to 24,
+       which is what the tile and the donut say. Keep the three in step. */
+    ["hash map", 3, 3, "python"], ["sliding window", 2, 3, "python"],
+    ["intervals / sort", 2, 2, "python"], ["binary search", 1, 2, "python"],
+    ["stack", 2, 2, "python"], ["graph / BFS-DFS", 1, 3, "python"],
+    ["topological sort", 1, 1, "python"], ["dynamic programming", 0, 2, "python"],
+    ["recursion", 1, 1, "python"], ["heap / top-K", 1, 1, "python"],
+    ["LEFT JOIN + GROUP BY", 3, 3, "sql"], ["window functions", 2, 3, "sql"],
+    ["CTEs", 1, 2, "sql"], ["recursive CTE", 1, 1, "sql"],
+    ["dedupe / row_number", 1, 1, "sql"], ["HAVING + aggregates", 2, 2, "sql"]
   ];
   let patFilter = "all";
   function renderPatterns() {
@@ -807,7 +862,7 @@
   }).join("");
 
   /* ---------- donut ---------- */
-  const DIFF = [["easy", 18, "--success"], ["medium", 12, "--warning"], ["hard", 4, "--danger"]];
+  const DIFF = [["easy", 13, "--success"], ["medium", 8, "--warning"], ["hard", 3, "--danger"]];
   function drawDonut() {
     const svg = $("#donut");
     const total = DIFF.reduce(function (s, d) { return s + d[1]; }, 0);
@@ -855,7 +910,7 @@
     const pts = data.map(function (v, i) { return x(i) + "," + y(v); }).join(" ");
     g += '<polyline points="' + pts + " " + x(data.length - 1) + "," + y(0) + " " + x(0) + "," + y(0) +
       '" fill="url(#trendFill)" stroke="none"/>';
-    g += '<polyline points="' + pts + '" fill="none" stroke="url(#" + gradId() + ")" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>';
+    g += '<polyline points="' + pts + '" fill="none" stroke="url(#' + gradId() + ')" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>';
     data.forEach(function (v, i) {
       g += '<circle cx="' + x(i) + '" cy="' + y(v) + '" r="4.5" fill="var(--surface)" stroke="var(--accent)" stroke-width="2" ' +
         'data-v="' + v + '" data-i="' + i + '" class="pt" style="cursor:pointer"/>';
@@ -893,6 +948,7 @@
   window.addEventListener("resize", drawTrend);
 
   /* ---------- target company ---------- */
+  const GEN_TAIL = ', verified before delivery. <b style="color:var(--text-2)">Included with Pro</b> — 25 gems on the free plan.';
   const COS = [["Federato", "FD"], ["Stripe", "ST"], ["Databricks", "DB"], ["Ramp", "RA"], ["Vercel", "VC"], ["Linear", "LN"], ["Anthropic", "AN"], ["Other…", "+"]];
   let target = "Federato";
   function renderCos() {
@@ -909,11 +965,11 @@
     renderCos();
     $("#targetName").textContent = target;
     $("#genNote").innerHTML = '5 original problems for <b style="color:var(--text-2)">' + esc(target) + " · " +
-      esc($("#roleSel").value) + "</b>, verified before delivery.";
+      esc($("#roleSel").value) + "</b>" + GEN_TAIL;
   });
   $("#roleSel").addEventListener("change", function () {
     $("#genNote").innerHTML = '5 original problems for <b style="color:var(--text-2)">' + esc(target) + " · " +
-      esc(this.value) + "</b>, verified before delivery.";
+      esc(this.value) + "</b>" + GEN_TAIL;
   });
   $("#saveTarget").addEventListener("click", function () { toast("Target saved. The " + esc(target) + " pack loads first from now on.", "ok"); });
   $("#genBtn").addEventListener("click", function () {

@@ -139,7 +139,7 @@
 
   --text:   #0B0E15;
   --text-2: #4B5468;
-  --text-3: #6B7486;
+  --text-3: #656E80;
   --text-on-brand: #04070E;   /* ink on the brand sweep in BOTH themes */
 
   --accent:       #0A7490;
@@ -891,7 +891,7 @@ body { background: var(--bg); }
         </table>
         <ul class="rules">
           <li><code class="inline">--text-3</code> is the floor for body copy. Anything quieter is decorative and must repeat elsewhere.</li>
-          <li>Semantic colours are tuned <strong>per theme</strong>: dark success is #3FDD9A, light success is #0A8F5F. The same hex cannot pass on both grounds.</li>
+          <li>Semantic colours are tuned <strong>per theme</strong>: dark success is #3FDD9A, light success is #0A7A50. The same hex cannot pass on both grounds.</li>
         </ul>
       </div>
     </section>
@@ -1343,7 +1343,7 @@ body { background: var(--bg); }
     ["--border-strong","#333846", "#C7D0DE", "focusable edges, dividers"],
     ["--text",         "#E9ECF3", "#0B0E15", "primary copy"],
     ["--text-2",       "#A7AEBF", "#4B5468", "secondary copy"],
-    ["--text-3",       "#7C8494", "#6B7486", "meta — the quiet floor"],
+    ["--text-3",       "#7C8494", "#656E80", "meta — the quiet floor"],
     ["--accent",       "#2ED8F0", "#0A7490", "links, active tab, trace line"],
     ["--violet",       "#A38BFF", "#6234D8", "SQL, generated content"],
     ["--success",      "#3FDD9A", "#0A7A50", "passing tests, easy, solved"],
@@ -1392,7 +1392,8 @@ body { background: var(--bg); }
   const PAIRS = [
     ["--text on --bg",        "#E9ECF3", "#08090C", "#0B0E15", "#F7F8FB", 4.5],
     ["--text-2 on --surface", "#A7AEBF", "#111319", "#4B5468", "#FFFFFF", 4.5],
-    ["--text-3 on --surface", "#7C8494", "#111319", "#6B7486", "#FFFFFF", 4.5],
+    ["--text-3 on --surface", "#7C8494", "#111319", "#656E80", "#FFFFFF", 4.5],
+    ["--text-3 on --bg",      "#7C8494", "#08090C", "#656E80", "#F7F8FB", 4.5],
     ["--accent on --surface", "#2ED8F0", "#111319", "#0A7490", "#FFFFFF", 4.5],
     ["--success on --surface","#3FDD9A", "#111319", "#0A7A50", "#FFFFFF", 4.5],
     ["--warning on --surface","#FFC15E", "#111319", "#9A5B00", "#FFFFFF", 4.5],

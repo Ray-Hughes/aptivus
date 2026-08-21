@@ -8,8 +8,8 @@ replaced with core.css so every published file is fully self-contained
 import pathlib, sys
 
 HERE = pathlib.Path(__file__).parent
-SRC = HERE / "src"
-OUT = pathlib.Path("/Users/raymondhughes/va/aptivus/design")
+SRC = HERE          # the page sources live beside this script
+OUT = HERE.parent   # the four standalone deliverables
 OUT.mkdir(parents=True, exist_ok=True)
 
 core = (SRC / "core.css").read_text()

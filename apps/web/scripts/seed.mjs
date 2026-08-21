@@ -1,8 +1,8 @@
-import { createClient } from "@libsql/client";
+import { connectChecked } from "./db.mjs";
 import { hash } from "@node-rs/argon2";
 import { randomUUID } from "node:crypto";
 
-const c = createClient({ url: process.env.DATABASE_URL ?? "file:aptivus.db" });
+const c = await connectChecked();
 const now = Math.floor(Date.now() / 1000);
 
 const FLAGS = [

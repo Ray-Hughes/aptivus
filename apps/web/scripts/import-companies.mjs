@@ -1,8 +1,8 @@
-import { createClient } from "@libsql/client";
+import { connectChecked } from "./db.mjs";
 import { readFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 
-const c = createClient({ url: process.env.DATABASE_URL ?? "file:aptivus.db" });
+const c = await connectChecked();
 const raw = JSON.parse(readFileSync("../../packs/companies/companies.json", "utf8"));
 const list = raw.companies ?? raw;
 let added = 0, updated = 0;

@@ -1,9 +1,9 @@
-import { createClient } from "@libsql/client";
+import { connect } from "./db.mjs";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
 const url = process.env.DATABASE_URL ?? "file:aptivus.db";
-const client = createClient({ url, authToken: process.env.DATABASE_AUTH_TOKEN });
+const client = connect();
 
 const dir = "drizzle";
 const files = readdirSync(dir).filter((f) => f.endsWith(".sql")).sort();

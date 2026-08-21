@@ -1,9 +1,9 @@
 /* One problem so the practice route is demonstrable before the full pack
    import lands. Idempotent and keyed by slug, so the real importer wins. */
-import { createClient } from "@libsql/client";
+import { connectChecked } from "./db.mjs";
 import { randomUUID } from "node:crypto";
 
-const c = createClient({ url: process.env.DATABASE_URL ?? "file:aptivus.db" });
+const c = await connectChecked();
 const body = {
   prompt:
     "An underwriter wants to bind exactly two accounts whose premiums add up to a target.\n\n" +

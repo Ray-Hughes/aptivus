@@ -20,7 +20,7 @@
  * included. That is the point of keeping it server-side: the API decides what
  * leaves the building.
  */
-import { createClient } from "@libsql/client";
+import { connect } from "./db.mjs";
 import { spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { dirname, join } from "node:path";
@@ -36,10 +36,7 @@ const onlyPack = args[args.indexOf("--pack") + 1];
 const packFilter = args.includes("--pack") ? onlyPack : null;
 
 const now = Math.floor(Date.now() / 1000);
-const c = createClient({
-  url: process.env.DATABASE_URL ?? "file:aptivus.db",
-  authToken: process.env.DATABASE_AUTH_TOKEN,
-});
+const c = connect();
 
 /* ------------------------------------------------------------------ */
 /* verify first                                                        */

@@ -158,6 +158,8 @@ body.col-resizing { cursor: col-resize; user-select: none; }
   padding: 8px var(--sp-3); border-top: 1px solid var(--border); background: var(--bg-elev);
 }
 .ed-foot .pos { font-family: var(--font-mono); font-size: var(--t-2xs); color: var(--text-3); }
+.ed-foot .ed-tabhint { font-size: var(--t-2xs); color: var(--text-3); }
+.ed-foot .ed-tabhint.armed { color: var(--accent); font-weight: 600; }
 
 /* ---------- trace panel ---------- */
 #tracePanel {
@@ -298,9 +300,25 @@ body.row-resizing { cursor: row-resize; user-select: none; }
   .app-top .desk-only { display: none; }
 }
 @media (max-width: 700px) {
-  .app-top { gap: 8px; padding: 0 10px; }
-  .ptitle b { max-width: 130px; }
+  /* body has overflow:hidden, so anything the top bar cannot fit is unreachable, not
+     just untidy. Below 700px the bar wraps: identity + timer + theme on row one, the
+     pane switcher full-width on row two. Nothing is clipped and nothing is hidden. */
+  .app-top {
+    height: auto; min-height: 52px; gap: 7px; padding: 6px 10px;
+    flex-wrap: wrap; row-gap: 6px;
+  }
+  .ptitle b { max-width: 120px; }
   .sm-hide { display: none !important; }
+  .app-top .pane-switch { order: 10; flex: 1 0 100%; }
+  .app-top .pane-switch button { flex: 1; }
+  .app-top .timer { gap: 5px; }
+  .app-top .timer .clock { min-width: 46px; font-size: var(--t-sm); }
+  .app-top #tStart { padding: 0 8px; }
+  .app-top .avatar { display: inline-flex !important; }   /* the way back to Progress */
+}
+@media (max-width: 420px) {
+  .app-top .brand { display: none; }
+  .ptitle b { max-width: 108px; }
 }
 </style>
 </head>
@@ -405,7 +423,7 @@ body.row-resizing { cursor: row-resize; user-select: none; }
       </div>
       <div class="row" style="align-items:flex-end;gap:8px">
         <label class="sr-only" for="askInput">Your question</label>
-        <textarea class="textarea" id="askInput" rows="2" style="min-height:0;height:58px;font-size:var(--t-sm)" placeholder="e.g. I don't understand why seen[p] = i has to come after the check"></textarea>
+        <textarea class="textarea" id="askInput" rows="2" style="min-height:0;height:58px;font-size:var(--t-sm)" placeholder="e.g. why does [3000, 3000] come back as [0, 0]?"></textarea>
         <button class="btn btn-primary btn-sm" id="askSend">Ask</button>
       </div>
     </div>
@@ -466,8 +484,9 @@ body.row-resizing { cursor: row-resize; user-select: none; }
         </select>
         <span id="tStepLabel" hidden style="font-size:var(--t-2xs);color:var(--text-3);font-weight:600;letter-spacing:.06em;text-transform:uppercase">Query steps</span>
         <span class="spacer" id="tSpacer"></span>
-        <label class="sr-only" for="tCase">Input to trace</label>
-        <select class="select" id="tCase" style="width:auto;max-width:230px;padding:2px 24px 2px 7px;font-size:var(--t-3xs);background-color:var(--surface-2)"></select>
+        <label class="sr-only" for="tCase">Case to trace. Hidden cases step through the real input in your browser; their expected output stays on the server.</label>
+        <select class="select" id="tCase" title="Your code runs in your tab, so every test input has to be here. Expected outputs for hidden cases never leave the server."
+                style="width:auto;max-width:320px;padding:2px 24px 2px 7px;font-size:var(--t-3xs);background-color:var(--surface-2)"></select>
         <button class="btn btn-ghost btn-xs" id="tClose">Close</button>
       </div>
       <div class="tbody" id="tBody"></div>
@@ -483,10 +502,11 @@ body.row-resizing { cursor: row-resize; user-select: none; }
 
     <div class="ed-foot">
       <span class="pos" id="pos">Ln 1, Col 1</span>
+      <span class="ed-tabhint sm-hide" id="edTabHint">Tab indents · Esc then Tab moves focus</span>
       <span class="spacer"></span>
-      <button class="btn btn-outline btn-sm" id="btnTrace" title="Step through your code (T)">
+      <button class="btn btn-accent btn-sm" id="btnTrace" title="Step through your code (T)">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17l6-6-6-6"/><path d="M12 19h8"/></svg>
-        Trace
+        Trace <span class="kbd-hint sm-hide">T</span>
       </button>
       <button class="btn btn-secondary btn-sm" id="btnRun">Run <span class="kbd-hint sm-hide">⌘⏎</span></button>
       <button class="btn btn-primary btn-sm" id="btnSubmit">Submit <span class="kbd-hint sm-hide">⌘⇧⏎</span></button>
@@ -538,7 +558,7 @@ const PY_STARTER =
 "    seen = {}                       # value -> index we saw it at\n" +
 "    for i, p in enumerate(premiums):\n" +
 "        need = target - p\n" +
-"        seen[p] = i\n" +
+"        seen[p] = i                 # <- planted bug. Run, then trace sample 2\n" +
 "        if need in seen:\n" +
 "            return [seen[need], i]\n" +
 "    return []\n";
@@ -892,14 +912,27 @@ ta.addEventListener("input", function () {
 });
 ta.addEventListener("keyup", caretPos);
 ta.addEventListener("click", caretPos);
+/* Tab indents, which makes the editor a keyboard trap unless there is a way out.
+   Esc arms "the next Tab moves focus" — the CodeMirror/Monaco convention — and the
+   editor footer says so. WCAG 2.1.2. */
+let tabEscapes = false;
+function setTabEscape(on) {
+  tabEscapes = on;
+  const h = $("#edTabHint");
+  h.textContent = on ? "Tab moves focus" : "Tab indents · Esc then Tab moves focus";
+  h.classList.toggle("armed", on);
+}
+ta.addEventListener("blur", function () { if (tabEscapes) setTabEscape(false); });
 ta.addEventListener("keydown", function (e) {
+  if (e.key === "Escape") { setTabEscape(!tabEscapes); return; }
   if (e.key === "Tab") {
+    if (tabEscapes) { setTabEscape(false); return; }   /* let the browser move focus */
     e.preventDefault();
     const s = ta.selectionStart, en = ta.selectionEnd;
     ta.value = ta.value.slice(0, s) + "    " + ta.value.slice(en);
     ta.selectionStart = ta.selectionEnd = s + 4;
     paintEditor(); caretPos();
-  }
+  } else if (tabEscapes) { setTabEscape(false); }
   if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
     e.preventDefault();
     e.shiftKey ? submit() : run();
@@ -918,6 +951,27 @@ function setActiveLine(n) {
 /* ==================================================================
    4. problem plumbing
    ================================================================== */
+/* Notes are per problem and really are local — localStorage, never a network call. */
+const NOTE_KEY = "aptivus.notes.";
+function noteHelpText(saved) {
+  return saved
+    ? "Saved in this browser against “" + CUR.title + "”. Never sent anywhere."
+    : "Saves in this browser as you type, per problem. Never sent anywhere.";
+}
+function loadNote() {
+  let v = "";
+  try { v = localStorage.getItem(NOTE_KEY + CUR.id) || ""; } catch (e) { v = ""; }
+  $("#noteArea").value = v;
+  $("#noteHelp").textContent = noteHelpText(!!v);
+}
+$("#noteArea").addEventListener("input", function () {
+  try {
+    localStorage.setItem(NOTE_KEY + CUR.id, this.value);
+    $("#noteHelp").textContent = noteHelpText(!!this.value.trim());
+  } catch (e) {
+    $("#noteHelp").textContent = "This browser is blocking local storage, so notes will not survive a reload.";
+  }
+});
 let CUR = PROBLEMS.py01;
 let hintsUsed = 0, hintsLeft = 5, solsLeft = 3, solRevealed = false, solved = false;
 let gems = 148, submitLocked = false;
@@ -933,7 +987,7 @@ function renderProblem() {
   $("#fileName").textContent = CUR.file;
   $("#langSel").value = CUR.kind;
   $("#followups").innerHTML = CUR.followups.map(function (f) { return "<li>" + f + "</li>"; }).join("");
-  $("#noteHelp").textContent = "Saved locally against “" + CUR.title + "”. Never sent anywhere.";
+  loadNote();
   ta.value = CUR.starter;
   activeLine = null;
   paintEditor(); caretPos();
@@ -946,7 +1000,7 @@ function renderProblem() {
 
 function buildSwitcher() {
   $("#pswitchPanel").innerHTML =
-    '<div class="hd">Federato pack · 27 problems</div>' +
+    '<div class="hd">Federato pack · 32 problems</div>' +
     Object.keys(PROBLEMS).map(function (k) {
       const p = PROBLEMS[k];
       const on = p.id === CUR.id;
@@ -956,7 +1010,7 @@ function buildSwitcher() {
         '<span class="badge badge-' + (p.kind === "sql" ? "sql" : "python") + '" style="font-size:var(--t-3xs)">' +
         (p.kind === "sql" ? "SQL" : "PY") + "</span></button>";
     }).join("") +
-    '<div class="hd">The other 25</div>' +
+    '<div class="hd">The other 30</div>' +
     '<a class="it" href="landing.html#packs" role="menuitem" style="color:var(--text-3)">' +
     "Only two are wired up in this prototype →</a>";
 }
@@ -967,7 +1021,8 @@ function renderHints() {
   h += '<div class="note note-warn" style="margin-bottom:var(--sp-4)">' +
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex:0 0 auto;margin-top:2px"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>' +
     "<span>Hints are progressive — each one gives away a little more. <b>" + hintsLeft +
-    " of 5 left today</b>, resetting at 00:00 UTC. After that they cost 1 gem each.</span></div>";
+    ' of 5 left today</b>, resetting in <b id="hintReset">' + untilUtcMidnight() +
+    "</b> — 00:00 UTC. After that they cost 1 gem each.</span></div>";
   CUR.hints.forEach(function (t, i) {
     if (i < hintsUsed) {
       h += '<div class="hintcard"><div class="hh">' +
@@ -1047,10 +1102,24 @@ function renderSolution() {
   });
 }
 
+/* Phase 2 §5: allowances reset at 00:00 UTC and the UI has to say so, with a countdown.
+   Same string as the profile dashboard. */
+function untilUtcMidnight() {
+  const now = new Date();
+  const next = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0);
+  const ms = next - now.getTime();
+  const h = Math.floor(ms / 3600000), m = Math.floor((ms % 3600000) / 60000);
+  return h + " h " + String(m).padStart(2, "0") + " m";
+}
 function updateAllowance() {
   $("#hintsLeft").textContent = hintsLeft;
   $("#solsLeft").textContent = solsLeft;
+  $("#allowBox").title = hintsLeft + " hints and " + solsLeft + " solutions left today · resets in " +
+    untilUtcMidnight() + ", at 00:00 UTC";
+  const r = $("#hintReset");
+  if (r) r.textContent = untilUtcMidnight();
 }
+setInterval(updateAllowance, 30000);
 
 /* ---------- problem tabs ---------- */
 const probPanels = { desc: "#probDesc", hints: "#probHints", sol: "#probSol", ask: "#probAskBody" };
@@ -1104,11 +1173,22 @@ function resetResults() {
   $("#resTests").innerHTML =
     '<div class="res-empty"><div>' +
     '<div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6.5L4.6 19a2 2 0 0 0 1.7 3h11.4a2 2 0 0 0 1.7-3L14 9.5V3"/></svg></div>' +
-    "<p><b style='color:var(--text-2)'>Run</b> to check the samples, or <b style='color:var(--text-2)'>Submit</b> to run the hidden set too.</p>" +
-    "<p style='margin-top:8px;font-size:var(--t-2xs)'>⌘⏎ runs · ⌘⇧⏎ submits</p></div></div>";
+    "<p><b style='color:var(--text-2)'>Run</b> to check the samples, or <b style='color:var(--text-2)'>Submit</b> to run the hidden set too. " +
+    "A red case gets a <b style='color:var(--text-2)'>Trace this case</b> button — that is the thing to try first.</p>" +
+    "<p style='margin-top:8px;font-size:var(--t-2xs)'>⌘⏎ runs · ⌘⇧⏎ submits · T traces</p>" +
+    (CUR.kind === "sql" ? "" :
+      "<p style='margin-top:10px;font-size:var(--t-2xs)'>The editor opens on a deliberate half-right attempt — see the comment on line 5.</p>") +
+    "</div></div>";
+  /* No stdin box here: this problem is called with arguments, and a box Run never reads
+     is a lie. Problems that read input() get an editable box in its place. */
   $("#resStdout").innerHTML =
-    '<div class="stdin-box"><label class="label" for="stdinBox">Input <span class="muted">(stdin for Run)</span></label>' +
-    '<textarea class="textarea" id="stdinBox" placeholder="this problem takes its input as function arguments"></textarea></div>' +
+    '<div class="stdin-box"><span class="label">Standard input</span>' +
+    '<div class="note note-info" style="margin-top:8px">' + '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex:0 0 auto;margin-top:2px"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>' +
+    "<span>" + (CUR.kind === "sql"
+      ? "SQL problems are graded on the result set, so there is no standard input."
+      : "Run hands your function its arguments, so there is nothing to type here. Problems that read " +
+        "<code>input()</code> put an editable stdin box in this spot.") +
+    "</span></div></div>" +
     '<pre class="code" style="border:0;border-radius:0;background:transparent;padding:var(--sp-4)"><span class="muted">nothing printed yet</span></pre>';
 }
 
@@ -1151,7 +1231,9 @@ function renderResults(res, mode) {
       '<span class="ms">' + r.ms + "ms</span></summary>" +
       '<div class="case-bd">' +
       '<span class="k">input</span>' + esc(argStr(r.t)) +
-      '<span class="k">expected</span><span class="good">' + esc(pyList(r.t.exp)) + "</span>" +
+      '<span class="k">expected</span>' + (r.t.sample
+        ? '<span class="good">' + esc(pyList(r.t.exp)) + "</span>"
+        : '<span class="muted">graded on the server — hidden cases never ship their expected output</span>') +
       '<span class="k">your output</span>' +
       (r.err ? '<span class="bad">' + esc(r.err) + "</span>"
              : '<span class="' + (r.pass ? "good" : "bad") + '">' + esc(pyList(r.got)) + "</span>") +
@@ -1197,7 +1279,7 @@ function solvedBox() {
       ? '<span class="gem-chip" style="font-size:var(--t-sm)"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 2h12l4 7-10 13L2 9z"/></svg> +' + earn + " gems</span>"
       : '<span class="badge" style="font-size:var(--t-2xs)">no gems — you used ' + (solRevealed ? "the solution" : hintsUsed + (hintsUsed === 1 ? " hint" : " hints")) + "</span>") +
     '<span class="badge badge-easy">+40 XP</span>' +
-    '<span class="flame-chip" style="font-size:var(--t-xs)"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2s5 4.5 5 9a5 5 0 0 1-10 0c0-1.5.6-2.8 1.4-3.8C8.7 8.6 9 10 10 10c0-3 2-5.6 2-8z"/></svg> 13 days</span>' +
+    '<span class="flame-chip" style="font-size:var(--t-xs)"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2s5 4.5 5 9a5 5 0 0 1-10 0c0-1.5.6-2.8 1.4-3.8C8.7 8.6 9 10 10 10c0-3 2-5.6 2-8z"/></svg> 13-day streak · today counted</span>' +
     "</div>" +
     '<div class="row" style="justify-content:center;gap:8px">' +
     '<button class="btn btn-primary btn-sm" id="nextProblem">Next problem →</button>' +
@@ -1296,12 +1378,20 @@ function goNext() {
    ================================================================== */
 let TRACE = null, tIdx = 0, tTimer = null, PINNED = [], traceCase = 0;
 
+/* Grouping is the policy, made visible. Code executes in the learner's tab, so every test
+   INPUT has to travel here — that is not a leak. What never leaves the server is the
+   expected OUTPUT of a hidden case, so the picker says which group you are in. */
+const G_SAMPLE = "Sample cases · input and expected output";
+const G_HIDDEN = "Hidden cases · real input, expected output stays on the server";
 function traceCases() {
-  if (CUR.kind === "sql") return [{ label: "the query as written", i: 0 }];
+  if (CUR.kind === "sql") return [{ label: "the query as written", i: 0, group: "Your query" }];
   const cs = TESTS.map(function (t, i) {
-    return { label: (t.sample ? "sample " : "hidden case ") + (i + 1) + " · " + pyList(t.args[0]) + ", " + t.args[1], i: i };
+    return {
+      label: (t.sample ? "sample " : "hidden case ") + (i + 1) + " · " + pyList(t.args[0]) + ", " + t.args[1],
+      i: i, group: t.sample ? G_SAMPLE : G_HIDDEN
+    };
   });
-  cs.push({ label: "My file, run as written", file: true });
+  cs.push({ label: "My file, run as written", file: true, group: "Your file" });
   return cs;
 }
 
@@ -1321,9 +1411,13 @@ function openTrace(caseIdx) {
   $("#tracePanel").hidden = false;
   showPane("editor");
   const sel = $("#tCase");
-  sel.innerHTML = traceCases().map(function (c, i) {
-    return '<option value="' + (c.file ? "file" : c.i) + '">' + esc(c.label) + "</option>";
-  }).join("");
+  let opts = "", grp = null;
+  traceCases().forEach(function (c) {
+    if (c.group !== grp) { if (grp !== null) opts += "</optgroup>"; opts += '<optgroup label="' + esc(c.group) + '">'; grp = c.group; }
+    opts += '<option value="' + (c.file ? "file" : c.i) + '">' + esc(c.label) + "</option>";
+  });
+  if (grp !== null) opts += "</optgroup>";
+  sel.innerHTML = opts;
   sel.value = String(traceCase);
   renderTrace();
 }
@@ -1359,6 +1453,7 @@ function renderTrace() {
     steps = sim.steps;
     meta = pyList(t.args[0]) + ", " + t.args[1];
     TRACE_EXPECT = t.exp;
+    TRACE_SAMPLE = !!t.sample;
   }
   TRACE = { steps: steps, meta: meta, shape: shape };
   PINNED = PINNED.filter(function (n) { return steps.some(function (s) { return n in s.vars; }); });
@@ -1366,7 +1461,7 @@ function renderTrace() {
   tIdx = 0;
   setStep(0);
 }
-let TRACE_EXPECT = null;
+let TRACE_EXPECT = null, TRACE_SAMPLE = false;
 
 function srcLine(n) { return (ta.value.split("\n")[n - 1] || "").trim(); }
 
@@ -1384,7 +1479,10 @@ function setStep(i) {
 
   let h = '<div class="tnote">' +
     "<span>Input <b>" + esc(TRACE.meta) + "</b></span>" +
-    (TRACE_EXPECT && traceCase !== "file" ? "<span>· expected <b>" + esc(pyList(TRACE_EXPECT)) + "</b></span>" : "") +
+    (traceCase === "file" || !TRACE_EXPECT ? ""
+      : TRACE_SAMPLE
+        ? "<span>· expected <b>" + esc(pyList(TRACE_EXPECT)) + "</b></span>"
+        : '<span title="Your code runs in your tab, so the input is here. The answer is not.">· expected output <b>graded on the server</b></span>') +
     "<span>· <kbd>←</kbd> <kbd>→</kbd> to step</span>" +
     (TRACE.shape === "buggy" ? '<span class="badge badge-hard" style="font-size:var(--t-3xs)">tracing your code as written</span>' : "") +
     "</div>";
@@ -1395,8 +1493,10 @@ function setStep(i) {
       esc(pyList(s.ret)) + "</code>" +
       (TRACE_EXPECT && traceCase !== "file"
         ? (JSON.stringify(s.ret) === JSON.stringify(TRACE_EXPECT)
-            ? " — which matches."
-            : ' — but this case expected <code style="color:var(--danger);background:var(--danger-quiet)">' + esc(pyList(TRACE_EXPECT)) + "</code>.")
+            ? (TRACE_SAMPLE ? " — which matches." : " — and the grader marked this case <b>passed</b>.")
+            : TRACE_SAMPLE
+              ? ' — but this case expected <code style="color:var(--danger);background:var(--danger-quiet)">' + esc(pyList(TRACE_EXPECT)) + "</code>."
+              : ' — and the grader marked this case <b style="color:var(--danger)">failed</b>. The expected value stays on the server.')
         : ".") + "</span>"
     : '<span class="next">Next to run: <code>' + esc(srcLine(s.l)) + "</code></span>";
   h += "</div>";
@@ -1951,7 +2051,7 @@ syncPanes();
 showPane("editor");   /* the code is what you land on, on any width */
 setTimeout(function () {
   toast("info", "Prototype — everything here works",
-    "Run the code as shipped: sample 2 fails. Then hit “Trace this case”.");
+    "The starter is a deliberate half-right attempt — see the comment on line 5. Run it, then Trace.");
 }, 900);
 })();
 </script>
