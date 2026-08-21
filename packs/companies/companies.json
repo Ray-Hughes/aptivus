@@ -1,0 +1,2230 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-08-20",
+  "description": "Sourced research on what specific companies actually test in technical interviews: loop structure, languages, SQL presence, algorithm/data-structure patterns, system design topics, difficulty calibration, and quirks. Used to target Aptivus practice packs at a user's real target employer.",
+  "legal_note": "This dataset records the SHAPE of each company's interview process and the PATTERNS it draws on (e.g. 'sliding window', 'top-N per group', 'interval merging') -- never verbatim interview questions. Where a source quoted a specific question, it was paraphrased into its underlying pattern before being recorded here. No proprietary or NDA-covered question text is reproduced. All practice problems built from this dataset must be original, authored fresh from the pattern description, not reconstructed from a specific reported question. See README.md for the full legal position.",
+  "confidence_scale": {
+    "high": "Multiple corroborating primary sources (company engineering blog, official careers/interview-prep page, or official public handbook) confirm the claim.",
+    "medium": "Primary sources exist but are thin/partial, or the claim rests on multiple corroborating secondary sources (Glassdoor/Levels.fyi/interview-prep blogs) that agree with each other.",
+    "low": "Single weak secondary source, or sources conflict and could not be resolved."
+  },
+  "companies": [
+    {
+      "name": "Federato",
+      "slug": "federato",
+      "industry": "insurtech / P&C insurance RiskOps platform",
+      "size": "startup, likely low hundreds of employees (unknown exact headcount; $95M total raised across Series A + later round as of Nov 2024)",
+      "confidence": "medium",
+      "loop": {
+        "summary": "Reported full loop for a Senior Forward Deployed Engineer req: HR/recruiter call, behavioral with a TPM, technical round with an engineer, behavioral with the Director of FDE, and a meeting with a co-founder, over roughly two weeks. Overall candidate-rated difficulty ~2.8/5. Two technical rounds are the scheduled coding/design content; the rest is behavioral/fit.",
+        "rounds": [
+          {
+            "name": "Recruiter/HR screen",
+            "duration_minutes": null,
+            "covers": "logistics, background, motivation",
+            "format": "call"
+          },
+          {
+            "name": "Behavioral with TPM",
+            "duration_minutes": null,
+            "covers": "role framing, collaboration, one report described the role as ~70-80% customer-facing",
+            "format": "video call"
+          },
+          {
+            "name": "Technical: coding",
+            "duration_minutes": 45,
+            "covers": "part SQL, part data structures & algorithms; reported as general SQL + LeetCode-style questions",
+            "format": "HackerRank, any language, explicitly no AI tools permitted"
+          },
+          {
+            "name": "Technical: system design",
+            "duration_minutes": 60,
+            "covers": "workflow orchestration, distributed systems, event-driven architecture; API design (REST/GraphQL) for complex frontend operations, data modeling for high-write/high-read workloads, scalability (concurrency, caching, background job processing)",
+            "format": "diagram drawn in HackerRank's built-in whiteboard tool"
+          },
+          {
+            "name": "Behavioral with Director of FDE",
+            "duration_minutes": null,
+            "covers": "leadership/ownership signal for a customer-facing technical role",
+            "format": "video call"
+          },
+          {
+            "name": "Co-founder conversation",
+            "duration_minutes": null,
+            "covers": "final-round culture/vision alignment",
+            "format": "video call"
+          }
+        ]
+      },
+      "languages": {
+        "permitted": [
+          "any language for the HackerRank coding round"
+        ],
+        "notes": "Job postings name Python, JavaScript, and SQL as the core languages for the Forward Deployed Engineer role; stack is Python/TypeScript/React/Node on the product side."
+      },
+      "sql": {
+        "present": true,
+        "weight": "heavy",
+        "notes": "Candidate reports describe the 45-minute technical round as explicitly split between SQL and DS&A, not SQL-as-an-afterthought. SQL is named alongside Python/JavaScript in job postings as a required language."
+      },
+      "patterns": [
+        "general SQL querying (joins, aggregation, filtering) reported as part of the loop, but no candidate report names specific SQL sub-patterns (e.g. window functions vs recursive CTEs) - unconfirmed",
+        "general LeetCode-style DS&A problems reported, but no candidate report names specific algorithmic categories (e.g. sliding window vs graph vs DP) - unconfirmed"
+      ],
+      "system_design": {
+        "applicable": true,
+        "topics": [
+          "high-volume data ingestion pipeline design (ingesting from external data providers without degrading platform performance) - paraphrased from a single reported prompt, treat as the pattern of 'ingestion pipeline under load', not the literal prompt",
+          "REST/GraphQL API contract design for complex frontend operations",
+          "data modeling for high-write/high-read workloads",
+          "scalability: concurrency, caching, background job processing",
+          "event-driven / workflow orchestration architecture"
+        ],
+        "notes": "One specific system-design prompt was reported (about ingesting external insurance data provider feeds at volume); we intentionally paraphrase it above into a pattern rather than quoting it, per the no-verbatim-questions rule. Themes beyond that one prompt come from broader FDE-interview-genre write-ups (Palantir/OpenAI/Anthropic-style FDE interviews), not confirmed Federato-specific reports, so treat those as lower-confidence context rather than Federato-verified facts."
+      },
+      "difficulty": {
+        "skew": "medium, candidate-rated overall difficulty ~2.8/5",
+        "notes": "No breakdown by round difficulty was reported."
+      },
+      "quirks": [
+        "No AI tools permitted in the coding round",
+        "System design diagrams are drawn in HackerRank's built-in whiteboard, not a separate tool",
+        "Role is reported as majority customer-facing (~70-80%) despite the coding-heavy technical round - some candidate-reported inconsistency between interviewers on how the role is framed (engineer vs. customer-facing TPM-like role)",
+        "No public engineering blog exists for Federato - stack and process details are assembled from job postings and secondhand candidate reports, not primary engineering-team writing"
+      ],
+      "sources": [
+        {
+          "url": "https://www.federato.ai/",
+          "type": "primary",
+          "note": "company site, product/positioning"
+        },
+        {
+          "url": "https://job-boards.greenhouse.io/federato/jobs/5375752008",
+          "type": "primary",
+          "note": "Senior Forward Deployed Engineer job posting - languages, role scope"
+        },
+        {
+          "url": "https://job-boards.greenhouse.io/federato/jobs/5019876008",
+          "type": "primary",
+          "note": "Forward Deployed Engineer II job posting"
+        },
+        {
+          "url": "https://www.glassdoor.com/Interview/Federato-Interview-Questions-E6809618.htm",
+          "type": "secondary",
+          "note": "blocks automated fetch (403); summarized from search-result snippets only - loop structure, difficulty rating"
+        },
+        {
+          "url": "https://www.glassdoor.com/Interview/Federato-Forward-Deployed-Engineer-Interview-Questions-EI_IE6809618.0,8_KO9,34.htm",
+          "type": "secondary",
+          "note": "blocks automated fetch (403); summarized from search-result snippets only - the two scheduled technical rounds, no-AI rule, whiteboard tool"
+        },
+        {
+          "url": "https://dataford.io/interview-guides/federato/software-engineer",
+          "type": "secondary",
+          "note": "third-party interview guide"
+        },
+        {
+          "url": "https://www.builtinsf.com/job/staff-full-stack-engineer/6346317",
+          "type": "primary",
+          "note": "job posting used for stack details (Python/TS/React/Node/Postgres/Kubernetes/Kafka)"
+        },
+        {
+          "url": "https://www.prnewswire.com/news-releases/federato-announces-80-million-raised-to-bring-riskops-to-insurance-302311553.html",
+          "type": "primary",
+          "note": "funding/size context"
+        }
+      ],
+      "unknowns": [
+        "Exact employee headcount",
+        "Specific algorithmic pattern categories tested (only 'LeetCode questions' reported generically)",
+        "Specific SQL sub-skills tested (only 'SQL questions' reported generically)",
+        "Whether the loop or content differs for non-FDE engineering roles (this record is FDE-specific; Federato also hires core platform/product engineers whose loop was not researched here)",
+        "Scoring rubric / bar for each round"
+      ],
+      "last_verified": "2026-08-20"
+    },
+    {
+      "name": "Amazon",
+      "slug": "amazon",
+      "industry": "big tech / e-commerce, cloud computing (AWS) & advertising",
+      "size": "~1.56 million employees worldwide (full-time + part-time), attributed to Amazon's 2025 annual report via secondary aggregators (Demandsage, Statista); not verified directly against the 10-K",
+      "confidence": "high",
+      "loop": {
+        "summary": "An asynchronous Online Assessment gates the process, followed by a virtual onsite loop (typically 4 x 55-minute rounds for SDE II) that blends coding, system design and Leadership Principles behavioral probing in every round. A Bar Raiser - a trained interviewer from outside the hiring team - sits in the loop and chairs the post-loop debrief with effective veto power. Outcome typically communicated within about 5 business days.",
+        "rounds": [
+          {
+            "name": "Online Assessment (OA)",
+            "duration_minutes": 120,
+            "covers": "coding problems (~70-90 min, typically 2 questions), a Workstyles/behavioral survey aligned to Leadership Principles, and for many full-time SDE roles a ~60-minute Work Simulation scenario exercise",
+            "format": "asynchronous, proctored-style integrity rules: only public non-login reference docs allowed, print-screen ends the session, copy-paste banned so code must be typed live. SDE II OA is documented as 118 min: 90 min coding + 20 min system design scenario + 8 min work style survey"
+          },
+          {
+            "name": "Phone Screen",
+            "duration_minutes": 45,
+            "covers": "coding and Leadership Principles; reported for some levels/orgs, particularly SDE I",
+            "format": "video/phone; sources are conflicting on whether experienced hires go straight from OA to the loop, so this round is not universal"
+          },
+          {
+            "name": "Virtual Onsite Loop Round 1-4",
+            "duration_minutes": 55,
+            "covers": "each round blends technical assessment (coding and/or system design at scale) with 1-2 Leadership Principles probed via STAR-format behavioral questions",
+            "format": "virtual, interviewers drawn from the SDE community; SDE I loops are often reported as 3 x 40-minute rounds while senior loops can run up to 5 x 60-minute rounds across multiple days"
+          },
+          {
+            "name": "Bar Raiser (embedded in the loop)",
+            "duration_minutes": 55,
+            "covers": "long-term and company-wide fit rather than team-specific fit; heavy Leadership Principles focus alongside technical assessment",
+            "format": "one of the loop interviewers, not a separate stage; the Bar Raiser is an Amazon employee from any function, outside the hiring team, with extensive LP training and months of shadowing"
+          },
+          {
+            "name": "Architecture Deep Dive",
+            "duration_minutes": 60,
+            "covers": "deep architectural and design discussion for senior/principal candidates",
+            "format": "additional round reported for senior+ loops only (secondary sourcing)"
+          },
+          {
+            "name": "Debrief",
+            "duration_minutes": "unknown",
+            "covers": "recruiter plus all interviewers convene; the Bar Raiser chairs and drives to hire/no-hire consensus and sometimes level; insufficient evidence can trigger 1-2 additional interviews before reconvening",
+            "format": "post-loop meeting; outcome typically within ~5 business days"
+          }
+        ]
+      },
+      "languages": {
+        "permitted": [
+          "C",
+          "C++",
+          "C#",
+          "Go",
+          "Java",
+          "JavaScript",
+          "Kotlin",
+          "Objective-C",
+          "Python",
+          "Ruby",
+          "Scala",
+          "Swift"
+        ],
+        "notes": "No primary Amazon page enumerates a fixed list - the official OA page only tells candidates to practice in the language they plan to use. The list above is broad secondary consensus. Java, Python and C++ are most common in practice. Candidates are reportedly not penalized for language choice despite Amazon's internal codebase skewing Java."
+      },
+      "sql": {
+        "present": false,
+        "weight": "none",
+        "notes": "Query-writing SQL is not a standard part of the generalist SDE loop per multiple secondary sources. Amazon's own topics page lists 'databases' among nine general topic areas, so database concepts and data-store trade-offs can surface inside system design, but not SQL authoring. SQL is heavy in Amazon's separate Data Engineer / Data Scientist / BI Analyst tracks, which are a different job family."
+      },
+      "patterns": [
+        "two pointers",
+        "sliding window over arrays and strings",
+        "hash map / frequency counting",
+        "heap / priority queue (top-K, scheduling, merging streams)",
+        "graph BFS/DFS on adjacency structures",
+        "tree traversal",
+        "topological sort",
+        "union-find / disjoint set",
+        "shortest-path graph problems",
+        "dynamic programming (subset/knapsack style)",
+        "DP on grids",
+        "linked list manipulation",
+        "binary search including binary search on the answer space",
+        "interval merging",
+        "object-oriented / low-level design (e.g. cache-with-eviction-policy style)"
+      ],
+      "system_design": {
+        "applicable": true,
+        "topics": [
+          "rate limiting (token bucket, leaky bucket, fixed window)",
+          "caching strategies",
+          "sharding and partitioning (consistent hashing, hot-key avoidance, rebalancing)",
+          "load balancing",
+          "consistency models, availability and resilience",
+          "capacity estimation and traffic patterns",
+          "queues and event-driven architecture (backpressure, retries, fault isolation)",
+          "storage and data-store trade-offs"
+        ],
+        "notes": "A dedicated system design component is confirmed from SDE II upward, appearing in both the OA (a 20-minute scenario) and the onsite loop. Amazon's own SDE II page gives the evaluation rubric explicitly: practicality, accuracy, efficiency, reliability, optimization, scalability. SDE I loops are coding- and behavioral-heavy with system design light or absent (secondary sourcing only). Senior/Principal loops add an architecture deep dive."
+      },
+      "difficulty": {
+        "skew": "medium-heavy with some hard",
+        "notes": "No primary Amazon statement of difficulty. Secondary consensus: medium-skewed with hards mixed in and occasional easies; a commonly cited SDE II shape is one medium plus one hard per coding round, with the bar described as solving solid mediums cleanly under time pressure. Reported variance across teams is significant, consistent with Amazon's team-dependent process. Sources warn that publicly tagged Amazon question sets are noisy (mixing retired OA questions and outliers)."
+      },
+      "quirks": [
+        "Bar Raiser: a trained volunteer interviewer from outside the hiring team (3,600+ company-wide) who assesses long-term company fit, chairs the debrief as decision driver with effective veto power, and mentors other interviewers; program originated in 1999 as the 'Barkeeper Program'",
+        "16 Leadership Principles are woven into essentially every round rather than confined to one behavioral round; each technical interviewer typically probes 1-2 LPs via STAR stories",
+        "secondary sources argue Leadership Principles performance can outweigh raw coding performance at the debrief",
+        "Work Simulation in the OA: a ~60-minute scenario-based prioritization/triage exercise judged on LP-style reasoning, not just code correctness - distinctive to Amazon",
+        "OA integrity rules: copy-paste banned (code must be typed), print-screen ends the session, only public non-login reference docs permitted",
+        "no code execution in live rounds - Amazon's internal 'LiveCode' tool is reported as syntax-highlighting only, used over Amazon Chime, with no autocomplete or AI assistance (secondary sourcing, not primary-confirmed)",
+        "process is explicitly team-dependent: round counts, durations and emphasis vary meaningfully by org and level",
+        "no take-home assignment; the OA is the only asynchronous component",
+        "debrief can order 1-2 additional interviews when evidence is insufficient rather than defaulting to no-hire"
+      ],
+      "sources": [
+        {
+          "url": "https://www.amazon.jobs/content/en/how-we-hire/sde-ii-interview-prep",
+          "type": "primary",
+          "note": "SDE II OA breakdown (118 min: 90 coding + 20 system design + 8 work style), 4 x 55-minute virtual loop, explicit system design rubric, ~5 business day outcome timeline"
+        },
+        {
+          "url": "https://www.amazon.jobs/content/en/how-we-hire/university/sde-oa",
+          "type": "primary",
+          "note": "Full Online Assessment structure including the Work Simulation component, OA integrity rules, and intern vs full-time differences"
+        },
+        {
+          "url": "https://www.amazon.jobs/content/en/how-we-hire/interview-prep/software-development-topics",
+          "type": "primary",
+          "note": "Nine general topic areas including data structures, algorithms, coding and databases; 'apply rather than memorize' philosophy"
+        },
+        {
+          "url": "https://www.aboutamazon.com/news/workplace/amazon-bar-raiser",
+          "type": "primary",
+          "note": "Bar Raiser facts: 3,600+ Bar Raisers, three duties (interviewer, decision driver, teacher), training and shadowing requirements, debrief chairing role"
+        },
+        {
+          "url": "https://www.aboutamazon.com/news/workplace/amazon-leadership-principles-interview",
+          "type": "primary",
+          "note": "The 16 Leadership Principles and Amazon's own STAR-format guidance for answering LP questions"
+        },
+        {
+          "url": "https://www.tryexponent.com/guides/amazon-software-engineer-interview",
+          "type": "secondary",
+          "note": "Round counts by level (SDE I vs senior), team-dependent framing, algorithm pattern frequency, and difficulty calibration; corroborated against interviewkickstart, igotanoffer and prepfully"
+        }
+      ],
+      "unknowns": [
+        "exact current employee count verified directly against Amazon's 10-K or official fact sheet (only secondary aggregators reached)",
+        "primary enumeration of permitted programming languages (no official list found)",
+        "whether a reported pilot 'AI-assisted coding round' exists - single low-authority secondary source, treated as unverified rumor and excluded from the loop above",
+        "SDE I-specific round count and durations (only the SDE II official page was fetchable; SDE I details are secondary)",
+        "any primary numeric LeetCode-equivalent difficulty statement",
+        "whether the Work Simulation appears in OAs above entry level or is entry/new-grad specific",
+        "whether a standalone phone screen is universal for experienced hires or whether they go straight from OA to the virtual loop (sources conflict by level)",
+        "primary confirmation of the LiveCode tooling and its no-execution constraint"
+      ],
+      "last_verified": "2026-08-20"
+    },
+    {
+      "name": "Anthropic",
+      "slug": "anthropic",
+      "industry": "AI research / foundation models",
+      "size": "roughly 3,000-5,200 employees as of mid-2026 depending on source/methodology (Anthropic is private and does not publish official headcount); reported plans to grow toward ~8,000 by end of 2026",
+      "confidence": "medium",
+      "loop": {
+        "summary": "A recruiter screen, followed by a technical/coding assessment (asynchronous CodeSignal or live in a shared environment like Colab/Replit, 60-90 minutes, progressively harder tasks), then an onsite phase of roughly 4-5 hours made up of about 4-5 separate sessions (hiring-manager conversation, coding, system design, and a distinctive 'culture fit'/AI-ethics-and-safety values round). At least one source describes this onsite phase as split into two separate loops on different days, with the second canceled if the first is not passed -- this detail is not corroborated by the primary source and is flagged as uncertain.",
+        "rounds": [
+          {
+            "name": "Recruiter screen",
+            "duration_minutes": 30,
+            "covers": "background, motivation for joining Anthropic, role/level/team fit",
+            "format": "phone/video call, sometimes split into two calls"
+          },
+          {
+            "name": "Technical/coding assessment",
+            "duration_minutes": 75,
+            "covers": "progressive, multi-tiered coding tasks that start simple and escalate in complexity (e.g. practical tasks like log/stack-trace analysis, file operations, small system/banking-style state machines); tests problem decomposition and incremental correctness rather than single-shot algorithm puzzles; concurrency/multithreading reported as a recurring theme",
+            "format": "live shared environment (Colab, CodeSignal, or Replit) or asynchronous CodeSignal OA depending on role; Anthropic's own careers page describes external reference use as acceptable"
+          },
+          {
+            "name": "Hiring manager screen",
+            "duration_minutes": 50,
+            "covers": "engineering judgment, experience discussion, expectations around scope/level",
+            "format": "live conversation"
+          },
+          {
+            "name": "Onsite - coding",
+            "duration_minutes": 60,
+            "covers": "further coding, similar practical/incremental style to the earlier assessment",
+            "format": "live shared coding environment"
+          },
+          {
+            "name": "Onsite - system design",
+            "duration_minutes": 60,
+            "covers": "LLM inference/serving infrastructure and distributed systems at scale -- e.g. request batching/queuing, GPU utilization under variable load, token-generation services under heavy request volume, file caching, API design for concurrent requests",
+            "format": "live whiteboard/discussion"
+          },
+          {
+            "name": "Onsite - culture fit / values (AI ethics and safety)",
+            "duration_minutes": 60,
+            "covers": "how the candidate reasons about AI ethics, risk, and responsible deployment; alignment with Anthropic's stated values around transparency, data security, and accountability; widely reported as the round candidates most often fail",
+            "format": "conversational"
+          },
+          {
+            "name": "Onsite - technical project deep dive (role-dependent)",
+            "duration_minutes": 45,
+            "covers": "discussion of a past technical project",
+            "format": "presentation/discussion"
+          }
+        ]
+      },
+      "languages": {
+        "permitted": [
+          "Python (primary/default)"
+        ],
+        "notes": "Anthropic's own careers page and multiple secondary sources describe live coding environments (Colab, CodeSignal, Replit) that are Python-centric; candidates are told to be comfortable with basic syntax and standard libraries. No confirmation found of whether other languages are explicitly allowed."
+      },
+      "sql": {
+        "present": "unknown",
+        "weight": "unknown",
+        "notes": "Some secondary interview-prep sites (aggregator content, e.g. question banks) claim a SQL or data-reasoning component exists, but no primary source or first-hand interview account corroborates this clearly, and the claim reads as possibly generic/aggregator filler rather than confirmed. Treat as unverified."
+      },
+      "patterns": [
+        "practical/incremental problem-solving on a single scenario that escalates in constraints (interviewer 'layers on' complexity mid-problem)",
+        "concurrency and multithreading",
+        "data structure implementation for realistic scenarios (e.g. a small transactional/banking-style system with multiple operation types)",
+        "log/stack-trace and file-operation style debugging and processing tasks",
+        "first-principles problem solving over memorized algorithm recall",
+        "leans more toward practical engineering tasks than classic LeetCode-style puzzles, per multiple secondary sources"
+      ],
+      "system_design": {
+        "applicable": true,
+        "topics": [
+          "LLM inference and serving infrastructure at scale",
+          "request batching and queuing for token generation (e.g. handling very high request-per-second throughput)",
+          "GPU resource optimization under variable load",
+          "file/data caching",
+          "API design for high concurrency"
+        ],
+        "notes": "Reported as applicable broadly to the SWE onsite loop; no confirmation of which levels specifically get this round beyond general SWE candidates."
+      },
+      "difficulty": {
+        "skew": "medium-hard, escalating within each problem",
+        "notes": "Multiple sources describe an 'extremely high bar' with a values/culture-fit round frequently cited as the actual point of failure rather than the technical rounds themselves."
+      },
+      "quirks": [
+        "Explicit, publicly documented policy banning AI-assistance during live interviews and (unless told otherwise) during take-home assessments -- notable/ironic given Anthropic is an AI company; documented at anthropic.com/candidate-ai-guidance",
+        "Anthropic permits and even encourages AI (Claude) use earlier in the process -- resume/application polishing and interview prep -- but draws a hard line at live interviews and default-prohibits it on take-homes",
+        "A 'culture fit' / AI-ethics-and-safety round is a distinctive, named part of the loop and is reported as the most common failure point",
+        "About half of Anthropic's technical staff reportedly have no prior ML experience and about half have PhDs, per the official careers page -- signals a broad, non-credential-gated bar for technical roles",
+        "One secondary source describes two separate onsite loops on different days (second canceled if first is failed) while another describes a single ~4-5 hour, ~5-session onsite -- these are not fully reconciled and may reflect team-specific variation or evolution over time"
+      ],
+      "sources": [
+        {
+          "url": "https://www.anthropic.com/careers",
+          "type": "primary",
+          "note": "Official Anthropic careers page; confirmed live coding environments (Colab/CodeSignal), that external references are acceptable, hiring philosophy (no ML-experience requirement), and that engineers do research/researchers do engineering; did not disclose full round count or system design/behavioral structure"
+        },
+        {
+          "url": "https://www.anthropic.com/candidate-ai-guidance",
+          "type": "primary",
+          "note": "Official Anthropic page detailing AI (Claude) usage policy across the hiring funnel: encouraged for application polishing and interview prep, prohibited by default on take-homes and always prohibited in live interviews unless stated otherwise"
+        },
+        {
+          "url": "https://www.tryexponent.com/guides/anthropic-software-engineer-interview",
+          "type": "secondary",
+          "note": "Gave 7-9 round breakdown with durations, described technical screen and onsite loop structure, coding patterns, system design topics, and 1-4 month timeline"
+        },
+        {
+          "url": "https://interviewing.io/anthropic-interview-questions",
+          "type": "secondary",
+          "note": "Described a 3-stage process (recruiter call, CodeSignal coding challenge, 4-5 hour/5-session onsite), system design topics (LLM inference, batching, GPU utilization), and overall difficulty framing"
+        },
+        {
+          "url": "https://www.linkjob.ai/interview-questions/anthropic-software-engineer-interview/ (via search snippet)",
+          "type": "secondary",
+          "note": "Source of the 'two separate onsite loops on different days' claim and the 90-minute CodeSignal take-home detail; single-source, not corroborated elsewhere, so treated as lower-confidence"
+        },
+        {
+          "url": "https://igotanoffer.com/en/advice/anthropic-software-engineer-interview",
+          "type": "secondary",
+          "note": "WebFetch 403'd; used only via earlier aggregated search snippet describing culture-fit round as the most common failure point"
+        }
+      ],
+      "unknowns": [
+        "Whether the onsite is genuinely split into two separate loops/days or a single ~5-hour session -- sources conflict",
+        "Whether SQL is a real, recurring part of the loop or an aggregator artifact -- unverified",
+        "Exact number and order of onsite rounds for the general (non-managerial) SWE track vs. other tracks",
+        "Formal difficulty calibration or rubric (no source quantified easy/medium/hard mix)",
+        "Whether non-Python languages are permitted in coding rounds",
+        "Exact current headcount (private company, estimates range 3,000-5,200+ depending on source and date)"
+      ],
+      "last_verified": "2026-08-20"
+    },
+    {
+      "name": "Databricks",
+      "slug": "databricks",
+      "industry": "unified data analytics / lakehouse platform (data + AI infrastructure)",
+      "size": "roughly 12,000-16,000 employees as of mid-2026 (estimates vary notably by source/methodology: ~11,487 per one source for 2025, up to ~15,800-15,965 by mid-2026 per others)",
+      "confidence": "medium",
+      "loop": {
+        "summary": "A recruiter screen and hiring-manager conversation, then a technical phone screen with live coding (CoderPad), often an online assessment for new-grad/intern pipelines, and a 4-5 round virtual onsite covering two coding rounds (one with a concurrency/multithreading emphasis), a system design round (mid/senior and above), and a behavioral/values round, followed by team matching; total process commonly takes 4-8 weeks.",
+        "rounds": [
+          {
+            "name": "Online assessment (new-grad/intern pipelines)",
+            "duration_minutes": 70,
+            "covers": "proctored coding test, typically 4 questions (roughly 2 easy, 2 medium/hard) spanning data structures, algorithms, and data-manipulation scenarios",
+            "format": "CodeSignal or HackerRank, proctored"
+          },
+          {
+            "name": "Recruiter screen",
+            "duration_minutes": 30,
+            "covers": "background, motivation, logistics",
+            "format": "phone/video"
+          },
+          {
+            "name": "Hiring manager call",
+            "duration_minutes": 60,
+            "covers": "background/experience discussion, largely behavioral",
+            "format": "video"
+          },
+          {
+            "name": "Technical phone screen",
+            "duration_minutes": 60,
+            "covers": "medium-to-hard live coding problem(s); reported to often touch graph algorithms, optimization, or concurrency",
+            "format": "CoderPad, virtual"
+          },
+          {
+            "name": "Onsite coding round(s)",
+            "duration_minutes": 60,
+            "covers": "algorithms/data-structures coding; one round frequently emphasizes concurrency/multithreading (e.g. implementing a queue-based message processor)",
+            "format": "CoderPad, virtual"
+          },
+          {
+            "name": "System design",
+            "duration_minutes": 60,
+            "covers": "open-ended distributed-systems/data-platform design problem; generally given to more experienced (roughly L4+) candidates, with lighter or no formal design round for new-grad/L3 loops",
+            "format": "Google Docs or shared whiteboard, virtual"
+          },
+          {
+            "name": "Behavioral / values / cross-functional",
+            "duration_minutes": 60,
+            "covers": "STAR-style behavioral questions, ownership, culture fit",
+            "format": "video"
+          }
+        ]
+      },
+      "languages": {
+        "permitted": [
+          "Python",
+          "Java",
+          "Scala",
+          "C++",
+          "candidate's choice generally accepted"
+        ],
+        "notes": "CoderPad is the typical coding environment; PySpark/Python is reported as most common overall, with Scala carrying extra relevance on Spark-adjacent teams (not required to pass). SQL is used as well in some rounds given the data-platform domain."
+      },
+      "sql": {
+        "present": true,
+        "weight": "moderate",
+        "notes": "SQL window functions (RANK, LAG, LEAD, PARTITION BY) and general SQL fluency are reported as tested, consistent with Databricks being a data platform company; Spark/Delta Lake-flavored questions (DAG execution, shuffle, serialization) are also reported as common, blending SQL and distributed-data-processing concepts. This is corroborated across multiple secondary sources but not confirmed via a primary Databricks source, so weight is calibrated to 'moderate' rather than 'heavy'."
+      },
+      "patterns": [
+        "graph algorithms (traversal/optimization) in the technical phone screen",
+        "concurrency/multithreading pattern: producer/consumer or queue-based message processing under thread-safety constraints",
+        "standard coding-fundamentals patterns: hash maps, binary search, arrays, strings, graphs, sorting",
+        "SQL analytic patterns: window functions / ranking within partitions",
+        "distributed data processing reasoning: shuffle/serialization/DAG execution trade-offs discussed conversationally, not necessarily as a coding pattern",
+        "difficulty reported to skew toward LeetCode-hard more than medium, per one secondary source, though this is not fully corroborated elsewhere"
+      ],
+      "system_design": {
+        "applicable": true,
+        "topics": [
+          "distributed data ingestion/processing pipelines at large scale (e.g. exabyte-scale workloads)",
+          "distributed coordination concepts (e.g. fencing tokens, leader-election-style locking)",
+          "streaming architecture combining structured streaming, feature engineering, and model inference with transactional storage guarantees",
+          "storage-format and query-optimization trade-offs, consistency models, fault tolerance, and data governance discussed at a conceptual/architectural level"
+        ],
+        "notes": "Reported as generally reserved for L4/experienced-level loops; new-grad/L3 loops reportedly skip it or use a lighter design discussion. This level cutoff is sourced from secondary aggregator content, not a primary Databricks source, so treat as approximate."
+      },
+      "difficulty": {
+        "skew": "medium-to-hard",
+        "notes": "Multiple secondary sources describe a 'noticeably high coding bar' with strong emphasis on distributed-systems and performance reasoning; one source specifically claims a lean toward LeetCode-hard over medium, though this single-source claim is not independently corroborated and should be treated cautiously."
+      },
+      "quirks": [
+        "some pipelines route through an online assessment step (CodeSignal/HackerRank) before human interviews, mainly for new-grad/intern-style hiring",
+        "a specialized post-onsite take-home/database assessment (reported as roughly 5 hours) may occasionally be requested, but this is described as rare/role-dependent rather than standard",
+        "concurrency/multithreading is called out repeatedly across sources as a signature, harder-than-average round",
+        "reference checks are reported as unusually weighted in the final decision, typically involving 1 manager plus 2 more senior team members",
+        "strong and consistent emphasis on Spark/Delta Lake/lakehouse-specific systems knowledge layered on top of generic algorithmic ability"
+      ],
+      "sources": [
+        {
+          "url": "https://www.databricks.com/blog/2020/01/22/engineering-intervews-a-hiring-managers-guide.html",
+          "type": "primary",
+          "note": "Databricks' own engineering blog (2020) — confirms interviews run 45-90 minutes, blend technical and soft-skill assessment, favor hands-on coding over whiteboard/pure-algorithm style, sometimes deliberately use an unfamiliar language/framework to test learning ability, and use the STAR technique for behavioral evaluation. Notably dated (2020), so may not reflect the current loop exactly — flagged as a freshness caveat."
+        },
+        {
+          "url": "https://interviewing.io/databricks-interview-questions",
+          "type": "secondary",
+          "note": "Round-by-round breakdown (recruiter/HM/phone screen/onsite structure and durations), difficulty calibration toward LeetCode-hard, CoderPad/Google Docs tooling, and note on a rare post-onsite take-home."
+        },
+        {
+          "url": "https://www.interviewquery.com/interview-guides/databricks-software-engineer",
+          "type": "secondary",
+          "note": "Corroborated overall 4-8 week, 5-6 stage timeline; online assessment structure (4 questions, CodeSignal/HackerRank) for new-grad pipelines; system design generally for L4+."
+        },
+        {
+          "url": "https://prepfully.com/interview-guides/databricks-software-engineer",
+          "type": "secondary",
+          "note": "Used via search snippet corroboration for phone-screen content (graph/optimization/concurrency) and the ~20% phone-screen advancement rate claim (not independently verified elsewhere, treated as low-confidence detail)."
+        },
+        {
+          "url": "https://www.systemdesignhandbook.com/guides/databricks-system-design-interview/",
+          "type": "secondary",
+          "note": "Source for system design topic categories: distributed data pipelines, coordination/fencing, streaming + ML inference architecture, storage/consistency/governance trade-offs."
+        },
+        {
+          "url": "https://www.techinterview.org/post/3233460280/databricks-interview-guide-2026-spark-internals-delta-lake-and-lakehouse-architecture/",
+          "type": "secondary",
+          "note": "Corroboration for SQL window-function and Spark-internals (DAG/shuffle/serialization) emphasis in technical rounds."
+        }
+      ],
+      "unknowns": [
+        "current exact headcount (estimates vary widely, roughly 12,000-16,000 depending on source and date)",
+        "precise weighting of SQL vs. general-purpose coding in a typical backend-engineer (non-data-engineer) loop specifically",
+        "whether the 2020 hiring-manager blog post's described format still matches the current (2026) loop in round count/duration — no more recent primary post was found",
+        "exact level cutoff (e.g., L3 vs L4) at which system design and take-home assessments are introduced",
+        "whether a take-home project is standard for core software/backend engineer roles or specific to certain specialties (e.g., data engineering)",
+        "official scoring rubric or hiring-committee process details"
+      ],
+      "last_verified": "2026-08-20"
+    },
+    {
+      "name": "Datadog",
+      "slug": "datadog",
+      "industry": "cloud monitoring / observability platform",
+      "size": "~8,100 employees as of end of FY2025 per company filings; secondary estimates for mid-2026 range 8,700-10,300 (source variance, treat as approximate)",
+      "confidence": "medium",
+      "loop": {
+        "summary": "Recruiter screen, then a technical phone screen (often preceded by a HackerRank/OA for some pipelines), then a virtual onsite loop of roughly 3-5 one-hour rounds covering coding, system design, a project/resume deep-dive, and behavioral, followed by team matching which happens after the onsite rather than before.",
+        "rounds": [
+          {
+            "name": "Recruiter screen",
+            "duration_minutes": 30,
+            "covers": "background, motivation, logistics",
+            "format": "phone/Zoom"
+          },
+          {
+            "name": "Technical phone screen / OA",
+            "duration_minutes": 60,
+            "covers": "coding problem(s), sometimes preceded by a HackerRank online assessment for some roles",
+            "format": "CoderPad, remote via Zoom"
+          },
+          {
+            "name": "Onsite coding round 1",
+            "duration_minutes": 60,
+            "covers": "algorithmic coding, often systems-flavored (e.g. building a data structure or parser with performance constraints)",
+            "format": "shared editor (CoderPad), virtual"
+          },
+          {
+            "name": "Onsite coding round 2 (below Staff level)",
+            "duration_minutes": 60,
+            "covers": "second coding problem; for Staff+ this slot is replaced by a presentation round",
+            "format": "shared editor, virtual"
+          },
+          {
+            "name": "System design",
+            "duration_minutes": 60,
+            "covers": "narrower-scope design problems relative to typical FAANG prompts (candidate's choice of whiteboarding tool, e.g. Excalidraw)",
+            "format": "virtual whiteboard/doc"
+          },
+          {
+            "name": "Behavioral / project deep-dive (\"resume grill\")",
+            "duration_minutes": 60,
+            "covers": "past projects, production incidents, ownership and depth on what's on the resume",
+            "format": "conversational, virtual"
+          },
+          {
+            "name": "Presentation (Staff+ only)",
+            "duration_minutes": 60,
+            "covers": "candidate presents past technical work; replaces one coding round",
+            "format": "virtual presentation"
+          }
+        ]
+      },
+      "languages": {
+        "permitted": [
+          "Python",
+          "Go",
+          "Java",
+          "C++",
+          "candidate's choice within reason"
+        ],
+        "notes": "No single mandated language; secondary sources report Go and Python as most common given Datadog's own stack (Go-heavy backend, Python for the Agent/integrations), but any major language producing runnable code is accepted."
+      },
+      "sql": {
+        "present": true,
+        "weight": "light",
+        "notes": "Not consistently reported as a dedicated round; secondary sources mention SQL/database questions (e.g. classic query problems) can appear given Datadog's data-heavy domain, but it is not described as a core, heavily-weighted component of the loop like it might be at a data-platform company."
+      },
+      "patterns": [
+        "sliding window over a stream (e.g. percentile calculation over time windows, requiring a two-heap or order-statistic approach)",
+        "top-K / heap (merging multiple sorted streams via a min-heap)",
+        "log/metrics aggregation and parsing under performance constraints",
+        "custom data structure design for time-series-like data",
+        "general array/string/hash-map/graph/binary-search/tree patterns typical of a standard coding loop",
+        "production-incident / systems-reasoning discussion in the project deep-dive round rather than a pure algorithm pattern"
+      ],
+      "system_design": {
+        "applicable": true,
+        "topics": [
+          "metrics ingestion pipeline at scale (agent collection, ingestion gateway, aggregation at multiple granularities, durable storage, low-latency query tier)",
+          "distributed tracing system (trace-context propagation, span storage/indexing, trace query at scale)",
+          "multi-tenant observability system design (tenant isolation, quota/throttling, noisy-neighbor mitigation, tag/cardinality management)",
+          "narrower/more scoped design prompts than typical big-tech \"design Twitter\"-style questions, per secondary sources"
+        ],
+        "notes": "Present from mid-level upward; exact level cutoff not verified from a primary source."
+      },
+      "difficulty": {
+        "skew": "medium-to-hard",
+        "notes": "Multiple secondary sources describe problems as starting at a LeetCode-medium level and layering additional real-world/systems complexity; Datadog is reported to avoid asking verbatim well-known LeetCode questions, instead drawing from an internal question bank."
+      },
+      "quirks": [
+        "explicit official AI-tool disclosure policy: undisclosed AI assistance during interviews is prohibited and may lead to disqualification (per Datadog's own Candidate Experience page)",
+        "in-person/onsite office visit is offered as optional after the face-to-face phase even though the loop defaults to remote/Zoom",
+        "take-home projects exist for some roles, scoped by the recruiter, though not confirmed as standard for core SWE/backend loops",
+        "team matching happens after the onsite loop rather than before, which is less common than up-front team matching",
+        "\"resume grill\" style deep-dive round that specifically probes past production failures and technical depth beyond memorized algorithms"
+      ],
+      "sources": [
+        {
+          "url": "https://careers.datadoghq.com/candidate-experience/",
+          "type": "primary",
+          "note": "Datadog's own careers page describing interview stages, remote/Zoom format, in-person option, and the official AI-tool disclosure policy."
+        },
+        {
+          "url": "https://interviewing.io/datadog-interview-questions",
+          "type": "secondary",
+          "note": "Round-by-round breakdown (recruiter call, phone screen, onsite structure/durations), difficulty calibration, languages/tools, and quirks like post-onsite team matching."
+        },
+        {
+          "url": "https://www.finalroundai.com/blog/datadog-interview-process",
+          "type": "secondary",
+          "note": "Corroborated 4-stage overview, distinguished OA vs phone screen, and Staff+ presentation-round substitution."
+        },
+        {
+          "url": "https://dataford.io/interview-guides/datadog/software-engineer",
+          "type": "secondary",
+          "note": "Corroborating detail on coding round content (metrics aggregator, log parser, time-series data structure) and Resume Grill round."
+        },
+        {
+          "url": "https://www.systemdesignhandbook.com (via search snippet on Datadog system design)",
+          "type": "secondary",
+          "note": "System design topic categories: metrics ingestion pipeline, distributed tracing, multi-tenant isolation."
+        },
+        {
+          "url": "https://www.glassdoor.com/Interview/Datadog-Software-Engineer-Interview-Questions-EI_IE762009.0,7_KO8,25.htm",
+          "type": "secondary",
+          "note": "Referenced only via search snippets (Glassdoor blocks automated fetch / WebFetch was not attempted given known 403 behavior); used as low-weight corroboration of sliding-window pattern mention, not directly fetched."
+        }
+      ],
+      "unknowns": [
+        "exact current employee headcount (sources disagree, ranging ~8,100 to ~10,300 depending on date and methodology)",
+        "whether SQL is a formally scored, dedicated interview component or just occasional",
+        "precise level cutoff (e.g. L4 vs L5) at which system design is introduced",
+        "whether take-home projects are standard or exceptional for core software/backend engineer (non-specialist) roles",
+        "official scoring rubric or how many interviewers vote per round",
+        "whether pairing on real production code (vs. a synthetic problem) ever occurs"
+      ],
+      "last_verified": "2026-08-20"
+    },
+    {
+      "name": "GitLab",
+      "slug": "gitlab",
+      "industry": "DevSecOps / DevOps platform (software development lifecycle tooling)",
+      "size": "~2,500 employees as of mid-2026, following a ~14% workforce reduction (~350 people) announced June 2026; pre-reduction figures cited around 2,580-2,689",
+      "confidence": "high",
+      "loop": {
+        "summary": "A fully remote, largely asynchronous pipeline: application review, recruiter screening call, an optional role-dependent assessment, a technical interview built around reviewing/contributing to a merge request in a small purpose-built app (not live algorithmic coding), then a series of team/panel interviews (including a values/culture-add conversation), reference checks, and offer.",
+        "rounds": [
+          {
+            "name": "Screening call",
+            "duration_minutes": 30,
+            "covers": "background, motivation, logistics",
+            "format": "phone/video, async scheduling"
+          },
+          {
+            "name": "Assessment (role-dependent)",
+            "duration_minutes": null,
+            "covers": "role-specific skills check for certain positions",
+            "format": "unknown exact format; varies by role per handbook"
+          },
+          {
+            "name": "Technical interview",
+            "duration_minutes": 60,
+            "covers": "candidate reviews and works asynchronously (up to ~1 hour, at least 24 hours before the call) on a merge request to a small, self-contained application tailored to the role, then discusses it live; explicitly framed like reviewing a real contribution, not a whiteboard/algorithm exercise",
+            "format": "asynchronous MR review + live discussion call; open-book, internet and the GitLab Handbook may be used"
+          },
+          {
+            "name": "Team interviews",
+            "duration_minutes": null,
+            "covers": "multiple conversations with team members/manager; includes a values/culture-add discussion per GitLab's CREDIT values framework",
+            "format": "video calls, remote"
+          },
+          {
+            "name": "References & final steps",
+            "duration_minutes": null,
+            "covers": "reference checks (TMRG - talent management review group - connection) and background screening",
+            "format": "async"
+          }
+        ]
+      },
+      "languages": {
+        "permitted": [
+          "Ruby (Ruby on Rails)",
+          "Go",
+          "Vue.js (frontend/fullstack roles)",
+          "Python, Java, Node/JavaScript as secondary proficiencies expected of backend engineers"
+        ],
+        "notes": "Per GitLab's own job-family handbook pages, Backend Engineers are expected to be proficient in Ruby and proficient/fluent in at least one other common language (Go, Python, Java, Node, JavaScript); Fullstack Engineers work across Ruby on Rails (backend) and Vue.js (frontend). The technical interview itself is centered on a pre-built merge request rather than free choice of language for a live coding problem, so 'permitted languages' mainly reflects the job's tech stack rather than interview-day flexibility."
+      },
+      "sql": {
+        "present": "unknown",
+        "weight": "unknown",
+        "notes": "No source found describing SQL as an explicit component of GitLab's technical interview; the interview is centered on the merge-request exercise, which could incidentally involve database code depending on role, but this was not confirmed."
+      },
+      "patterns": [
+        "not a traditional LeetCode-style algorithmic loop — GitLab's own engineering blog argues against algorithm/whiteboard interviews",
+        "practical code review and contribution pattern: read an existing small codebase, implement/extend a merge request, respond to review feedback",
+        "specific algorithmic patterns (sliding window, heaps, DP, etc.) are not reported by sources as characteristic of GitLab's process"
+      ],
+      "system_design": {
+        "applicable": "unknown",
+        "topics": [],
+        "notes": "No primary or corroborated secondary source was found describing a dedicated system design round for backend/SWE roles; GitLab's public handbook pages describe the technical interview as MR-review-based rather than a separate design round. Could not verify whether senior/staff loops add a design-specific conversation."
+      },
+      "difficulty": {
+        "skew": "low-to-medium (deliberately anti-LeetCode)",
+        "notes": "GitLab's hiring philosophy, as described in secondary summaries of their own blog post ('The main problem with technical interviews'), explicitly critiques algorithm/whiteboard-style interviewing and favors practical, open-book, real-world-style evaluation via the merge-request exercise. Direct fetch of that blog post returned HTTP 403, so this is sourced from search-snippet secondary corroboration rather than a directly-read primary page, though the handbook technical-interview page (primary, directly fetched) corroborates the practical/open-book framing."
+      },
+      "quirks": [
+        "fully public interviewing handbook (handbook.gitlab.com) — unusually transparent about process details",
+        "technical interview is explicitly 'open-book': candidates may use the internet and the GitLab Handbook itself during the exercise",
+        "asynchronous component: candidates get the merge request at least 72 hours ahead and are expected to review/prepare on their own time before the live call",
+        "all-remote company with no offices; interview process designed around async, written communication norms",
+        "GitLab states it does not use AI for hiring decisions itself, though its Talent Acquisition team uses AI for supporting content (job descriptions, interview-summary drafts) with human review",
+        "average time-to-hire for Software Engineer roles reported around 34 days"
+      ],
+      "sources": [
+        {
+          "url": "https://handbook.gitlab.com/handbook/hiring/interviewing/technical/",
+          "type": "primary",
+          "note": "Directly fetched (via curl) — confirms the merge-request-based technical interview format, 72-hour advance access, ~1 hour self-review expectation, and asynchronous-note requirement."
+        },
+        {
+          "url": "https://handbook.gitlab.com/handbook/hiring/interviewing/",
+          "type": "primary",
+          "note": "GitLab's overview index for the interviewing handbook section (interviewer prep requirements hub); confirms structure exists but page fetch returned mostly navigation content."
+        },
+        {
+          "url": "https://handbook.gitlab.com/handbook/hiring/candidate-faq",
+          "type": "primary",
+          "note": "Candidate FAQ page referenced for process stages; fetch returned limited extractable body text beyond confirming the page's existence and hiring-process framing."
+        },
+        {
+          "url": "https://job-description-library.../backend (GitLab handbook job-description-library, e.g. https://handbook.gitlab.com/job-description-library/engineering/development/backend/senior/)",
+          "type": "primary",
+          "note": "GitLab's own Backend Engineer job-family descriptions — source for expected language proficiencies (Ruby plus Go/Python/Java/Node/JavaScript) and remote/async English-proficiency requirement."
+        },
+        {
+          "url": "https://about.gitlab.com/blog/the-trouble-with-technical-interviews/",
+          "type": "secondary",
+          "note": "GitLab's own engineering blog arguing against algorithm/whiteboard interviews; direct WebFetch returned HTTP 403 (blocked), so this is used only via search-result snippet summary, not a directly-read primary fetch — confidence on its specific claims is lower than the handbook pages."
+        },
+        {
+          "url": "https://www.uplers.com/talent/resources/career-development/behind-the-scenes-of-gitlabs-tech-interview-process/",
+          "type": "secondary",
+          "note": "Third-party summary corroborating overall stage sequence (application, screening call, assessment, technical interview, team interviews, references, offer) and the ~34-day average hire timeline."
+        }
+      ],
+      "unknowns": [
+        "whether a dedicated system design round exists for senior/staff backend roles",
+        "whether SQL/database-specific questions are part of any standard loop",
+        "exact number and duration of 'team interviews' — count and length not specified in fetched pages",
+        "content/format of the role-dependent 'Assessment' stage mentioned in search summaries",
+        "whether coding difficulty or content differs meaningfully between Backend, Infrastructure, and Fullstack tracks beyond the general MR-based format",
+        "current exact headcount (source estimates range ~2,500-2,689 depending on pre/post the June 2026 reduction)"
+      ],
+      "last_verified": "2026-08-20"
+    },
+    {
+      "name": "Google",
+      "slug": "google",
+      "industry": "big tech / search, advertising & cloud",
+      "size": "~190,800 employees as of Dec 31 2025 (~194,700 as of Mar 31 2026), Alphabet Inc. total; figures via SEC-filing aggregators (Macrotrends/StockAnalysis)",
+      "confidence": "medium",
+      "loop": {
+        "summary": "Optional online hiring assessment, then a recruiter call, one technical phone screen, and a 4-6 round virtual onsite (2-3 coding + behavioral, plus system design at L5+); an independent hiring committee that never met the candidate makes the hire/no-hire call, followed by team matching. End-to-end typically 6-12 weeks.",
+        "rounds": [
+          {
+            "name": "Google Hiring Assessment (GHA)",
+            "duration_minutes": 40,
+            "covers": "self-paced personality / situational-judgment screen for cultural alignment; non-technical",
+            "format": "online, self-paced, ~50 questions; reported as used for some candidate pools rather than universally"
+          },
+          {
+            "name": "Recruiter Phone Screen",
+            "duration_minutes": 30,
+            "covers": "background, level targeting (L3-L6), compensation expectations, timeline, work authorization",
+            "format": "phone/video, non-technical"
+          },
+          {
+            "name": "Technical Phone Screen",
+            "duration_minutes": 45,
+            "covers": "1-2 medium-difficulty DS&A coding problems, live",
+            "format": "video call with shared Google Doc or Google's internal Virtual Interview Platform (VIP); limited/no syntax highlighting, no autocomplete, no code execution"
+          },
+          {
+            "name": "Onsite Coding Rounds (2-3)",
+            "duration_minutes": 45,
+            "covers": "data structure and algorithm problem solving; candidate must hand-trace test cases since nothing runs",
+            "format": "virtual via Google Meet (some locations reported requiring at least one in-person round as of 2025); Google Doc / VIP, no IDE"
+          },
+          {
+            "name": "Googleyness & Leadership (Behavioral)",
+            "duration_minutes": 45,
+            "covers": "STAR-format questions on collaboration, navigating ambiguity, learning agility, conflict and feedback",
+            "format": "conversational; sources cite under-preparation here as a common failure mode"
+          },
+          {
+            "name": "System Design",
+            "duration_minutes": 45,
+            "covers": "distributed system architecture and trade-off reasoning; reserved for L5+ (at L4 may appear only as a lighter design discussion folded into a coding round)",
+            "format": "discussion/diagramming, no coding"
+          },
+          {
+            "name": "Hiring Committee Review",
+            "duration_minutes": "unknown",
+            "covers": "committee of ~4-5 Googlers who did not interview the candidate reviews the written feedback packet and makes the hire decision",
+            "format": "asynchronous packet review; one secondary source cites a 7-point Strong No-Hire to Strong Hire scale"
+          },
+          {
+            "name": "Team Matching",
+            "duration_minutes": "unknown",
+            "covers": "matching an approved candidate to a specific team; ordering vs. committee review varies by region",
+            "format": "recruiter-coordinated conversations with hiring managers"
+          }
+        ]
+      },
+      "languages": {
+        "permitted": [
+          "Java",
+          "C++",
+          "Python"
+        ],
+        "notes": "Google's interview tooling is specifically noted as supporting Java, C++ and Python; candidates are generally told to use their strongest language and no source found an explicit ban on other mainstream languages. Hard constraint is the environment, not the language: no IDE, no autocomplete, and no compile/run, so code must be correct by hand."
+      },
+      "sql": {
+        "present": false,
+        "weight": "none",
+        "notes": "SQL did not appear in any SWE-specific source examined (Google's own prep guide index, hellointerview, Exponent, interviewing.io). SQL-heavy content clusters in Google's separate Data Science / analytics candidate-prep track. Inferred from consistent absence across SWE sources rather than an explicit Google statement that SQL is excluded."
+      },
+      "patterns": [
+        "arrays and string manipulation",
+        "hash map / frequency counting",
+        "two pointers",
+        "sliding window",
+        "sorting-based approaches",
+        "binary search",
+        "graph BFS/DFS on adjacency structures",
+        "shortest-path graph problems",
+        "topological sort",
+        "tree traversal (binary trees)",
+        "trie",
+        "heap / priority queue (top-K)",
+        "stacks and queues",
+        "linked list manipulation",
+        "dynamic programming including DP on grids / 2D DP",
+        "memoization",
+        "basic math / number theory"
+      ],
+      "system_design": {
+        "applicable": true,
+        "topics": [
+          "rate limiting (token bucket, leaky bucket, distributed counters)",
+          "sharding / partitioning",
+          "caching strategies and eviction",
+          "consistency models and trade-offs",
+          "load balancing",
+          "read replicas",
+          "idempotency",
+          "fault tolerance and failure modes",
+          "storage system design",
+          "delivery guarantees",
+          "distributed consensus (L6+)",
+          "operational and production reliability concerns (L6+)"
+        ],
+        "notes": "Not a dedicated round at L3/L4; at L4 design may surface only as a short discussion inside a coding round. Becomes a dedicated round at L5 (senior) and is weighted more heavily at L6+. Multiple sources note Google weights coding more heavily relative to system design than other large tech companies."
+      },
+      "difficulty": {
+        "skew": "medium with a hard tail",
+        "notes": "One aggregator tagging ~100 Google-associated problems reported roughly 33% easy / 58% medium / 9% hard. Qualitatively, sources converge on the phone screen being medium at minimum and the onsite skewing medium with roughly one interviewer in five escalating to hard. All difficulty figures are crowd-sourced; Google publishes no difficulty rubric."
+      },
+      "quirks": [
+        "no IDE: coding done in a shared Google Doc or Google's internal Virtual Interview Platform with at most partial syntax highlighting",
+        "no autocomplete and no compile/run - candidates hand-trace test cases",
+        "AI assistants explicitly prohibited during interviews",
+        "hiring committee model: the engineers who interviewed you do not make the decision; ~4-5 Googlers who never met you decide from the written packet",
+        "Google Hiring Assessment (GHA) personality/situational screen used for some candidate pools; failing it reportedly bars reapplication for ~6 months (secondary source only)",
+        "system design gated to L5+ rather than being universal",
+        "team matching as a distinct post-approval stage",
+        "no take-home component reported for generalist SWE",
+        "not pair programming - interviewer observes rather than collaborates on the code",
+        "one secondary source reports a cap of 3 interview attempts per 5-year window and ~1 year validity on a passed loop (uncorroborated)"
+      ],
+      "sources": [
+        {
+          "url": "https://www.google.com/about/careers/applications/candidate-prep/swe",
+          "type": "primary",
+          "note": "Google's official SWE interview prep guide; confirmed to exist and be indexed, but body content is JS-rendered and could not be extracted by automated fetch, so no factual claims rest on it"
+        },
+        {
+          "url": "https://www.google.com/about/careers/applications/how-we-hire/interview/",
+          "type": "primary",
+          "note": "Google's official 'how we hire' interview page; same JS-rendering limitation - existence confirmed, content not extractable"
+        },
+        {
+          "url": "https://www.hellointerview.com/guides/google/l4",
+          "type": "secondary",
+          "note": "Round-by-round breakdown: GHA, recruiter screen, phone screen, onsite composition, no dedicated L4 system design, VIP tooling details, supported languages, hiring committee, 6-12 week timeline"
+        },
+        {
+          "url": "https://www.tryexponent.com/guides/google-software-engineer-interview",
+          "type": "secondary",
+          "note": "Round formats, STAR-format Googleyness & Leadership round, system design gating by level, algorithm pattern list, hiring committee description"
+        },
+        {
+          "url": "https://interviewing.io/guides/hiring-process/google",
+          "type": "secondary",
+          "note": "Coding weighted above system design, technical topic list, 7-point rating scale, hiring committee composition, AI-tool prohibition, retry-limit claims"
+        },
+        {
+          "url": "https://interviewsolver.com/interview-questions/google",
+          "type": "secondary",
+          "note": "Easy/medium/hard distribution (33/58/9) from a ~100-problem tagged dataset, plus top pattern categories"
+        }
+      ],
+      "unknowns": [
+        "exact current wording/content of Google's own official SWE prep guide (page is a JS-rendered SPA; all loop details are triangulated from secondary sources)",
+        "whether the Google Hiring Assessment is universal or pool/region-specific",
+        "exact number of onsite interviewers and whether it is always one interviewer per round",
+        "explicit Google statement on whether SQL is or is not asked in generalist SWE loops (inferred from absence)",
+        "official difficulty rubric or LeetCode-equivalent calibration published by Google",
+        "current default coding tool as of 2026 (sources conflict between shared Google Doc and the internal VIP tool)",
+        "retry-limit and pass-validity rules (3 attempts / 5 years, ~1 year validity) - single uncorroborated secondary source",
+        "whether any take-home component exists (not found in any source)"
+      ],
+      "last_verified": "2026-08-20"
+    },
+    {
+      "name": "Meta",
+      "slug": "meta",
+      "industry": "big tech / social media, advertising & AR-VR",
+      "size": "~75,472 employees as of June 30 2026 (Q2 2026 filing figure, still including ~8,000 employees from a May 2026 reduction expected to roll off by end of Q3 2026); ~78,865 as of Dec 31 2025",
+      "confidence": "medium",
+      "loop": {
+        "summary": "A recruiter screen, then a single 45-minute technical screen with two coding problems, then a full loop of two coding rounds, one design round (systems or product variant, matched to the candidate's background) and one behavioral 'Jedi' round. A hiring/candidate review committee that never met the candidate decides from the written feedback packet. Roughly 2-3 months end to end.",
+        "rounds": [
+          {
+            "name": "Recruiter Screen",
+            "duration_minutes": "unknown",
+            "covers": "background, experience, level fit, logistics",
+            "format": "phone/video; Meta's own prep page does not describe this stage, so details are secondary"
+          },
+          {
+            "name": "Initial Technical Screen",
+            "duration_minutes": 45,
+            "covers": "two coding problems, each intended to take 10-30 minutes; structured as 5 min intro, 35 min coding, 5 min candidate questions",
+            "format": "video with a collaborative online code editor (CoderPad-style) for remote, whiteboard for in-person; gatekeeper for the full loop"
+          },
+          {
+            "name": "Coding Interview (x2 in the full loop)",
+            "duration_minutes": 45,
+            "covers": "two problems per round, same 5/35/5 structure; Meta's own guide states these are typically harder than the screen",
+            "format": "collaborative editor with no IntelliSense/autocomplete and no compile or execution; minor syntax errors explicitly tolerated"
+          },
+          {
+            "name": "AI-Enabled Coding Interview",
+            "duration_minutes": "unknown",
+            "covers": "a single extended problem in three phases - bug-fixing in an unfamiliar codebase, a ~120+ line core implementation, then optimization",
+            "format": "three-panel CoderPad-style UI (file explorer, editor, AI chat panel); the AI assistant can read file context but cannot edit code directly. Reported as rolled out from Oct 2025 for SWE and EM roles up to E7/M2, replacing one of the two traditional coding rounds. Single strong secondary source - medium confidence and possibly still a partial rollout"
+          },
+          {
+            "name": "Design Interview",
+            "duration_minutes": 45,
+            "covers": "systems design or product design, whichever variant matches the candidate's background; discussion and diagramming only, no coding",
+            "format": "whiteboard/discussion; Meta deliberately matches an interviewer with a similar technical background to the candidate"
+          },
+          {
+            "name": "Behavioral Interview ('Jedi' round)",
+            "duration_minutes": 45,
+            "covers": "background, motivation, and culture/values fit; answers are mapped by the interviewer to Meta's stated values",
+            "format": "STAR/STARR format recommended by Meta's own materials; secondary sources report it sometimes runs up to 60 minutes and carries formal weight equal to technical rounds"
+          },
+          {
+            "name": "Lunch with an engineer",
+            "duration_minutes": "unknown",
+            "covers": "informal conversation about working at Meta",
+            "format": "explicitly non-evaluative per Meta's own guide"
+          },
+          {
+            "name": "Hiring / Candidate Review Committee",
+            "duration_minutes": "unknown",
+            "covers": "committee of senior leaders and experienced interviewers reviews the written feedback packet and decides; can request additional interviews to fill gaps",
+            "format": "asynchronous packet review; committee members typically never met the candidate"
+          }
+        ]
+      },
+      "languages": {
+        "permitted": [
+          "Python",
+          "Java",
+          "C++",
+          "JavaScript",
+          "Objective-C",
+          "C#",
+          "Kotlin",
+          "TypeScript"
+        ],
+        "notes": "Meta does not mandate a language; official guidance is to use any industry-standard language you are most fluent in. Python, Java, C++ and JavaScript are most common in practice. The newer AI-enabled round has a narrower supported set: Java, C++, C#, Python, Kotlin, TypeScript. Standard coding rounds run in a collaborative editor with no IntelliSense and no compile/run; Meta's own guide recommends practicing in a plain text editor without syntax highlighting."
+      },
+      "sql": {
+        "present": false,
+        "weight": "none",
+        "notes": "Meta's own official SWE interview prep page makes no mention of SQL in any round - only classic DS&A topics. SQL is heavily tested at Meta but in the separate Data Science, Data Analytics and Data Engineer interview tracks, which are distinct job families with their own loops. Concluded from consistent absence across SWE-specific sources rather than an explicit Meta statement excluding it."
+      },
+      "patterns": [
+        "arrays and lists",
+        "hash map / frequency counting",
+        "two pointers",
+        "sliding window over arrays and strings",
+        "stacks and queues",
+        "tree traversal and DFS on trees",
+        "graph BFS/DFS on adjacency structures",
+        "heap / priority queue",
+        "sorting and searching",
+        "binary search",
+        "backtracking",
+        "recursion vs iteration trade-offs",
+        "dynamic programming",
+        "Big-O complexity analysis"
+      ],
+      "system_design": {
+        "applicable": true,
+        "topics": [
+          "requirements gathering and scoping ambiguous problems",
+          "scalability",
+          "storage and database design",
+          "sharding and replication",
+          "caching strategies and eviction policies (LRU-style)",
+          "load balancing",
+          "API design",
+          "latency and reliability requirements",
+          "push vs pull delivery models",
+          "consistency and replication trade-offs",
+          "rate limiting",
+          "social-feed fanout and ranking pipelines"
+        ],
+        "notes": "Candidates are routed into either a Systems Design or a Product Design variant based on background. The round becomes a real, heavily weighted component at E5 (senior) and intensifies at E6 (staff), where secondary sources report passing both design-adjacent rounds is treated as a hard gate. Entry-level E3/new-grad loops generally do not include a full system design round (medium confidence, secondary). E5 leans end-to-end high-level design with ownership framing; E6 goes deeper into low-level component design and technical leadership."
+      },
+      "difficulty": {
+        "skew": "easy-to-medium, executed fast",
+        "notes": "Meta's own guide states screen problems are designed to be solvable in 10-30 minutes and that full-loop coding problems are typically harder than the screen. Secondary consensus: two problems in ~35 minutes of coding time means roughly 15-20 minutes each, so the bar is speed and cleanliness on mediums rather than solving hards. Emphasis is repeatedly described as fast, clean, communicative coding. No source provided a quantified easy/medium/hard percentage split."
+      },
+      "quirks": [
+        "two problems per 45-minute coding round - unusually high throughput expectation vs other big tech loops",
+        "no IntelliSense/autocomplete and no code execution in the standard round; minor syntax errors explicitly tolerated because code is never compiled",
+        "Meta's own guide recommends practicing in a plain text editor with no syntax highlighting to simulate the environment",
+        "AI-enabled coding round (Oct 2025+) that deliberately ALLOWS a constrained AI chat assistant - a notable divergence from the industry-standard AI ban; Meta's stated rationale is realism plus making LLM-based cheating less effective (medium confidence, single strong secondary source)",
+        "behavioral round nicknamed the 'Jedi' round internally, scored with formal weight equal to technical rounds and mapped explicitly to Meta's values",
+        "design round is split into Systems Design vs Product Design variants and the interviewer is matched to the candidate's background",
+        "hiring/candidate review committee decides from the written packet without having met the candidate - so candidates are effectively writing for the packet, not just for the interviewer",
+        "a non-evaluative lunch with an engineer is built into the full loop day"
+      ],
+      "sources": [
+        {
+          "url": "https://www.metacareers.com/blog/preparing-for-your-software-engineering-interview-at-meta/",
+          "type": "primary",
+          "note": "Meta's own official SWE prep guide - round names, durations, the 5/35/5 structure, two-problems-per-round format, coding topic list, design interview variants, behavioral focus, and the plain-editor / STAR prep guidance. Most load-bearing source in this profile"
+        },
+        {
+          "url": "https://www.hellointerview.com/blog/meta-ai-enabled-coding",
+          "type": "secondary",
+          "note": "The new AI-enabled coding interview format: three-panel UI, three-phase problem, supported languages and models, and which levels it applies to (up to E7/M2)"
+        },
+        {
+          "url": "https://formation.dev/blog/how-to-pass-meta-software-engineering-interviews",
+          "type": "secondary",
+          "note": "Round sequence end to end, CoderPad usage, no-code-execution detail, and review committee mechanics; also the origin of a contested claim that DP questions are banned, which contradicts most other sources and was excluded"
+        },
+        {
+          "url": "https://www.tryexponent.com/guides/meta-software-engineer-interview",
+          "type": "secondary",
+          "note": "Corroborated loop structure, coding round timing, and the screen-vs-full-loop distinction (accessed via search snippets rather than full fetch)"
+        },
+        {
+          "url": "https://www.britannica.com/money/Meta-Platforms",
+          "type": "secondary",
+          "note": "Company and industry description, business segments (Family of Apps, Reality Labs), and an employee-count cross-check"
+        },
+        {
+          "url": "https://investor.atmeta.com/",
+          "type": "primary",
+          "note": "Q2 2026 earnings release / 10-Q is the origin of the 75,472 headcount figure; direct SEC fetch returned 403 so the number was read from search-engine summarization of the filing"
+        }
+      ],
+      "unknowns": [
+        "recruiter screen duration and format (no primary description found)",
+        "explicit Meta statement on whether SQL is excluded from the SWE generalist loop (inferred from absence)",
+        "whether one secondary source's claim that DP questions are banned in the standard coding round has any basis - contradicted by most other sources, unresolved, and excluded from the pattern list",
+        "whether the full loop is still same-day or now genuinely multi-day, and whether that varies by role/level (sources conflict)",
+        "whether the AI-enabled coding round has fully replaced one coding interview for all SWE candidates or is still a selective rollout - could not cross-verify against metacareers.com",
+        "any quantified LeetCode-equivalent difficulty distribution (only qualitative easy-to-medium framing found)",
+        "exact headcount verified by direct fetch of the filing rather than search summarization"
+      ],
+      "last_verified": "2026-08-20"
+    },
+    {
+      "name": "Microsoft",
+      "slug": "microsoft",
+      "industry": "big tech / cloud computing, productivity software & devices",
+      "size": "~223,000 employees as of June 30 2026 (down from 228,000 the prior year), per SEC-filing-derived aggregators; a workforce-intelligence estimate (Revelio Labs) puts it nearer 238,000 as of March 2026 using different methodology",
+      "confidence": "medium",
+      "loop": {
+        "summary": "Recruiter screen (sometimes with an online assessment for new grads), a technical phone screen, then a 3-5 round virtual loop over Microsoft Teams mixing coding, system design (SDE II and above) and competency-based behavioral. A conditional final 'As Appropriate' round with a senior/principal interviewer acts as the bar-raising judgment call. Roughly 3-8 weeks end to end.",
+        "rounds": [
+          {
+            "name": "Recruiter Screen",
+            "duration_minutes": 40,
+            "covers": "background and resume, role fit, logistics, some light behavioral questions",
+            "format": "phone/Teams; sometimes paired with an optional online coding assessment for new grads (HackerRank-style, ~90 min, 3-4 problems)"
+          },
+          {
+            "name": "Technical / Phone Screen",
+            "duration_minutes": 50,
+            "covers": "one coding problem worked live with an interviewer; for experienced hires this is sometimes a more conversational solution-design discussion rather than pure live coding",
+            "format": "video, shared editor"
+          },
+          {
+            "name": "Onsite Loop / 'Super Day' - Coding Rounds (1-3)",
+            "duration_minutes": 55,
+            "covers": "data structures and algorithms, sometimes framed around the kind of work the specific team does",
+            "format": "back-to-back rounds, virtual via Microsoft Teams; individual teams have significant latitude over question content, so loops vary"
+          },
+          {
+            "name": "System Design",
+            "duration_minutes": 55,
+            "covers": "distributed architecture, scalability and trade-offs; prompts arrive vague and verbal, with the candidate expected to drive requirements gathering",
+            "format": "discussion/diagramming; not standard at entry level, required from SDE II (~level 61-62) upward. Can also serve as a level-calibration signal"
+          },
+          {
+            "name": "Behavioral / HR Round",
+            "duration_minutes": 50,
+            "covers": "competency-based questions on collaboration, drive for results, customer focus, influencing, judgment and adaptability",
+            "format": "STAR/STARR format explicitly recommended by Microsoft's own materials; 'growth mindset' framing is emphasized across all rounds, not just this one"
+          },
+          {
+            "name": "Domain / Low-Level Design",
+            "duration_minutes": 55,
+            "covers": "team-specific domain depth or low-level component design",
+            "format": "occasional additional round for senior or specialized roles"
+          },
+          {
+            "name": "As Appropriate (AA) Round",
+            "duration_minutes": 55,
+            "covers": "judgment, scope, handling ambiguity and motivation for joining, rather than raw algorithms; often includes selling the candidate on the role",
+            "format": "conditional - only happens if earlier rounds went well, so being invited is itself a positive signal. Conducted by a senior/principal/partner-level interviewer who typically has not seen other interviewers' feedback, making an independent bar-raising call with significant to veto-level weight on hire and level"
+          }
+        ]
+      },
+      "languages": {
+        "permitted": [
+          "Java",
+          "JavaScript",
+          "C",
+          "C++",
+          "C#",
+          "Python"
+        ],
+        "notes": "Candidates generally choose their own language; sources mention Java, JavaScript, C/C++ and Python 'and others'. Microsoft's own careers pages state no language policy and no source found a hard restriction list. Teams have latitude in how they run rounds."
+      },
+      "sql": {
+        "present": true,
+        "weight": "light",
+        "notes": "For the generalist SWE loop SQL is incidental rather than a dedicated round - most loop descriptions center on DS&A coding, system/low-level design and behavioral, with SQL appearing occasionally in candidate write-ups (e.g. set-difference-style queries across two tables). For Microsoft's data-engineer and data-focused roles SQL is much heavier: a dedicated ~60-minute technical assessment covering complex joins, window functions (ROW_NUMBER/RANK/LAG/LEAD) and query optimization (indexing, partition pruning), commonly in T-SQL. This is one of the weakest-evidenced fields in this profile."
+      },
+      "patterns": [
+        "arrays and string manipulation",
+        "linked list manipulation",
+        "trees and binary search trees (traversal, construction, balancing concepts)",
+        "trie",
+        "graph BFS/DFS on adjacency structures",
+        "dynamic programming including DP on grids",
+        "recursion and backtracking",
+        "bit manipulation",
+        "stack and queue based problems",
+        "sorting and searching including binary search variants"
+      ],
+      "system_design": {
+        "applicable": true,
+        "topics": [
+          "scalability",
+          "fault tolerance",
+          "distributed systems architecture",
+          "caching strategy",
+          "load balancing",
+          "security, privacy and compliance considerations",
+          "team-domain-flavored architecture problems (e.g. cloud infrastructure rollout/update systems, Azure-style architecture)"
+        ],
+        "notes": "Not standard at entry level (new grad / SDE I, ~level 59-60); becomes a required dedicated round from SDE II (~level 61-62) and above including Senior SWE. Distinctive trait: prompts are delivered vague and verbal with no written spec, and requirements-clarification behavior is weighted heavily. Performance in this round can shift the candidate's level up or down."
+      },
+      "difficulty": {
+        "skew": "easy-to-medium",
+        "notes": "Broad secondary consensus places Microsoft's coding difficulty below Google and Meta in raw algorithmic terms, with the differentiator being code cleanliness, communication and collaborative problem solving rather than exotic algorithms. Hard-tier patterns appear less frequently than at Google/Meta. A comparably.com employee survey (methodology unverified) put 'difficult/very difficult' self-reports at 47% for Microsoft vs 49% for Google, and rated Microsoft among the highest for positive overall interview experience. No official Microsoft difficulty statement exists; this section is entirely secondary and directional."
+      },
+      "quirks": [
+        "'As Appropriate' (AA) round - the standout feature: a late-stage senior/principal interviewer who joins only if earlier rounds went well, usually has not seen other feedback, and exercises independent bar-raising judgment with outsized weight on the hire and level decision",
+        "no standing hiring committee - decision authority sits with the hiring manager plus the AA interviewer, unlike Google's committee or Amazon's Bar Raiser debrief model",
+        "collaborative and conversational interviewer style, repeatedly described as less adversarial than Google/Meta, with interviewers willing to give hints and prioritizing visible thought process",
+        "team-driven question content: individual teams have wide latitude over what they ask, producing meaningful loop-to-loop variability rather than a standardized question bank",
+        "virtual-first - Microsoft's own careers page states interviews happen over the phone, on Microsoft Teams, or in person, with Teams the current default",
+        "growth mindset and competency-based (STAR/STARR) evaluation framing applies across all rounds, not just the behavioral one - this is Microsoft's own stated philosophy",
+        "system design round doubles as a level-calibration mechanism",
+        "optional online assessment (HackerRank-style) for new grads only, not experienced hires"
+      ],
+      "sources": [
+        {
+          "url": "https://careers.microsoft.com/v2/global/en/hiring-tips.html",
+          "type": "primary",
+          "note": "Confirms interview modality (phone / Teams / in person) and that most candidates have 2-4 conversations each lasting up to an hour, and that candidates may be asked to write code or share work samples; does not name specific rounds"
+        },
+        {
+          "url": "https://careers.microsoft.com/v2/global/en/hiring-tips/interview-tips.html",
+          "type": "primary",
+          "note": "Confirms virtual-first interviewing, the competency-based STAR/STARR behavioral approach, and the core competencies assessed (collaboration, drive for results, customer focus, influencing, judgment, adaptability); no technical round specifics"
+        },
+        {
+          "url": "https://www.tryexponent.com/guides/microsoft-software-engineer-interview",
+          "type": "secondary",
+          "note": "Round-by-round breakdown (recruiter screen, technical screen, coding, system design, domain skills, behavioral), pattern categories, and system-design-as-leveling-tool detail"
+        },
+        {
+          "url": "https://www.levels.fyi/blog/ace-microsoft-hiring.html",
+          "type": "secondary",
+          "note": "Round structure, AA round description and its final-decision role, language flexibility, and level-to-round mapping (L59-62)"
+        },
+        {
+          "url": "https://copilotinterview.com/blog/microsoft-interview-process-loops",
+          "type": "secondary",
+          "note": "Per-stage timings (30 / 45-60 / 45-60 min), AA round nuance (joins late, independent judgment, judgment and scope focus over algorithms), difficulty positioned below Meta and Google, system design required from SDE II"
+        },
+        {
+          "url": "https://prepfully.com/interview-guides/microsoft-software-engineer-interview-guide",
+          "type": "secondary",
+          "note": "Alternate round breakdown (recruiter screen with optional OA, technical phone screen, Super Day onsite), pattern list, and a note that SQL/DBMS appears as a topic area in some loops"
+        },
+        {
+          "url": "https://stockanalysis.com/stocks/msft/employees/",
+          "type": "secondary",
+          "note": "Employee count of 223,000 as of June 30 2026, down from 228,000 the prior year; SEC-filing derived"
+        }
+      ],
+      "unknowns": [
+        "exact total round count - sources genuinely disagree (roughly 3 to 7 touchpoints), likely because it varies by level, team and new-grad vs experienced-hire",
+        "which online coding tool/IDE is used for live rounds (CoderPad, HackerRank, internal tool) - unconfirmed by any source",
+        "whether Microsoft has an explicit no-AI-assist / no-autocomplete policy - not found; only general industry norms were sourced, so this is NOT asserted for Microsoft",
+        "whether a take-home coding component exists for generalist SWE - one low-quality aggregator mentioned it generically but the detailed round-by-round sources all describe an all-live loop; treated as unverified and excluded",
+        "whether SQL is ever a formally named standard round for generalist (non-data) SWE - evidence suggests occasional/incidental only, but no primary source confirms or denies",
+        "any quantified easy/medium/hard breakdown - no source gave one; 'easy-to-medium, below Google/Meta' is qualitative only",
+        "igotanoffer.com and a relevant Medium account both returned 403 and were used only via search snippets where corroborated elsewhere"
+      ],
+      "last_verified": "2026-08-20"
+    },
+    {
+      "name": "Notion",
+      "slug": "notion",
+      "industry": "productivity / collaboration & workspace software (docs, wikis, databases)",
+      "size": "unknown precise figure; third-party estimates vary widely, roughly 1,900-6,000 employees depending on source/methodology as of 2026 (Revelio Labs, Unify GTM, and others disagree); no official Notion-published headcount found",
+      "confidence": "medium",
+      "loop": {
+        "summary": "Recruiter screen, then a technical phone screen, an optional take-home project (more common for senior/staff roles), and an onsite panel of practical (non-LeetCode) coding rounds, a system-design round centered on Notion's own collaborative-editing architecture, a 2025-2026-introduced 'AI-enabled' coding round using tools like Claude Code/Cursor, a culture/values interview, and a final/leadership conversation. Entirely sourced from secondary interview-prep aggregators and candidate-report sites; Notion's own careers site did not surface a dedicated public interview-process page in search.",
+        "rounds": [
+          {
+            "name": "Recruiter screen",
+            "duration_minutes": 30,
+            "covers": "background, motivation, logistics",
+            "format": "phone/video call"
+          },
+          {
+            "name": "Technical phone screen",
+            "duration_minutes": 53,
+            "covers": "practical coding fundamentals, debugging, structured problem-solving (not LeetCode-style puzzles)",
+            "format": "live coding with an engineer"
+          },
+          {
+            "name": "Take-home project (optional, more common for senior/staff)",
+            "duration_minutes": 300,
+            "covers": "build a simplified block-based editor (block types, drag-and-drop reordering, undo/redo) in React/TypeScript; ~5 days to complete, ~4-8 hours of actual work",
+            "format": "async take-home, later discussed/extended live during onsite pairing"
+          },
+          {
+            "name": "Onsite - practical coding round(s) (x2 reported)",
+            "duration_minutes": 60,
+            "covers": "implement functional requirements such as block models with parent-child relationships or search functionality; evaluated on edge-case handling, data-structure choice, readability, extensibility -- sometimes pairing live to extend the candidate's own take-home code",
+            "format": "live pairing / coding"
+          },
+          {
+            "name": "Onsite - system/software design",
+            "duration_minutes": 60,
+            "covers": "collaborative-system design centered on Notion's product: real-time collaborative editing, permissioned workspaces, block-based storage at scale, offline-first sync",
+            "format": "verbal/whiteboard design discussion"
+          },
+          {
+            "name": "Onsite - AI-enabled round (introduced 2025-2026)",
+            "duration_minutes": 60,
+            "covers": "coding task performed using AI assistants (Claude Code, Cursor); evaluated on critical evaluation of AI suggestions, error-catching, and knowing when not to rely on AI output",
+            "format": "live coding with AI tool"
+          },
+          {
+            "name": "Onsite - culture/values interview",
+            "duration_minutes": 45,
+            "covers": "culture fit, values alignment",
+            "format": "conversational"
+          },
+          {
+            "name": "Onsite - career history / leadership round",
+            "duration_minutes": 45,
+            "covers": "career narrative, top-management conversation for senior roles",
+            "format": "conversational"
+          }
+        ]
+      },
+      "languages": {
+        "permitted": [
+          "TypeScript",
+          "JavaScript"
+        ],
+        "notes": "TypeScript/JavaScript strongly preferred given Notion's stack; Python reported as generally accepted for backend-leaning candidates. No official language policy page found -- based on secondary-source aggregation."
+      },
+      "sql": {
+        "present": false,
+        "weight": "unknown",
+        "notes": "No source found describing SQL as a tested skill in Notion's SWE loop. Coding rounds and take-homes described are centered on in-memory data structures (block models, editors) rather than database query rounds. This is an absence-of-evidence finding, not a confirmed 'no SQL ever' -- system design does touch scalable block-database storage conceptually, which could touch on data modeling, but no source shows a hands-on SQL round."
+      },
+      "patterns": [
+        "tree / hierarchical data modeling (block parent-child relationships)",
+        "document/block-based data structure design",
+        "drag-and-drop reordering / list manipulation logic",
+        "undo-redo (command/history stack) implementation",
+        "search/indexing over nested content",
+        "debugging partially-working code live",
+        "incremental optimization of a working solution with trade-off discussion"
+      ],
+      "system_design": {
+        "applicable": true,
+        "topics": [
+          "block-based document data model (hierarchical, nestable content units)",
+          "real-time collaborative editing / conflict resolution (Operational Transform and CRDT concepts referenced)",
+          "permission systems with inherited/overridden access at workspace, page, and block levels",
+          "scalable storage for blocks at large user scale",
+          "offline-first sync and reconnection handling",
+          "version history / undo via event sourcing or snapshotting concepts",
+          "search infrastructure over large block volumes"
+        ],
+        "notes": "Reported as a single ~60-minute open-ended round; seniority targeting not explicitly confirmed by any source (inferred mid-to-senior emphasis from depth of topics, not verified)."
+      },
+      "difficulty": {
+        "skew": "medium",
+        "notes": "Aggregator-reported difficulty rating ~3/5; explicitly described across multiple sources as favoring practical engineering judgment, code quality, and product reasoning over pure algorithmic speed/LeetCode difficulty."
+      },
+      "quirks": [
+        "explicitly avoids LeetCode-style abstract puzzles in favor of practical, product-relevant coding tasks",
+        "take-home project (simplified block editor) is later extended live during onsite pairing to test maintainability of the candidate's own original code",
+        "dedicated 'AI-enabled' interview round (new in 2025-2026) requiring demonstrated skill using Claude Code/Cursor, with explicit penalty for passively accepting AI output without critical evaluation",
+        "culture/values round and a separate career-history/leadership round distinct from standard behavioral interviews"
+      ],
+      "sources": [
+        {
+          "url": "https://www.finalroundai.com/blog/notion-interview-process",
+          "type": "secondary",
+          "note": "Full fetch obtained: round count/duration breakdown, language preferences, practical coding round description, system design topic list, AI-enabled round details, take-home details"
+        },
+        {
+          "url": "https://www.systemdesignhandbook.com/guides/notion-system-design-interview/",
+          "type": "secondary",
+          "note": "Full fetch obtained: detailed system design topic breakdown (block model, real-time sync, permissions, offline-first, version history)"
+        },
+        {
+          "url": "https://www.techprep.app/blog/notion-interview-process",
+          "type": "secondary",
+          "note": "Search-snippet corroboration of 4 broad stages (Talent conversation, live technical assessment, panel interviews with 2 coding rounds + 1 design round + 1 career-history round, final interview)"
+        },
+        {
+          "url": "https://dataford.io/interview-guides/notion/software-engineer",
+          "type": "secondary",
+          "note": "Attempted fetch returned HTTP 429 (rate-limited); not directly read, excluded from claims beyond what corroborating sources confirmed"
+        },
+        {
+          "url": "https://www.glassdoor.com/Interview/Notion-Labs-Software-Engineer-Interview-Questions-EI_IE3304926.0,11_KO12,29.htm",
+          "type": "secondary",
+          "note": "Not fetched directly (Glassdoor blocks automated fetch); used only via WebSearch snippet showing 4-6 rounds, 3/5 difficulty rating, 59% positive experience, ~23 day average hire time"
+        },
+        {
+          "url": "https://prachub.com/resources/notion-software-engineer-interview-guide-2026-process-questions-and-preparation",
+          "type": "secondary",
+          "note": "Search-snippet corroboration only, not fetched directly"
+        }
+      ],
+      "unknowns": [
+        "official Notion-published interview-process page (none surfaced in search; notion.so/careers did not yield a public process breakdown)",
+        "precise, verified employee headcount",
+        "whether SQL/database query skills are ever tested in any round",
+        "exact seniority level(s) that receive the take-home vs. skip straight to onsite",
+        "whether the AI-enabled round is standard across all levels or only certain teams",
+        "specific grading rubric or pass/fail bar for any round"
+      ],
+      "last_verified": "2026-08-20"
+    },
+    {
+      "name": "OpenAI",
+      "slug": "openai",
+      "industry": "AI research / foundation models",
+      "size": "~4,500-7,800 employees as of early-to-mid 2026, reportedly targeting ~8,000 by year-end (estimates vary widely by source; OpenAI does not publish official headcount)",
+      "confidence": "medium",
+      "loop": {
+        "summary": "A multi-stage loop that usually runs 6-8 rounds over several weeks to a few months: recruiter screen, one or two 60-minute technical screens (coding and/or system design, sometimes using a progressive 'gate' format where one problem escalates in difficulty), often a paid ~48-hour take-home/work-trial project, then a 4-6 hour virtual (or in-person) onsite loop covering coding, system design, a technical project deep-dive/presentation, and 1-2 behavioral rounds. Loop composition varies notably by team and role -- multiple sources stress there is no single fixed template.",
+        "rounds": [
+          {
+            "name": "Recruiter screen",
+            "duration_minutes": 30,
+            "covers": "background, motivation, mission/AGI-safety alignment",
+            "format": "non-technical phone/video call"
+          },
+          {
+            "name": "Technical screen - coding",
+            "duration_minutes": 60,
+            "covers": "coding, sometimes a progressive multi-gate problem of increasing difficulty; also occasionally an async HackerRank-style OA with 1-2 algorithmic problems (90-120 min)",
+            "format": "live coding (CoderPad/HackerRank) or online assessment"
+          },
+          {
+            "name": "Technical screen - system design",
+            "duration_minutes": 60,
+            "covers": "architecture/scalability discussion, often ML-serving or infra flavored",
+            "format": "live, shared whiteboard/doc"
+          },
+          {
+            "name": "Take-home / work trial",
+            "duration_minutes": 2880,
+            "covers": "self-contained practical engineering project (e.g. building a small system with retry/reliability logic), graded like production code on correctness, code quality, tests, and design decisions; reportedly compensated (~$1,000 per some public reports)",
+            "format": "asynchronous, ~48-hour window (FDE roles get ~1 week plus a video walkthrough)"
+          },
+          {
+            "name": "Technical deep dive",
+            "duration_minutes": 45,
+            "covers": "defense of take-home project or a past project; tradeoffs and decisions under follow-up questioning",
+            "format": "live discussion"
+          },
+          {
+            "name": "Onsite - coding",
+            "duration_minutes": 60,
+            "covers": "implementation-heavy problems, often 'recreate behavior of an existing system' style, data-structure-from-scratch style problems",
+            "format": "own IDE with screen share or shared editor"
+          },
+          {
+            "name": "Onsite - system design",
+            "duration_minutes": 60,
+            "covers": "deeper architecture round, failure modes, distributed coordination, production correctness (idempotency, retries)",
+            "format": "live whiteboard"
+          },
+          {
+            "name": "Onsite - behavioral (leadership/collaboration)",
+            "duration_minutes": 30,
+            "covers": "cross-functional collaboration, mission alignment, ethical judgment, conflict/collaboration scenarios; senior levels get a leadership-focused variant with a senior manager/exec",
+            "format": "STAR-style interview"
+          },
+          {
+            "name": "Domain-specific interview (optional, senior/specialist roles)",
+            "duration_minutes": 60,
+            "covers": "deep technical expertise for ML infra, distributed systems, or safety-specific roles",
+            "format": "live technical discussion"
+          }
+        ]
+      },
+      "languages": {
+        "permitted": [
+          "any language candidate is comfortable with (commonly Python)"
+        ],
+        "notes": "No official published language policy found; multiple secondary sources say candidates may use any language, with Python being most common given the ML-heavy codebase context. OpenAI reportedly has not published a policy on reference materials or AI-tool use during interviews, so candidates are advised to confirm with their recruiter."
+      },
+      "sql": {
+        "present": true,
+        "weight": "light",
+        "notes": "Not a core recurring pillar, but at least one reported coding question involved implementing a subset of SQL functionality in-memory (tables, inserts, WHERE-clause selects, joins) as a systems/parsing exercise rather than a query-writing exercise. No evidence of a dedicated SQL query-writing round for the general SWE track."
+      },
+      "patterns": [
+        "data-structure-from-scratch with a clean API (e.g. LRU-cache-style eviction structures)",
+        "resumable iterator / generator with state serialization",
+        "time-indexed / versioned key-value store (time-travel lookups)",
+        "rate limiter / token-bucket style throttling",
+        "concurrency and async constructs",
+        "production-reliability coding: retry-with-backoff wrappers, idempotency, webhook delivery with dead-letter handling",
+        "streaming/batching of tokenized or event data",
+        "debugging or extending an existing (sometimes intentionally flawed) codebase rather than solving from a blank page",
+        "progressive 'gate' problems that escalate in constraints/difficulty mid-interview"
+      ],
+      "system_design": {
+        "applicable": true,
+        "topics": [
+          "real-time model-serving / inference infrastructure",
+          "distributed training orchestration",
+          "webhook/event delivery systems with delivery guarantees, retries, dead-letter queues",
+          "global content/API distribution and rate limiting",
+          "database sharding and consistency tradeoffs",
+          "full-stack system design touching API design, data model, and front-end considerations for product-facing roles"
+        ],
+        "notes": "System design appears at multiple stages (phone screen and onsite) and several sources describe it as one of the most heavily weighted areas of the loop, especially for mid-to-senior levels. Weight and topic skew (pure infra vs full-stack) appears to vary by team."
+      },
+      "difficulty": {
+        "skew": "medium-hard, with an emphasis on practical/production engineering judgment over pure algorithmic puzzle-solving",
+        "notes": "Multiple independent sources describe the coding bar as higher than typical big-tech LeetCode screens, favoring substantial working code, edge-case handling, and testing over a single clever algorithmic insight."
+      },
+      "quirks": [
+        "Take-home/work-trial project is commonly reported and reportedly paid (~$1,000 per some accounts) -- unusually high-stakes and treated as a major gating round",
+        "Loop length and exact round composition vary significantly by team/candidate, more so than typical large-company standardized loops",
+        "No official published stance on AI-assisted coding tools during interviews was found (in contrast to Anthropic's explicit ban) -- candidates are told to confirm with their recruiter",
+        "Practical/production-code bias over classic algorithmic puzzles is repeatedly emphasized across sources",
+        "Technical project presentation / deep-dive round on candidate's own past work is common, more prominent at senior levels"
+      ],
+      "sources": [
+        {
+          "url": "https://openai.com/interview-guide/",
+          "type": "primary",
+          "note": "Official OpenAI interview guide page; WebFetch returned 403 (blocked), so only search-engine snippets could be used describing hiring philosophy, not full round-by-round detail"
+        },
+        {
+          "url": "https://www.anthropic.com/careers",
+          "type": "primary",
+          "note": "Used for Anthropic company data only, not OpenAI"
+        },
+        {
+          "url": "https://www.tryexponent.com/guides/openai-software-engineer-interview",
+          "type": "secondary",
+          "note": "Interview-guide site; gave round counts, durations, coding/system-design/behavioral breakdown, and note that OpenAI has no published language/AI-tool policy"
+        },
+        {
+          "url": "https://www.hellointerview.com/guides/openai/l5",
+          "type": "secondary",
+          "note": "Detailed L5-level loop breakdown: recruiter call, coding screen, architecture screen, onsite coding/system design/behavioral/project presentation, domain-specific round, plus specific coding patterns (LRU cache, resumable iterator, time-based KV store, rate limiter)"
+        },
+        {
+          "url": "https://www.techprep.app/blog/openai-interview-process",
+          "type": "secondary",
+          "note": "Described 6-8 round structure, progressive 'gate' coding format, 48-hour take-home/work-trial project, technical deep dive round, and testing areas (DSA, system design, low-level design, behavioral)"
+        },
+        {
+          "url": "https://igotanoffer.com/en/advice/openai-interview-process",
+          "type": "secondary",
+          "note": "Search-snippet only (WebFetch 403'd); corroborated 6-8 round structure, two same-day 60-min technical screens, 4-6 hour onsite, and higher coding bar than typical big tech"
+        },
+        {
+          "url": "https://www.techprep.app/blog/openai-interview-process (via search) and general web search aggregation",
+          "type": "secondary",
+          "note": "Corroborated take-home pay (~$1,000), SQL-subset-implementation coding question report, and general LeetCode-avoidance framing"
+        }
+      ],
+      "unknowns": [
+        "Exact, single canonical round count/order (sources disagree: some say 4-5 rounds, others 6-8, others 8-9) -- appears genuinely variable by team",
+        "Official language policy for coding rounds (no primary-source confirmation found)",
+        "Official policy on AI-assisted coding tools during interviews",
+        "Exact difficulty distribution (easy/medium/hard percentage) -- no source quantified this",
+        "Whether SQL appears as a recurring, intentional part of the loop or was a one-off team-specific question",
+        "Formal scoring rubric or bar-raiser process, if any",
+        "Whether an online assessment (OA) is universal or team-specific"
+      ],
+      "last_verified": "2026-08-20"
+    },
+    {
+      "name": "Plaid",
+      "slug": "plaid",
+      "industry": "fintech / financial data aggregation & bank connectivity API",
+      "size": "unknown (not verified this pass; publicly reported past figure ~1,200 employees circa 2023, not independently confirmed - do not treat as current)",
+      "confidence": "medium",
+      "loop": {
+        "summary": "Recruiter screen, then an online assessment and/or technical phone screen with live coding, followed by a multi-round virtual onsite covering coding, system design, a project deep-dive, and behavioral/culture fit. Timeline reported as roughly 2.5-3 weeks end to end. No official Plaid engineering-blog interview guide was found; this is reconstructed from multiple corroborating third-party sources.",
+        "rounds": [
+          {
+            "name": "Recruiter Screen",
+            "duration_minutes": 40,
+            "covers": "background, career trajectory, motivation for Plaid, high-level experience with APIs and distributed systems",
+            "format": "phone call, non-technical"
+          },
+          {
+            "name": "Online Assessment",
+            "duration_minutes": 90,
+            "covers": "two practical coding problems themed around financial/transaction data (categorization-style and deduplication-style)",
+            "format": "timed online judge"
+          },
+          {
+            "name": "Technical Phone Screen",
+            "duration_minutes": 60,
+            "covers": "one live coding problem that evolves as the interviewer layers on new requirements; evaluators watch testing discipline and communication, not just a correct final answer",
+            "format": "shared live coding environment (CoderPad-style)"
+          },
+          {
+            "name": "Virtual Onsite - Coding",
+            "duration_minutes": 90,
+            "covers": "two DS&A problems, commonly hash-map-based with iterative follow-up twists; described as multi-part with partial credit per part",
+            "format": "live coding, shared editor"
+          },
+          {
+            "name": "Virtual Onsite - System Design",
+            "duration_minutes": 60,
+            "covers": "infrastructure-level design (API gateways, load balancers, queues, relational vs non-relational storage) with strong emphasis on failure modes: idempotency, delivery semantics, reconciliation of inconsistent upstream data, graceful degradation when an external dependency is unreliable",
+            "format": "whiteboard/verbal design discussion"
+          },
+          {
+            "name": "Virtual Onsite - Project Deep Dive",
+            "duration_minutes": 60,
+            "covers": "detailed walkthrough of a past project: architecture, tradeoffs, design decisions; reported as unusually rigorous compared to peer companies",
+            "format": "conversational/verbal"
+          },
+          {
+            "name": "Virtual Onsite - Behavioral",
+            "duration_minutes": 45,
+            "covers": "teamwork, leadership scenarios, mission and values alignment",
+            "format": "conversational"
+          },
+          {
+            "name": "Coffee Chat",
+            "duration_minutes": 30,
+            "covers": "informal candidate-driven Q&A about team and culture; reported as non-evaluative",
+            "format": "conversational, optional/informal"
+          }
+        ]
+      },
+      "languages": {
+        "permitted": [
+          "unknown"
+        ],
+        "notes": "No source specified an explicit allowed-language list. Sources emphasize problem-solving and communication over language choice."
+      },
+      "sql": {
+        "present": true,
+        "weight": "unknown",
+        "notes": "No SWE/backend source mentioned SQL as part of the loop. Search results for Plaid Data Engineer roles indicate SQL and Python are heavily used with DBT/Airflow/Redshift familiarity expected. Given Plaid's data-aggregation business SQL may appear situationally in backend interviews, but this was not corroborated for the general SWE loop - left explicitly unknown rather than assumed."
+      },
+      "patterns": [
+        "hash map lookups with iteratively added constraints",
+        "graph shortest-path / weighted graph traversal",
+        "top-K / kth-smallest selection",
+        "array pair-finding",
+        "string parsing and fuzzy/approximate matching (edit-distance style)",
+        "state machine design for auth/connection flows",
+        "deduplication of near-duplicate records",
+        "rate limiting (token bucket vs sliding window)",
+        "circuit breaker / failure-handling logic",
+        "constraint-validation over a grid or board"
+      ],
+      "system_design": {
+        "applicable": true,
+        "topics": [
+          "idempotent processing of retried or duplicate events",
+          "at-least-once vs exactly-once delivery semantics",
+          "reconciliation of inconsistent data from unreliable upstream sources",
+          "graceful degradation when an external dependency fails",
+          "API gateway / load balancer / queue-based architecture",
+          "relational vs non-relational data store tradeoffs",
+          "pipeline design for pulling data from many heterogeneous, variably reliable external integrations"
+        ],
+        "notes": "Reported as roughly a mid-senior (L5-equivalent) bar, strongly weighted toward failure-mode reasoning over happy-path design. Which levels or roles skip this round is unconfirmed."
+      },
+      "difficulty": {
+        "skew": "medium, with system design and the project deep-dive leaning harder than the coding rounds",
+        "notes": "One guide rated overall difficulty 7.5/10, describing coding as slightly below a big-tech L5 bar while system design and the deep-dive are comparably or more rigorous. A first-hand Blind account described coding problems as easy-tier but noted interviewers fail candidates who do not communicate or test thoroughly, suggesting the bar is more about process than raw algorithmic difficulty."
+      },
+      "quirks": [
+        "problems evolve mid-interview as the interviewer layers on new requirements after an initial simple version works",
+        "unusually rigorous project/architecture deep-dive round relative to peer fintechs",
+        "interviewer-side feedback that jumping straight into code without proposing an approach first is a common failure mode",
+        "domain-flavored problems themed around transactions and financial data rather than generic puzzles",
+        "informal non-evaluative 'coffee chat' stage in the loop",
+        "mission/values fit matters; skepticism about fintech reported to hurt candidates"
+      ],
+      "sources": [
+        {
+          "url": "https://prepfully.com/interview-guides/plaid-software-engineer",
+          "type": "secondary",
+          "note": "Three-stage loop breakdown (recruiter screen, virtual technical interview, virtual final onsite with coding/system design/behavioral/coffee chat) plus algorithm pattern areas"
+        },
+        {
+          "url": "https://www.teamblind.com/post/Plaid-coding-interview-expectations-g83DkDWH",
+          "type": "secondary",
+          "note": "First-hand/interviewer-perspective thread on format (project deep-dive plus coding round), emphasis on communication and testing, and difficulty framing"
+        },
+        {
+          "url": "https://www.techinterview.org/companies/plaid/",
+          "type": "secondary",
+          "note": "Most detailed source on system design topics (idempotency, delivery semantics, reconciliation), a 5-round onsite structure, difficulty rating and quirks; explicitly not an official Plaid source"
+        },
+        {
+          "url": "https://www.glassdoor.com/Interview/Plaid-Software-Engineer-Interview-Questions-EI_IE1156368.0,5_KO6,23.htm",
+          "type": "secondary",
+          "note": "Returned HTTP 403 on WebFetch as expected; used only indirectly via WebSearch snippets referencing recruiter screen, online assessment and technical phone screen structure"
+        },
+        {
+          "url": "https://dataford.io/interview-guides/plaid/software-engineer",
+          "type": "secondary",
+          "note": "Corroborated recruiter screen then 90-minute two-problem online assessment then CoderPad technical phone screen with an evolving problem, via search snippet"
+        },
+        {
+          "url": "https://www.interviewquery.com/interview-guides/plaid-data-engineer",
+          "type": "secondary",
+          "note": "Search snippet only; SQL and Python heavily used for Plaid Data Engineer interviews specifically - used to caveat the SQL field rather than generalize to the SWE loop"
+        }
+      ],
+      "unknowns": [
+        "current employee headcount (not verified this pass)",
+        "explicit list of permitted programming languages for coding rounds",
+        "whether SQL appears at all in the general SWE/backend loop (only evidenced for Data Engineer titled roles)",
+        "exact scoring rubric and how many onsite rounds are role/level dependent",
+        "whether a take-home assignment applies broadly or only to select roles (one source mentioned it without specifying which)",
+        "no official Plaid-authored interview-prep page was located; all structural claims rest on third-party corroboration"
+      ],
+      "last_verified": "2026-08-20"
+    },
+    {
+      "name": "Ramp",
+      "slug": "ramp",
+      "industry": "fintech / corporate cards & spend management",
+      "size": "~2,400-2,600 employees as of mid-2026 (Revelio Labs / Tracxn estimates)",
+      "confidence": "medium",
+      "loop": {
+        "summary": "A fast (2-4 week) staged pipeline: an unusual puzzle/CTF application gate, a recruiter screen, a timed multi-level online assessment, then a virtual onsite of roughly 4 rounds covering practical product-framed coding, system design, and a values/ownership behavioral with the hiring manager. Sources consistently describe the philosophy as engineering judgment over LeetCode grinding.",
+        "rounds": [
+          {
+            "name": "CTF / Puzzle Application Gate",
+            "duration_minutes": "unknown",
+            "covers": "a self-serve puzzle (decoding an encoded string, inspecting the page/DOM for a hidden link) that must be solved to unlock the real application form",
+            "format": "asynchronous, browser-based, before any recruiter review"
+          },
+          {
+            "name": "Recruiter Screen",
+            "duration_minutes": 30,
+            "covers": "background, motivation, culture and values fit",
+            "format": "phone/video call"
+          },
+          {
+            "name": "Online Assessment",
+            "duration_minutes": 90,
+            "covers": "one large problem split into ~4 progressive levels of increasing requirements (industry-coding-framework style); some reports describe database/functionality-implementation flavored tasks",
+            "format": "proctored CodeSignal"
+          },
+          {
+            "name": "Recorded Async Behavioral (reported by some candidates, not universal)",
+            "duration_minutes": 20,
+            "covers": "behavioral and values questions",
+            "format": "async recorded video"
+          },
+          {
+            "name": "Technical Phone Screen (reported for some pipelines)",
+            "duration_minutes": 60,
+            "covers": "live coding on a practical, product-framed system-building problem",
+            "format": "live collaborative coding"
+          },
+          {
+            "name": "Virtual Onsite - Practical/Backend Coding",
+            "duration_minutes": 60,
+            "covers": "hands-on implementation against a semi-realistic codebase (adding a feature to make failing tests pass), API design, data-consistency debugging",
+            "format": "live coding; AI-assisted workflow tools sometimes allowed or expected"
+          },
+          {
+            "name": "Virtual Onsite - Product/Feature Coding",
+            "duration_minutes": 60,
+            "covers": "product-framed coding challenge, distinct from the backend-systems round",
+            "format": "live coding"
+          },
+          {
+            "name": "Virtual Onsite - System Design",
+            "duration_minutes": 60,
+            "covers": "distributed systems, service boundaries, data modeling, high availability, operational and monitoring concerns, often framed around financial-system scenarios",
+            "format": "whiteboard / verbal design discussion"
+          },
+          {
+            "name": "Virtual Onsite - Behavioral / Hiring Manager",
+            "duration_minutes": 45,
+            "covers": "ownership mindset, incident handling and on-call, reliability-vs-speed tradeoffs, learning velocity ('slope')",
+            "format": "conversational"
+          }
+        ]
+      },
+      "languages": {
+        "permitted": [
+          "unknown"
+        ],
+        "notes": "No source specified an explicit allowed-language list. Assessment platform is CodeSignal; onsite coding is described as working in a realistic codebase/test suite rather than pseudocode."
+      },
+      "sql": {
+        "present": true,
+        "weight": "light",
+        "notes": "SQL and database-functionality tasks are reported in the CodeSignal OA and are emphasized for Data Analyst and Solutions Consultant roles. Not clearly confirmed as a dedicated component of the core backend/SWE virtual onsite - treat as light and unconfirmed for the SWE track."
+      },
+      "patterns": [
+        "multi-stage single problem with escalating requirements (OA format rather than a named DS&A pattern)",
+        "sliding window",
+        "queue-based processing",
+        "in-memory data structure / state simulation",
+        "concurrency handling",
+        "feature implementation inside an existing codebase against a failing test suite (practical coding rather than classic DS&A)"
+      ],
+      "system_design": {
+        "applicable": true,
+        "topics": [
+          "financial/payment pipeline design",
+          "transaction flow processing",
+          "notification service design",
+          "service boundaries in a distributed system",
+          "data modeling",
+          "high-availability architecture",
+          "monitoring and operational excellence"
+        ],
+        "notes": "Described consistently across secondary sources as one of the ~4 virtual onsite rounds. Whether it is given at all levels or only senior and above is unconfirmed."
+      },
+      "difficulty": {
+        "skew": "medium, practical and product-framed rather than classic hard LeetCode",
+        "notes": "Multiple sources explicitly contrast Ramp's approach with obscure-puzzle/LeetCode-style difficulty, favoring realistic production-flavored problems."
+      },
+      "quirks": [
+        "puzzle/CTF-style gate that must be solved before an application is even reviewed",
+        "OA is one large problem broken into 4 progressive levels rather than 4 separate problems",
+        "onsite coding works against a semi-real codebase / failing test suite, simulating actual engineering work",
+        "explicit interest in candidates' fluency with AI-assisted coding tools in at least one round rather than requiring unassisted output",
+        "heavy emphasis on ownership and 'slope' (learning velocity) as behavioral evaluation themes"
+      ],
+      "sources": [
+        {
+          "url": "https://interview.norahq.com/interview-guides/ramp-backend-software-engineer-interview-guide-2026",
+          "type": "secondary",
+          "note": "Aggregator guide giving a 4-5 round backend-specific breakdown with durations; likely AI-generated, not independently verifiable"
+        },
+        {
+          "url": "https://www.techprep.app/blog/ramp-interview-process",
+          "type": "secondary",
+          "note": "Aggregator guide describing the CTF gate, CodeSignal OA structure, and onsite round breakdown; corroborates the CTF gate and OA format"
+        },
+        {
+          "url": "https://www.interviewquery.com/guides/ramp-software-engineer",
+          "type": "secondary",
+          "note": "Search snippet corroborating the 4-round onsite structure; not fetched in full"
+        },
+        {
+          "url": "https://dataford.io/interview-guides/ramp/software-engineer",
+          "type": "secondary",
+          "note": "Search snippet corroborating overall pipeline shape; not fetched in full"
+        },
+        {
+          "url": "https://www.glassdoor.com/Interview/Live-code-in-SQL-to-extract-data-QTN_8159838.htm",
+          "type": "secondary",
+          "note": "Glassdoor listing indicating SQL live-coding appears in some Ramp loops (role not clearly backend SWE); accessed via search snippet only, direct fetch blocked by Glassdoor"
+        },
+        {
+          "url": "https://www.reveliolabs.com/companies/ramp-business/employees",
+          "type": "secondary",
+          "note": "Employee headcount estimate (~2,455-2,555 in 2026) used for the size field"
+        }
+      ],
+      "unknowns": [
+        "no official Ramp engineering blog or careers page describing the interview process was found - all process detail comes from third-party aggregator/prep sites and forum posts, some possibly AI-generated or based on small samples",
+        "exact allowed programming languages for coding rounds",
+        "whether the recorded async behavioral and the technical phone screen are universal or only used in some pipelines/levels",
+        "exact SQL weight and whether SQL is part of the core backend/SWE loop versus mainly data/analyst-adjacent roles",
+        "whether a take-home project is ever used (no source mentioned one)",
+        "scoring rubric or pass bar at each stage",
+        "whether system design is given at all levels or only senior/staff"
+      ],
+      "last_verified": "2026-08-20"
+    },
+    {
+      "name": "Rippling",
+      "slug": "rippling",
+      "industry": "HR / payroll / IT & workforce management SaaS (multi-product platform)",
+      "size": "unknown precise figure; third-party estimates range widely, roughly 4,000-7,700 employees as of 2026 (Tracxn, PitchBook, LeadIQ, GetLatka, FMC Group all disagree; no official Rippling-published headcount found)",
+      "confidence": "medium",
+      "loop": {
+        "summary": "A recruiter screen is followed by a live technical phone screen (coding, sometimes with SQL/Python emphasis for backend roles), then a hiring-manager conversation, then a 3-4 interview virtual onsite combining a practical build-something coding round, a LeetCode-style coding round, a system design round, and a behavioral/project deep-dive; cross-functional or PM interviews appear for some roles. Sourced entirely from secondary interview-prep aggregators and candidate reports; no official Rippling interview-structure page was accessible (rippling.com/careers/interview-kit returned 403 to automated fetch).",
+        "rounds": [
+          {
+            "name": "Recruiter screen",
+            "duration_minutes": 30,
+            "covers": "background, motivation, logistics, light behavioral",
+            "format": "phone/video call with recruiter"
+          },
+          {
+            "name": "Technical phone screen",
+            "duration_minutes": 60,
+            "covers": "live coding; for backend/data-adjacent roles reported to focus on SQL and Python; functions as a gatekeeper round",
+            "format": "live coding in a shared IDE (CodePair or similar)"
+          },
+          {
+            "name": "Hiring manager screen",
+            "duration_minutes": 60,
+            "covers": "project/resume deep-dive, team fit, role expectations",
+            "format": "video call with hiring manager"
+          },
+          {
+            "name": "Onsite - practical coding round",
+            "duration_minutes": 90,
+            "covers": "build something practical (e.g., a small HTTP server / REST API) then discuss tradeoffs, scaling, and how to extend it",
+            "format": "hands-on live coding + design discussion"
+          },
+          {
+            "name": "Onsite - algorithmic coding round",
+            "duration_minutes": 60,
+            "covers": "LeetCode-medium/hard-style progressive coding problems (arrays, strings, trees, hash maps, recursion, binary search, sorting)",
+            "format": "live coding, CodePair-style"
+          },
+          {
+            "name": "Onsite - system design",
+            "duration_minutes": 60,
+            "covers": "large-scale/distributed system design (e.g., feed systems, chat/social platforms, recommendation engines, file-sharing, exactly-once processing pipelines); backend candidates report product-specific topics like rules-evaluation engines and payroll/billing data flows",
+            "format": "whiteboard/verbal design discussion"
+          },
+          {
+            "name": "Onsite - behavioral / project deep-dive",
+            "duration_minutes": 45,
+            "covers": "past project ownership, STAR-style behavioral questions, engineering judgment under pressure",
+            "format": "conversational interview"
+          },
+          {
+            "name": "Cross-functional (reported for some roles)",
+            "duration_minutes": 30,
+            "covers": "ability to explain technical concepts to a non-technical stakeholder (e.g., PM)",
+            "format": "conversational"
+          }
+        ]
+      },
+      "languages": {
+        "permitted": [
+          "Python",
+          "Go",
+          "JavaScript/TypeScript",
+          "Ruby (mentioned in some job-req skill lists)"
+        ],
+        "notes": "No single mandated language found; candidate reports and job postings reference Python/Django, Golang, React/JS as common stack elements. Company officially lists Cursor/Claude-style AI coding assistants as permitted in some coding screens provided the candidate demonstrates full comprehension of submitted code (secondary source only, not corroborated on an official page)."
+      },
+      "sql": {
+        "present": true,
+        "weight": "light-to-moderate",
+        "notes": "Multiple secondary sources describe the technical phone screen for backend-leaning roles as focused on 'SQL and Python' live coding, and job postings list SQL/NoSQL and query-optimization knowledge as a requirement. However, no source shows SQL appearing in the onsite coding or system-design rounds specifically; treat as present at screening stage, unconfirmed depth beyond that."
+      },
+      "patterns": [
+        "array/string manipulation",
+        "hash map / lookup-table problems",
+        "tree traversal",
+        "recursion",
+        "binary search",
+        "sorting (e.g., merge sort variants)",
+        "linked list operations",
+        "interval-merging (reported specifically for backend/payroll-adjacent rounds)",
+        "rules-evaluator / state-machine style modeling (product-specific)",
+        "REST API / HTTP server design-and-build exercise"
+      ],
+      "system_design": {
+        "applicable": true,
+        "topics": [
+          "large-scale feed/recommendation systems",
+          "chat or social-platform style systems",
+          "file-sharing / distributed storage systems",
+          "exactly-once processing / distributed pipelines",
+          "multi-product data model (employee-as-source-of-truth pattern referenced for backend roles)",
+          "billing/payroll style balance-tracking and rules-processing flows"
+        ],
+        "notes": "System design round appears at onsite for mid/senior candidates; backend-specific product topics (payroll/expense rules engines, employee-record source-of-truth) are reported specifically for backend engineer loops, general SaaS system design (feeds, chat, recommendations) for generalist SWE loops."
+      },
+      "difficulty": {
+        "skew": "medium-to-hard",
+        "notes": "Multiple sources describe LeetCode medium-to-hard difficulty for the algorithmic round; practical build round is rated as moderate but time-pressured (90 minutes to build and discuss)."
+      },
+      "quirks": [
+        "heavy emphasis on writing and running/testing code live rather than just producing a correct answer on paper",
+        "one round is a 'build something practical' exercise (e.g., small HTTP server) rather than a pure algorithm puzzle",
+        "some secondary sources report optional use of AI coding assistants (Cursor/Claude) permitted during screens, evaluated on candidate's ability to explain and validate the output -- this is weakly sourced (single-source, not corroborated on an official page) and should be treated as low confidence",
+        "cross-functional/PM interview reported for some roles to test non-technical communication"
+      ],
+      "sources": [
+        {
+          "url": "https://www.rippling.com/careers/interview-kit",
+          "type": "primary",
+          "note": "Official Rippling interview-kit page; blocked automated fetch (HTTP 403), so content not directly verified -- listed as primary/official but unread; general interview-stage outline (recruiter screen, hiring manager round, formal assessment, onsite with ~3 team members) came from a WebSearch snippet referencing this page, not a full fetch"
+        },
+        {
+          "url": "https://www.rippling.com/careers/engineering",
+          "type": "primary",
+          "note": "Official Rippling engineering careers page; confirmed existence via search, not fully fetched for interview specifics"
+        },
+        {
+          "url": "https://interviewing.io/rippling-interview-questions",
+          "type": "secondary",
+          "note": "Detailed breakdown of 4-stage process, round durations, coding format (CodePair), AI-tool policy note, difficulty calibration (LeetCode medium/hard)"
+        },
+        {
+          "url": "https://prepfully.com/interview-guides/rippling-software-engineer-interview",
+          "type": "secondary",
+          "note": "Corroborates 4-round structure, stack keywords (Python/Django/Golang/React/MongoDB/Kafka/AWS), algorithm pattern list, system design topics, practical HTTP-server coding round"
+        },
+        {
+          "url": "https://dataford.io/interview-guides/rippling/software-engineer",
+          "type": "secondary",
+          "note": "Attempted fetch returned HTTP 429 (rate-limited); referenced only via search-result snippets describing SQL/Python live-coding technical screen and backend-specific system topics (rules engines, billing/payroll flows, interval merging)"
+        },
+        {
+          "url": "https://www.finalroundai.com/blog/rippling-interview-process",
+          "type": "secondary",
+          "note": "Search-snippet corroboration of overall round count and 3-6 week timeline"
+        }
+      ],
+      "unknowns": [
+        "exact official round count and duration as stated by Rippling itself (interview-kit page blocked to fetch)",
+        "whether SQL appears in onsite rounds or only the technical screen",
+        "official list of permitted programming languages for the algorithmic coding round",
+        "exact take-home usage (no source confirms a formal take-home for SWE roles, only a generic 'formal assessment' mention for other functions)",
+        "precise, verified employee headcount",
+        "whether AI-assistant use during interviews is officially sanctioned company policy or an informal/team-specific practice (only weakly sourced)"
+      ],
+      "last_verified": "2026-08-20"
+    },
+    {
+      "name": "Stripe",
+      "slug": "stripe",
+      "industry": "fintech / payments infrastructure",
+      "size": "~8,000-9,000 employees (2025-2026; estimates vary by tracker, Revelio Labs ~9,073 as of Mar 2026, other trackers report 8,000-16,600 depending on methodology)",
+      "confidence": "medium",
+      "loop": {
+        "summary": "Recruiter screen, a live technical phone screen, then a 4-5 round virtual onsite that mirrors real engineering work: general coding, a debugging/'Bug Bash' round, an API integration round, a system design round (mid-level and above), and a behavioral round. Full process typically takes 4-8 weeks.",
+        "rounds": [
+          {
+            "name": "Recruiter Phone Screen",
+            "duration_minutes": 30,
+            "covers": "background, motivation, role fit, logistics",
+            "format": "phone/video call, non-technical"
+          },
+          {
+            "name": "Technical Phone Screen",
+            "duration_minutes": 60,
+            "covers": "live coding on a scenario-driven prompt with escalating complexity, typically parsing/validating structured data",
+            "format": "shared online coding editor with an engineer"
+          },
+          {
+            "name": "General Coding Round",
+            "duration_minutes": 60,
+            "covers": "scenario-driven coding requiring extraction of a clean problem from a dense real-world prompt; emphasis on clean, correct, production-quality code over algorithmic cleverness",
+            "format": "live coding, candidate's own laptop"
+          },
+          {
+            "name": "Debugging Round ('Bug Bash')",
+            "duration_minutes": 60,
+            "covers": "finding and fixing a bug in an unfamiliar (sometimes real open-source) codebase with limited context",
+            "format": "live, unfamiliar repo"
+          },
+          {
+            "name": "Integration Round",
+            "duration_minutes": 60,
+            "covers": "implementing a small feature against a provided API/SDK using documentation; evaluated more like a design task than raw coding",
+            "format": "live coding with full internet/docs access"
+          },
+          {
+            "name": "System Design Round",
+            "duration_minutes": 60,
+            "covers": "architecting a service with scalability, reliability and consistency concerns; leans on financial-systems domain (correctness/consistency of value-bearing records)",
+            "format": "whiteboard/diagramming tool; typically mid-level and above, often skipped for new grad"
+          },
+          {
+            "name": "Behavioral Round",
+            "duration_minutes": 45,
+            "covers": "collaboration, ownership, decision-making, motivation for Stripe",
+            "format": "conversational"
+          }
+        ]
+      },
+      "languages": {
+        "permitted": [
+          "Python",
+          "JavaScript",
+          "Ruby",
+          "Go",
+          "Java",
+          "other common languages the candidate is fluent in"
+        ],
+        "notes": "Multiple secondary sources agree language choice is the candidate's own. One source claims AI coding assistants are not permitted in live rounds; this was not independently corroborated."
+      },
+      "sql": {
+        "present": true,
+        "weight": "light",
+        "notes": "No dedicated SQL round found in any source. Structured/tabular data parsing and manipulation appear inside general coding prompts. One source flagged deeper SQL questions per candidate reports but this could not be verified - treat as light and unconfirmed rather than a core pillar."
+      },
+      "patterns": [
+        "hash maps / hashing for lookups and deduplication",
+        "string and structured-data parsing/validation with escalating edge cases",
+        "array manipulation",
+        "LRU-style caching",
+        "interval overlap / scheduling constraints",
+        "greedy optimization",
+        "graph traversal and cycle detection",
+        "record deduplication",
+        "hypothesis-driven root-cause debugging in unfamiliar code",
+        "API/interface design and composition"
+      ],
+      "system_design": {
+        "applicable": true,
+        "topics": [
+          "service architecture for scalability and reliability",
+          "relational vs non-relational data store tradeoffs",
+          "caching strategy",
+          "ledger-style invariants and consistency (value conservation, balanced entries)",
+          "API design and developer-facing interface clarity"
+        ],
+        "notes": "Reported as core for mid-level and senior candidates; new-grad/entry-level loops often omit it. Backend-specific loops appear to weight system design and coding more heavily than the integration/bug-bash structure."
+      },
+      "difficulty": {
+        "skew": "medium, explicitly not LeetCode-hard",
+        "notes": "Multiple sources emphasize prompts are not classic LeetCode puzzles. Difficulty comes from extracting a clean problem out of a verbose real-world scenario and producing correct, production-quality code, rather than from algorithmic cleverness or optimal complexity."
+      },
+      "quirks": [
+        "rounds framed as close simulations of real Stripe engineering work rather than abstract algorithm puzzles",
+        "'Bug Bash' debugging round on an unfamiliar/real repo",
+        "integration round allows full internet and documentation access, graded more like API design than pure coding",
+        "candidates reportedly use their own laptop for onsite coding rounds",
+        "claimed no-AI-coding-assistant policy (single secondary source, uncorroborated)",
+        "prep advice repeatedly stresses reading Stripe's engineering blog and product docs to speak specifically about their systems"
+      ],
+      "sources": [
+        {
+          "url": "https://www.tryexponent.com/guides/stripe-software-engineer-interview",
+          "type": "secondary",
+          "note": "Most detailed single source; full round-by-round breakdown, languages, patterns, quirks (fetched successfully)"
+        },
+        {
+          "url": "https://prepfully.com/interview-guides/stripe-software-engineer",
+          "type": "secondary",
+          "note": "Search results corroborated loop structure; not fetched in full"
+        },
+        {
+          "url": "https://dataford.io/interview-guides/stripe/software-engineer",
+          "type": "secondary",
+          "note": "Corroborating snippet on loop stages: recruiter screen, optional technical assessment, 5-round onsite covering coding/Bug Bash/system design/API integration/behavioral"
+        },
+        {
+          "url": "https://www.finalroundai.com/blog/stripe-interview-process",
+          "type": "secondary",
+          "note": "Corroborated 4-stage overview and 6-8 week timeline via search snippet"
+        },
+        {
+          "url": "https://www.systemdesignhandbook.com/guides/stripe-system-design-interview/",
+          "type": "secondary",
+          "note": "Search snippet corroborating system design content: ledger/financial invariants, DB choice, caching"
+        },
+        {
+          "url": "https://www.glassdoor.com/Interview/Stripe-Interview-RVW33001273.htm",
+          "type": "secondary",
+          "note": "Glassdoor blocks automated fetching; relied on WebSearch snippet summaries only"
+        }
+      ],
+      "unknowns": [
+        "no official Stripe-authored 'how we interview' engineering blog post or careers page was located despite searching stripe.com directly - loop details are not confirmed by a primary Stripe source",
+        "exact current employee count (tracker estimates range 8,000-16,600)",
+        "whether AI coding assistants are actually banned (single secondary source)",
+        "exact scoring rubric and round weighting",
+        "whether a dedicated SQL/data-querying round exists for any specific team - evidence is thin and inconsistent",
+        "whether the take-home/technical-assessment stage mentioned by one source is standard or role-specific"
+      ],
+      "last_verified": "2026-08-20"
+    }
+  ]
+}

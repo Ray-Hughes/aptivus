@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="195 130 410 570" role="img" aria-label="Aptivus - Prepare. Perform.">
+  <defs>
+    <linearGradient id="apg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00E5FF"/>
+      <stop offset="100%" stop-color="#7C4DFF"/>
+    </linearGradient>
+    <filter id="apglow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <g filter="url(#apglow)">
+    <polygon points="400,150 560,245 560,435 400,530 240,435 240,245"
+             fill="none" stroke="url(#apg)" stroke-width="10" stroke-linejoin="round"/>
+    <g transform="translate(-12 0)" stroke="#F2F4F8" stroke-width="16"
+       stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <path d="M355 280 L440 340 L355 400"/>
+      <line x1="440" y1="400" x2="480" y2="400"/>
+    </g>
+  </g>
+  <!-- x is nudged by half the letter-spacing: the trailing space counts in the
+       advance width, so text-anchor="middle" otherwise sits left of true centre. -->
+  <text x="405" y="622" text-anchor="middle" fill="#F2F4F8"
+        font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
+        font-size="56" font-weight="600" letter-spacing="10">APTIVUS</text>
+  <text x="403" y="664" text-anchor="middle" fill="#7C8494"
+        font-family="Helvetica Neue, Helvetica, Arial, sans-serif"
+        font-size="18" letter-spacing="6">PREPARE. PERFORM.</text>
+</svg>

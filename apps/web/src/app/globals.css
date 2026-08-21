@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+/*
+ * Aptivus dark palette. One source of truth: every admin surface pulls from
+ * these tokens rather than hard-coding hexes at the call site.
+ */
+@theme {
+  --color-ink: #1b1c1f;
+  --color-surface: #232427;
+  --color-raised: #2a2b30;
+  --color-edge: #3a3d42;
+  --color-fg: #dfe1e5;
+  --color-muted: #9198a1;
+  --color-faint: #6f767f;
+  --color-accent: #39c06c;
+  --color-accent2: #4aa3ff;
+  --color-danger: #f0616d;
+  --color-warn: #e0b13c;
+  --color-brand-cyan: #00e5ff;
+  --color-brand-purple: #7c4dff;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+}
+
+html,
+body {
+  background-color: #1b1c1f;
+  color: #dfe1e5;
+}
+
+body {
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Brand gradient: cyan -> purple. */
+.brand-bar {
+  background-image: linear-gradient(90deg, #00e5ff 0%, #7c4dff 100%);
+}
+
+.brand-text {
+  background-image: linear-gradient(90deg, #00e5ff 0%, #7c4dff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Keep focus rings visible against the dark ground. */
+:focus-visible {
+  outline: 2px solid #4aa3ff;
+  outline-offset: 2px;
+}
+
+::selection {
+  background: rgba(124, 77, 255, 0.35);
+}
+
+/* Scrollbars that do not glare on a dark panel. */
+* {
+  scrollbar-color: #3a3d42 transparent;
+  scrollbar-width: thin;
+}

@@ -3,3 +3,19 @@ __pycache__/
 progress.json
 .DS_Store
 .venv/
+
+# node
+node_modules/
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+
+# local database and secrets
+*.db
+*.db-wal
+*.db-shm
+.env
+.env.local
+.env*.local
