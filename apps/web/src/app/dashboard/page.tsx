@@ -1,124 +1,257 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import Image from "next/image";
-import { and, desc, eq, sql } from "drizzle-orm";
-import { auth, signOut } from "@/auth";
+import { eq } from "drizzle-orm";
+import { auth } from "@/auth";
+import { AppHeader } from "@/components/AppHeader";
 import { db } from "@/db";
-import { attempts, profiles, userAchievements, achievements } from "@/db/schema";
+import { companies, profiles } from "@/db/schema";
+import { listAchievements } from "@/lib/achievements";
 import { summary } from "@/lib/entitlements";
-import { allFlagsFor } from "@/lib/flags";
+import { userStats } from "@/lib/stats";
+
+export const metadata = { title: "Progress — Aptivus" };
+
+/** 40 XP a solve, 25 a clean one. Levels widen as they go. */
+function levelFor(xp: number) {
+  let level = 1, need = 200, spent = 0;
+  while (xp - spent >= need) { spent += need; level++; need = Math.round(need * 1.25); }
+  return { level, into: xp - spent, need, title: TITLES[Math.min(level - 1, TITLES.length - 1)] };
+}
+const TITLES = [
+  "First Steps", "Warming Up", "Getting Fluent", "Pattern Spotter", "Steady Hands",
+  "Edge-case Hunter", "Pattern Hunter", "Edge-case Wrangler", "Interview Ready", "Relentless",
+];
+
+const card = "rounded-2xl border border-white/[0.07] bg-white/[0.02]";
 
 export default async function Dashboard() {
   const session = await auth();
   if (!session?.user?.id) redirect("/signin?next=/dashboard");
   const userId = session.user.id;
 
-  const [ent, flags, solvedRows, recent, badges, profile] = await Promise.all([
+  const [stats, ent, badges, profileRow, companyRows] = await Promise.all([
+    userStats(userId),
     summary(userId),
-    allFlagsFor(userId),
-    db
-      .select({ n: sql<number>`count(distinct ${attempts.problemId})` })
-      .from(attempts)
-      .where(and(eq(attempts.userId, userId), eq(attempts.status, "solved"))),
-    db.select().from(attempts).where(eq(attempts.userId, userId))
-      .orderBy(desc(attempts.createdAt)).limit(5),
-    db
-      .select({ name: achievements.name, icon: achievements.icon, tier: achievements.tier,
-                earnedAt: userAchievements.earnedAt })
-      .from(userAchievements)
-      .innerJoin(achievements, eq(achievements.id, userAchievements.achievementId))
-      .where(eq(userAchievements.userId, userId)),
+    listAchievements(userId),
     db.select().from(profiles).where(eq(profiles.userId, userId)).limit(1),
+    db.select({ slug: companies.slug, name: companies.name }).from(companies),
   ]);
 
-  const solved = solvedRows[0]?.n ?? 0;
-  const initials = (session.user.name ?? session.user.email ?? "?")
+  const xp = stats.solved * 40 + stats.cleanSolves * 25;
+  const lv = levelFor(xp);
+  const pct = Math.round((lv.into / lv.need) * 100);
+  const target = companyRows.find((c) => c.slug === profileRow[0]?.targetCompany);
+  const earned = badges.filter((b) => b.earned);
+  const initials = (session.user.name ?? session.user.email)
     .split(/[\s@.]+/).filter(Boolean).slice(0, 2).map((s) => s[0]?.toUpperCase()).join("");
 
+  const R = 34, C = 2 * Math.PI * R;
+
   return (
-    <main className="min-h-screen bg-[#0f1013] text-[#dfe1e5]">
-      <header className="flex items-center justify-between border-b border-[#24262b] px-6 py-3.5">
-        <div className="flex items-center gap-2.5">
-          <Image src="/logo.svg" alt="" width={26} height={26} />
-          <span className="font-semibold tracking-tight">Aptivus</span>
-        </div>
-        <div className="flex items-center gap-4">
-          {session.user.role === "admin" && (
-            <a href="/admin" className="text-[13px] text-[#8b8f96] hover:text-[#dfe1e5]">Admin</a>
-          )}
-          <div className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-[#00E5FF] to-[#7C4DFF] text-[12px] font-bold text-[#0f1013]">
-            {initials}
+    <div className="min-h-screen bg-[#0b0c0f] text-[#e6e8ec]">
+      <AppHeader
+        name={session.user.name} email={session.user.email}
+        image={session.user.image} role={session.user.role}
+        gems={stats.gems} streak={stats.streak}
+      />
+
+      <main className="mx-auto max-w-6xl px-5 py-8">
+        {/* identity */}
+        <section className={`${card} flex flex-wrap items-center gap-6 p-6`}>
+          <div className="relative grid h-[86px] w-[86px] shrink-0 place-items-center">
+            <svg width="86" height="86" className="absolute -rotate-90" aria-hidden>
+              <circle cx="43" cy="43" r={R} fill="none" stroke="rgba(255,255,255,.09)" strokeWidth="5" />
+              <circle
+                cx="43" cy="43" r={R} fill="none" stroke="url(#lvl)" strokeWidth="5"
+                strokeLinecap="round" strokeDasharray={C}
+                strokeDashoffset={C - (C * pct) / 100}
+              />
+              <defs>
+                <linearGradient id="lvl" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#00E5FF" /><stop offset="100%" stopColor="#9E7BFF" />
+                </linearGradient>
+              </defs>
+            </svg>
+            <span className="text-[19px] font-bold">{initials}</span>
           </div>
-          <form action={async () => { "use server"; await signOut({ redirectTo: "/" }); }}>
-            <button className="rounded-md border border-[#33363d] px-3 py-1.5 text-[12.5px] text-[#a9adb5] transition hover:border-[#4a4f57] hover:text-[#dfe1e5]">
-              Sign out
-            </button>
-          </form>
-        </div>
-      </header>
 
-      <div className="mx-auto max-w-5xl px-6 py-10">
-        <h1 className="text-[26px] font-semibold tracking-tight">
-          Welcome back{session.user.name ? `, ${session.user.name}` : ""}
-        </h1>
-        <p className="mt-1 text-[14px] text-[#8b8f96]">
-          {profile[0]?.targetCompany
-            ? `Preparing for ${profile[0].targetCompany}.`
-            : "Set a target company in settings to tailor your practice."}
-        </p>
+          <div className="min-w-[220px] flex-1">
+            <h1 className="text-[24px] font-semibold tracking-tight">
+              {session.user.name ?? session.user.email.split("@")[0]}
+            </h1>
+            <p className="mt-1 text-[13px] text-[#9aa1ad]">
+              Level {lv.level} · {lv.title}
+              {target ? <> · targeting <span className="text-[#4aa3ff]">{target.name}</span></> : null}
+            </p>
+            <div className="mt-3 flex items-center gap-3">
+              <div className="h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-white/[0.07]">
+                <div className="h-full rounded-full bg-gradient-to-r from-[#00E5FF] to-[#9E7BFF]"
+                     style={{ width: `${pct}%` }} />
+              </div>
+              <span className="whitespace-nowrap font-mono text-[11.5px] text-[#7f8794]">
+                {lv.into}/{lv.need} XP
+              </span>
+            </div>
+          </div>
 
-        <section className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+          <Link
+            href="/problems"
+            className="rounded-xl bg-gradient-to-r from-[#00E5FF] to-[#9E7BFF] px-5 py-2.5 text-[13.5px] font-semibold text-[#0b0c0f] transition hover:brightness-110"
+          >
+            {stats.solved ? "Resume practice →" : "Start practising →"}
+          </Link>
+        </section>
+
+        {/* stat tiles */}
+        <section className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            { label: "Solved", value: solved },
-            { label: "Gems", value: ent.gems },
-            { label: "Hints left today", value: ent.pro ? "Unlimited" : ent.hintsLeft },
-            { label: "Solutions left today", value: ent.pro ? "Unlimited" : ent.solutionsLeft },
-          ].map((s) => (
-            <div key={s.label} className="rounded-xl border border-[#24262b] bg-[#17181c] p-4">
-              <div className="text-[22px] font-semibold tabular-nums">{s.value}</div>
-              <div className="mt-0.5 text-[12px] text-[#8b8f96]">{s.label}</div>
+            { l: "Current streak", v: stats.streak, s: stats.streak ? "days in a row" : "solve one today" },
+            { l: "Problems solved", v: `${stats.solved}/${stats.total}`, s: `${stats.total - stats.solved} to go` },
+            { l: "Clean solves", v: `${stats.cleanPct}%`, s: "no hint, no solution" },
+            { l: "Gems", v: stats.gems, s: ent.pro ? "Pro — unlimited" : `${ent.hintsLeft} hints left today` },
+          ].map((t) => (
+            <div key={t.l} className={`${card} p-4`}>
+              <p className="text-[12px] text-[#7f8794]">{t.l}</p>
+              <p className="mt-1 text-[26px] font-semibold tabular-nums">{t.v}</p>
+              <p className="mt-0.5 text-[11.5px] text-[#6b727e]">{t.s}</p>
             </div>
           ))}
         </section>
 
-        <section className="mt-8 rounded-xl border border-[#24262b] bg-[#17181c] p-5">
-          <h2 className="text-[15px] font-semibold">Achievements</h2>
-          {badges.length === 0 ? (
-            <p className="mt-2 text-[13px] text-[#8b8f96]">
-              None yet. Solve a problem without hints to earn your first.
+        {/* rewards */}
+        <section className="mt-4">
+          <div className="mb-3 flex items-baseline gap-3">
+            <h2 className="text-[17px] font-semibold">Rewards &amp; achievements</h2>
+            <p className="text-[12px] text-[#7f8794]">
+              Gems come from your first clean solve of a problem. Capped at 30 a day, so grinding easy ones cannot farm it.
             </p>
-          ) : (
-            <ul className="mt-3 flex flex-wrap gap-2">
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
+            <div className={`${card} p-5`}>
+              <h3 className="text-[13px] font-medium text-[#c8ccd4]">Recent gems</h3>
+              {stats.ledger.length === 0 ? (
+                <p className="mt-3 text-[13px] text-[#7f8794]">
+                  Nothing yet. Solve a problem without a hint to earn your first.
+                </p>
+              ) : (
+                <ul className="mt-3 space-y-2">
+                  {stats.ledger.map((g) => (
+                    <li key={g.id} className="flex items-baseline justify-between gap-3 text-[13px]">
+                      <span className="min-w-0 truncate text-[#c8ccd4]">
+                        {g.reason.replace(/_/g, " ")}
+                      </span>
+                      <span className={`shrink-0 font-mono ${g.delta > 0 ? "text-[#7fe0a2]" : "text-[#ff9d9d]"}`}>
+                        {g.delta > 0 ? "+" : ""}{g.delta}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div className={`${card} p-5`}>
+              <h3 className="text-[13px] font-medium text-[#c8ccd4]">
+                Streak · last 12 weeks
+              </h3>
+              <div className="mt-3 grid grid-flow-col grid-rows-7 gap-[3px]">
+                {stats.heat.map((d) => (
+                  <span
+                    key={d.day}
+                    title={`${d.day}${d.active ? " · solved" : ""}`}
+                    className={`h-[11px] w-[11px] rounded-[2px] ${
+                      d.active ? "bg-[#39c06c]" : "bg-white/[0.06]"
+                    }`}
+                  />
+                ))}
+              </div>
+              <p className="mt-3 text-[11.5px] text-[#6b727e]">
+                {stats.streak > 0
+                  ? `${stats.streak} day streak · +10 gems at 7`
+                  : "No streak yet — one solve starts it"}
+              </p>
+            </div>
+          </div>
+
+          <div className={`${card} mt-4 p-5`}>
+            <h3 className="text-[13px] font-medium text-[#c8ccd4]">
+              Badges <span className="text-[#6b727e]">· {earned.length} of {badges.length} earned</span>
+            </h3>
+            <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
               {badges.map((b) => (
-                <li key={b.name} className="rounded-full border border-[#2f6b45] bg-[#132a1d] px-3 py-1.5 text-[12.5px]">
-                  <span className="mr-1.5">{b.icon}</span>{b.name}
+                <li
+                  key={b.slug}
+                  title={b.description}
+                  className={`rounded-xl border p-3 text-center ${
+                    b.earned
+                      ? "border-[#2f6b45] bg-[#12331f]"
+                      : "border-white/[0.07] bg-white/[0.02]"
+                  }`}
+                >
+                  <div className={`text-[20px] ${b.earned ? "" : "opacity-30 grayscale"}`}>{b.icon}</div>
+                  <p className={`mt-1.5 text-[12px] ${b.earned ? "text-white" : "text-[#6b727e]"}`}>
+                    {b.name}
+                  </p>
+                  {!b.earned && b.progress > 0 && (
+                    <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/[0.07]">
+                      <div className="h-full rounded-full bg-gradient-to-r from-[#00E5FF] to-[#9E7BFF]"
+                           style={{ width: `${Math.round(b.progress * 100)}%` }} />
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
-          )}
+          </div>
         </section>
 
-        <section className="mt-6 rounded-xl border border-[#24262b] bg-[#17181c] p-5">
-          <h2 className="text-[15px] font-semibold">Recent activity</h2>
-          {recent.length === 0 ? (
-            <p className="mt-2 text-[13px] text-[#8b8f96]">Nothing yet.</p>
-          ) : (
-            <ul className="mt-3 space-y-2">
-              {recent.map((a) => (
-                <li key={a.id} className="flex justify-between text-[13px]">
-                  <span>{a.problemId}</span>
-                  <span className={a.status === "solved" ? "text-[#39c06c]" : "text-[#8b8f96]"}>
-                    {a.testsPassed}/{a.testsTotal} · {a.status}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+        {/* patterns + activity */}
+        <section className="mt-4 grid gap-4 lg:grid-cols-2">
+          <div className={`${card} p-5`}>
+            <h3 className="text-[13px] font-medium text-[#c8ccd4]">Patterns solved</h3>
+            {stats.byPattern.length === 0 ? (
+              <p className="mt-3 text-[13px] text-[#7f8794]">Nothing solved yet.</p>
+            ) : (
+              <ul className="mt-3 space-y-2">
+                {stats.byPattern.slice(0, 8).map((p) => (
+                  <li key={p.pattern ?? "?"} className="flex items-center gap-3">
+                    <span className="w-40 shrink-0 truncate text-[12.5px] text-[#9aa1ad]">
+                      {p.pattern ?? "unclassified"}
+                    </span>
+                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
+                      <div className="h-full rounded-full bg-[#4aa3ff]"
+                           style={{ width: `${Math.min(100, p.n * 25)}%` }} />
+                    </div>
+                    <span className="w-6 shrink-0 text-right font-mono text-[11.5px] text-[#7f8794]">{p.n}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
 
-        <p className="mt-8 text-[11.5px] text-[#5f646d]">
-          Flags on: {Object.entries(flags).filter(([, v]) => v).map(([k]) => k).join(", ") || "none"}
-        </p>
-      </div>
-    </main>
+          <div className={`${card} p-5`}>
+            <h3 className="text-[13px] font-medium text-[#c8ccd4]">Recent activity</h3>
+            {stats.recent.length === 0 ? (
+              <p className="mt-3 text-[13px] text-[#7f8794]">
+                Nothing yet. <Link href="/problems" className="text-[#4aa3ff] hover:underline">Pick a problem</Link>.
+              </p>
+            ) : (
+              <ul className="mt-3 space-y-2">
+                {stats.recent.map((a) => (
+                  <li key={a.id} className="flex items-baseline justify-between gap-3 text-[13px]">
+                    <Link href={`/practice/${a.slug}`} className="min-w-0 truncate text-[#c8ccd4] hover:text-white">
+                      {a.title}
+                    </Link>
+                    <span className={`shrink-0 font-mono text-[11.5px] ${
+                      a.status === "solved" ? "text-[#7fe0a2]" : "text-[#7f8794]"}`}>
+                      {a.testsPassed}/{a.testsTotal}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+      </main>
+    </div>
   );
 }
