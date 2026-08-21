@@ -16,8 +16,11 @@
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.3",
+    "@codemirror/lang-python": "^6.2.1",
+    "@codemirror/lang-sql": "^6.10.0",
     "@libsql/client": "^0.17.4",
     "@node-rs/argon2": "^2.1.0",
+    "@uiw/react-codemirror": "^4.25.11",
     "drizzle-orm": "^0.45.2",
     "nanoid": "^5.1.16",
     "next": "16.3.1",

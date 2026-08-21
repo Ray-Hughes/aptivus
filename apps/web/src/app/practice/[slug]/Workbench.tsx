@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { CodeEditor } from "@/components/CodeEditor";
 import { Markdown } from "@/components/Markdown";
 import {
   getEngine, type ResultRow, type TestCase, type TraceResult,
@@ -22,6 +23,9 @@ export function Workbench(props: {
   const [step, setStep] = useState(0);
   const [pinned, setPinned] = useState<string[]>([]);
   const [tab, setTab] = useState<"results" | "trace">("results");
+  const [pTab, setPTab] = useState<"description" | "hints" | "solution">("description");
+  const [solution, setSolution] = useState<{ code: string; explanation: string } | null>(null);
+  const [solutionCost, setSolutionCost] = useState<string | null>(null);
   const [expr, setExpr] = useState("");
   const [replLog, setReplLog] = useState<{ q: string; a: string; bad?: boolean }[]>([]);
   const [hints, setHints] = useState<string[]>([]);
@@ -132,6 +136,22 @@ export function Workbench(props: {
     if (data.entitlements) setEnt(data.entitlements);
   });
 
+  /* --- metered solution -------------------------------------------------- */
+  const getSolution = () => guard("solution", async () => {
+    const res = await fetch(`/api/problems/${props.slug}/solution`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ language: "python" }),
+    });
+    const data = await res.json();
+    if (res.status === 402) { setSolutionCost(data.error ?? "You are out of solutions today."); return; }
+    if (!res.ok) { setSolutionCost(data.error ?? "Could not fetch the solution."); return; }
+    setSolution({
+      code: data.solution ?? data.code ?? "",
+      explanation: data.explanation ?? "",
+    });
+    if (data.entitlements) setEnt(data.entitlements);
+  });
+
   const cur = trace?.steps[step];
   const valueOf = (name: string) => trace?.pool[cur?.locals[name] ?? -1];
 
@@ -175,30 +195,122 @@ export function Workbench(props: {
 
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden p-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
         {/* problem */}
-        <section className={`${card} flex min-h-0 flex-col overflow-y-auto p-5`}>
-          <Markdown source={props.prompt} className="text-[13.5px] text-[#c8ccd4]" />
-
-          {hints.map((h, i) => (
-            <p key={i} className="mt-3 rounded-lg border border-[#4a4520] bg-[#231f10] px-3 py-2 text-[12.5px] text-[#e2d07a]">
-              Hint {i + 1}: {h}
-            </p>
-          ))}
-
-          <div className="mt-4 flex gap-2">
-            <button onClick={getHint} disabled={!!busy || hints.length >= props.hintCount}
-                    className={`${btn} border border-[#33363d] text-[#a9adb5] hover:text-[#dfe1e5]`}>
-              {hints.length >= props.hintCount ? "No more hints" : `Hint (${hints.length}/${props.hintCount})`}
-            </button>
+        <section className={`${card} flex min-h-0 flex-col overflow-hidden`}>
+          <div className="flex shrink-0 gap-1 border-b border-white/[0.07] px-3 py-2">
+            {([
+              ["description", "Description"],
+              ["hints", `Hints ${hints.length}/${props.hintCount}`],
+              ["solution", "Solution"],
+            ] as const).map(([id, label]) => (
+              <button
+                key={id}
+                onClick={() => setPTab(id)}
+                aria-pressed={pTab === id}
+                className={`rounded-lg px-3 py-1.5 text-[12.5px] transition ${
+                  pTab === id ? "bg-white/[0.1] text-white" : "text-[#8b929d] hover:text-white"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
 
-          {props.followups.length > 0 && (
-            <details className="mt-5">
-              <summary className="cursor-pointer text-[13px] text-[#4aa3ff]">Follow-ups an interviewer may ask</summary>
-              <ul className="mt-2 list-disc space-y-1 pl-5 text-[12.5px] text-[#a9adb5]">
-                {props.followups.map((f) => <li key={f}>{f}</li>)}
-              </ul>
-            </details>
-          )}
+          <div className="min-h-0 flex-1 overflow-y-auto p-5">
+            {pTab === "description" && (
+              <>
+                <Markdown source={props.prompt} className="text-[13.5px] text-[#c8ccd4]" />
+                {props.followups.length > 0 && (
+                  <details className="mt-5">
+                    <summary className="cursor-pointer text-[13px] text-[#4aa3ff]">
+                      Follow-ups an interviewer may ask
+                    </summary>
+                    <ul className="mt-2 list-disc space-y-1 pl-5 text-[12.5px] text-[#9aa1ad]">
+                      {props.followups.map((f) => <li key={f}>{f}</li>)}
+                    </ul>
+                  </details>
+                )}
+              </>
+            )}
+
+            {pTab === "hints" && (
+              <div>
+                {hints.length === 0 && (
+                  <p className="text-[13px] leading-relaxed text-[#8b929d]">
+                    Three hints, each a bit more direct than the last. Try the trace first —
+                    it usually tells you more than hint one does.
+                  </p>
+                )}
+                {hints.map((h, i) => (
+                  <div key={i} className="mb-2.5 rounded-lg border border-[#4a4520] bg-[#231f10] px-3.5 py-2.5">
+                    <p className="mb-1 text-[11.5px] font-medium uppercase tracking-wide text-[#c9a94a]">
+                      Hint {i + 1}
+                    </p>
+                    <p className="text-[13px] leading-relaxed text-[#e2d07a]">{h}</p>
+                  </div>
+                ))}
+                <button
+                  onClick={getHint}
+                  disabled={!!busy || hints.length >= props.hintCount}
+                  className={`${btn} mt-3 border border-white/12 text-[#c8ccd4]`}
+                >
+                  {hints.length >= props.hintCount
+                    ? "No more hints"
+                    : busy === "hint"
+                      ? "Getting…"
+                      : `Reveal hint ${hints.length + 1}`}
+                </button>
+                <p className="mt-2 text-[11.5px] text-[#6b727e]">
+                  {ent.pro
+                    ? "Pro — unlimited"
+                    : ent.hintsLeft > 0
+                      ? `${ent.hintsLeft} free hints left today, then 1 gem each`
+                      : `Free hints used — 1 gem each · ${ent.gems} gems`}
+                </p>
+              </div>
+            )}
+
+            {pTab === "solution" && (
+              <div>
+                {solution ? (
+                  <>
+                    <pre className="overflow-x-auto rounded-lg border border-white/[0.08] bg-[#0b0c0f] p-3.5 font-mono text-[12px] leading-relaxed text-[#c8ccd4]">
+                      {solution.code}
+                    </pre>
+                    {solution.explanation && (
+                      <Markdown source={solution.explanation} className="mt-4 text-[13px] text-[#c8ccd4]" />
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <p className="text-[13px] leading-relaxed text-[#8b929d]">
+                      The reference solution and the write-up explaining why it works.
+                      Worth spending five more minutes before you look — the explanation
+                      lands harder when you have already fought the problem.
+                    </p>
+                    {solutionCost && (
+                      <p role="alert" className="mt-3 rounded-lg border border-[#5c2b2b] bg-[#2a1618] px-3 py-2 text-[12.5px] text-[#ff9d9d]">
+                        {solutionCost}
+                      </p>
+                    )}
+                    <button
+                      onClick={getSolution}
+                      disabled={!!busy}
+                      className={`${btn} mt-4 border border-white/12 text-[#c8ccd4]`}
+                    >
+                      {busy === "solution" ? "Revealing…" : "Reveal the solution"}
+                    </button>
+                    <p className="mt-2 text-[11.5px] text-[#6b727e]">
+                      {ent.pro
+                        ? "Pro — unlimited"
+                        : ent.solutionsLeft > 0
+                          ? `${ent.solutionsLeft} free solutions left today, then 3 gems`
+                          : `Free solutions used — 3 gems · ${ent.gems} gems`}
+                    </p>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </section>
 
         {/* editor + results */}
@@ -210,11 +322,9 @@ export function Workbench(props: {
                 {booting ? "starting engine…" : "runs in your browser"}
               </span>
             </div>
-            <textarea
-              value={code} onChange={(e) => setCode(e.target.value)} spellCheck={false}
-              className="min-h-0 w-full flex-1 resize-none bg-[#0b0c0f] p-4 font-mono text-[13px] leading-relaxed text-[#e6e8ec] outline-none"
-              aria-label="Code editor"
-            />
+            <div className="min-h-0 flex-1 overflow-hidden">
+              <CodeEditor value={code} onChange={setCode} language="python" />
+            </div>
             <div className="flex items-center justify-between border-t border-[#24262b] px-4 py-2.5">
               <div className="flex gap-2">
                 <button onClick={runTrace} disabled={!!busy || booting}
