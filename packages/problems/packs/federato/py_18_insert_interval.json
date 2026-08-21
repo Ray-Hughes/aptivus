@@ -1,0 +1,451 @@
+{
+  "id": "py_18_insert_interval",
+  "pack": "federato",
+  "kind": "code",
+  "title": "Insert a coverage period into an existing schedule",
+  "difficulty": "medium",
+  "pattern": "intervals",
+  "tags": [
+    "intervals",
+    "arrays",
+    "greedy"
+  ],
+  "minutes": 15,
+  "mode": "function",
+  "prompt": "A schedule holds an insured's coverage periods as `[start_day, end_day]`, already\n**merged and sorted by start**, so no two periods in it overlap.\n\nA new policy is bound. Insert its period and return the schedule still merged and\nstill sorted. As in the merge problem, **touching counts as continuous**: `[1,4]` and\n`[4,5]` are one unbroken period.\n\n```\ninsert_period([[1,3],[6,9]], [2,5])                          -> [[1,5],[6,9]]\ninsert_period([[1,2],[3,5],[6,7],[8,10],[12,16]], [4,8])     -> [[1,2],[3,10],[12,16]]\ninsert_period([], [5,7])                                     -> [[5,7]]\n```\n\nYou should not need to sort. The input is already ordered; use that.\n\n### Why this one\nIt is the interval question that cannot be answered by muscle memory. Merge-intervals\nis \"sort, then sweep\" and people can produce it half-asleep; this one hands you a\nsorted input and asks for a different shape -- three phases: the periods entirely\nbefore the new one, the run that overlaps it and collapses into a single period, and\nthe periods entirely after. Interviewers ask it because the three-phase structure is\nvisible in the code. If you sort the input anyway, that is a signal that you pattern-\nmatched instead of read, and it will come up in the debrief.",
+  "hints": [
+    "The input is already sorted and already merged. That means the periods that overlap the new one form a single contiguous run -- you never have to look backwards.",
+    "Three phases, three loops over the same index. Phase 1: everything that ends before the new period starts, copied straight through. Phase 2: everything that overlaps, absorbed into the new period. Phase 3: the rest, copied straight through.",
+    "Phase 2 is `while i < n and schedule[i][0] <= new_end: new_start = min(new_start, schedule[i][0]); new_end = max(new_end, schedule[i][1]); i += 1`. The comparisons are `<=` and `<` on purpose -- with touching counted as continuous, phase 1's test is `schedule[i][1] < new_start` and phase 2's is `schedule[i][0] <= new_end`."
+  ],
+  "explanation": "### Where this one goes wrong\nTwo places, and both are comparison operators.\n\n**The touching convention.** Decide out loud, before you type, whether `[1,4]` and\n`[4,5]` are one period or two, and then make every comparison agree with that decision.\nHere they are one, so phase 1 skips a period only when it ends **strictly before** the\nnew start, and phase 2 absorbs a period when it starts **at or before** the new end.\nFlip either operator to its strict or non-strict twin and the gap-filling case\n(`[[1,3],[5,8]]` with `[3,5]`, which should collapse to `[[1,8]]`) quietly returns\nthree periods instead of one.\n\n**The greedy end.** Phase 2 extends with `max(new_end, period_end)`, never plain\nassignment. A short new period landing inside a long existing one -- `[[1,10]]` with\n`[3,4]` -- must leave `[[1,10]]` alone, and assignment would shrink it to `[[1,4]]`.\nThat is the same `max` that carries merge-intervals, and it is the same bug.",
+  "followups": [
+    "Remove a period rather than insert one. (Same three phases, but the middle phase can *split* an existing period in two -- the left remnant and the right remnant -- and either can be empty.)",
+    "Return the gaps in coverage after the insert, between the first start and the last end. (One pass over the merged output, emitting [prev_end, next_start] whenever they differ.)",
+    "You are inserting a thousand periods, one at a time. Is this still the right approach? (No -- a thousand O(n) inserts is O(n*k). Collect them all, sort once, and merge: O((n+k) log (n+k)). Or hold the schedule in a balanced interval tree for O(log n) per insert.)"
+  ],
+  "signature": {
+    "name": {
+      "python": "insert_period",
+      "ruby": "insert_period",
+      "javascript": "insertPeriod"
+    },
+    "params": [
+      {
+        "name": "schedule",
+        "type": "int[][]",
+        "description": "non-overlapping, sorted by start"
+      },
+      {
+        "name": "new_period",
+        "type": "int[]"
+      }
+    ],
+    "returns": "int[][]"
+  },
+  "tests": [
+    {
+      "args": [
+        [
+          [
+            1,
+            3
+          ],
+          [
+            6,
+            9
+          ]
+        ],
+        [
+          2,
+          5
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          5
+        ],
+        [
+          6,
+          9
+        ]
+      ],
+      "sample": true
+    },
+    {
+      "args": [
+        [
+          [
+            1,
+            2
+          ],
+          [
+            3,
+            5
+          ],
+          [
+            6,
+            7
+          ],
+          [
+            8,
+            10
+          ],
+          [
+            12,
+            16
+          ]
+        ],
+        [
+          4,
+          8
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          10
+        ],
+        [
+          12,
+          16
+        ]
+      ],
+      "sample": true
+    },
+    {
+      "args": [
+        [],
+        [
+          5,
+          7
+        ]
+      ],
+      "expected": [
+        [
+          5,
+          7
+        ]
+      ],
+      "sample": true
+    },
+    {
+      "args": [
+        [
+          [
+            1,
+            3
+          ],
+          [
+            6,
+            9
+          ]
+        ],
+        [
+          10,
+          12
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          3
+        ],
+        [
+          6,
+          9
+        ],
+        [
+          10,
+          12
+        ]
+      ]
+    },
+    {
+      "args": [
+        [
+          [
+            6,
+            9
+          ]
+        ],
+        [
+          1,
+          3
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          3
+        ],
+        [
+          6,
+          9
+        ]
+      ]
+    },
+    {
+      "args": [
+        [
+          [
+            2,
+            3
+          ],
+          [
+            5,
+            7
+          ],
+          [
+            8,
+            10
+          ]
+        ],
+        [
+          1,
+          12
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          12
+        ]
+      ]
+    },
+    {
+      "args": [
+        [
+          [
+            1,
+            10
+          ]
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          10
+        ]
+      ]
+    },
+    {
+      "args": [
+        [
+          [
+            1,
+            4
+          ],
+          [
+            7,
+            9
+          ]
+        ],
+        [
+          4,
+          5
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          5
+        ],
+        [
+          7,
+          9
+        ]
+      ]
+    },
+    {
+      "args": [
+        [
+          [
+            1,
+            4
+          ],
+          [
+            7,
+            9
+          ]
+        ],
+        [
+          5,
+          7
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          4
+        ],
+        [
+          5,
+          9
+        ]
+      ]
+    },
+    {
+      "args": [
+        [
+          [
+            1,
+            3
+          ],
+          [
+            5,
+            8
+          ]
+        ],
+        [
+          3,
+          5
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          8
+        ]
+      ]
+    },
+    {
+      "args": [
+        [
+          [
+            1,
+            5
+          ]
+        ],
+        [
+          1,
+          5
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          5
+        ]
+      ]
+    },
+    {
+      "args": [
+        [
+          [
+            1,
+            4
+          ]
+        ],
+        [
+          4,
+          4
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          4
+        ]
+      ]
+    },
+    {
+      "args": [
+        [
+          [
+            5,
+            6
+          ]
+        ],
+        [
+          1,
+          2
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          2
+        ],
+        [
+          5,
+          6
+        ]
+      ]
+    },
+    {
+      "args": [
+        [
+          [
+            -10,
+            -5
+          ],
+          [
+            0,
+            2
+          ]
+        ],
+        [
+          -6,
+          0
+        ]
+      ],
+      "expected": [
+        [
+          -10,
+          2
+        ]
+      ]
+    },
+    {
+      "args": [
+        [
+          [
+            -10,
+            -5
+          ],
+          [
+            0,
+            2
+          ]
+        ],
+        [
+          -6,
+          -1
+        ]
+      ],
+      "expected": [
+        [
+          -10,
+          -1
+        ],
+        [
+          0,
+          2
+        ]
+      ]
+    }
+  ],
+  "languages": {
+    "python": {
+      "starter": "def insert_period(schedule, new_period):\n    # schedule: list[[int,int]], non-overlapping and sorted by start\n    # new_period: [int, int] -> list[[int,int]]\n    pass\n",
+      "solution": "def insert_period(schedule, new_period):\n    start, end = new_period\n    out = []\n    i, n = 0, len(schedule)\n\n    # 1. everything that ends strictly before the new period starts\n    while i < n and schedule[i][1] < start:\n        out.append(schedule[i])\n        i += 1\n\n    # 2. the contiguous run that overlaps or touches: absorb it\n    while i < n and schedule[i][0] <= end:\n        start = min(start, schedule[i][0])\n        end = schedule[i][1]      # max, never assignment\n        i += 1\n    out.append([start, end])\n\n    # 3. everything after\n    out.extend(schedule[i:])\n    return out\n",
+      "notes": "### Ruby to Python notes\n- `start, end = new_period` unpacks a two-element list, same as Ruby's `start, end = new_period`. If the list is the wrong length you get `ValueError: not enough values to unpack` rather than a silent `nil`.\n- `end` is a perfectly legal variable name in Python. Coming from Ruby that looks alarming; there is no block terminator to collide with. `min`, `max`, `list` and `id` are the names to actually avoid shadowing.\n- `schedule[i:]` past the end is `[]`, so phase 3 needs no guard.\n- `out.append(schedule[i])` puts the caller's inner list into your result by reference. Harmless here because nothing mutates it afterwards, but `out.append(list(schedule[i]))` is the version you say out loud if the interviewer raises an eyebrow."
+    },
+    "javascript": {
+      "starter": "function insertPeriod(schedule, newPeriod) {\n  // schedule: number[][], non-overlapping and sorted by start\n  // newPeriod: [number, number] -> number[][]\n}\n",
+      "solution": "function insertPeriod(schedule, newPeriod) {\n  let [start, end] = newPeriod;\n  const out = [];\n  let i = 0;\n  const n = schedule.length;\n\n  // 1. everything that ends strictly before the new period starts\n  while (i < n && schedule[i][1] < start) out.push(schedule[i++]);\n\n  // 2. the contiguous run that overlaps or touches: absorb it\n  while (i < n && schedule[i][0] <= end) {\n    start = Math.min(start, schedule[i][0]);\n    end = Math.max(end, schedule[i][1]);       // max, never assignment\n    i++;\n  }\n  out.push([start, end]);\n\n  // 3. everything after\n  while (i < n) out.push(schedule[i++]);\n  return out;\n}\n",
+      "notes": "### Ruby to JavaScript notes\n- `let [start, end] = newPeriod` is array destructuring -- Ruby's parallel assignment. It must be `let`, not `const`, because phase 2 reassigns both.\n- `Math.max(a, b)` takes arguments, not an array: `Math.max(arr)` returns `NaN`, and `NaN` compares false against everything, so a bug here produces silence rather than an error. For an array you need `Math.max(...arr)`.\n- No `extend`. `out.concat(schedule.slice(i))` returns a new array and discards it unless you reassign; the drain loop above avoids the question.\n- `while (i < n && ...)` short-circuits exactly like Ruby's `&&`, so the bounds check protects the index lookup. Without it `schedule[i][1]` on a past-the-end index throws `Cannot read properties of undefined`, which is JavaScript's version of `NoMethodError on nil`.\n\n### Where this one goes wrong\nBoth failure modes are comparison operators. With touching counted as continuous, phase 1\nskips a period only when it ends **strictly before** the new start, and phase 2 absorbs one\nthat starts **at or before** the new end -- flip either and `[[1,3],[5,8]]` with `[3,5]`\nreturns three periods instead of `[[1,8]]`. And phase 2 must extend with `Math.max`, never\nassignment, or `[[1,10]]` with `[3,4]` shrinks to `[[1,4]]`.\n"
+    }
+  },
+  "complexity": "O(n) time, single pass, and O(n) output space. No sort: the input is already ordered."
+}

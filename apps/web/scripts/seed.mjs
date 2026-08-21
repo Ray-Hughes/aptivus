@@ -45,6 +45,13 @@ for (const [slug, name, description, icon, tier, gem] of ACHIEVEMENTS) {
 
 // Admin account. There is deliberately no admin signup route.
 const email = (process.env.ADMIN_EMAIL ?? "r.hughes2136@gmail.com").toLowerCase();
+// A known default password on a deployed admin account is an open door, so
+// the fallback only exists off localhost when explicitly forced.
+const isProd = process.env.NODE_ENV === "production" || process.env.APTIVUS_ENV === "production";
+if (isProd && !process.env.ADMIN_PASSWORD) {
+  console.error("refusing to seed: set ADMIN_PASSWORD (no default outside development)");
+  process.exit(1);
+}
 const password = process.env.ADMIN_PASSWORD ?? "aptivus-dev-admin-2026";
 const digest = await hash(password, { memoryCost: 19456, timeCost: 2, parallelism: 1 });
 const existing = await c.execute({ sql: "SELECT id FROM users WHERE email = ?", args: [email] });

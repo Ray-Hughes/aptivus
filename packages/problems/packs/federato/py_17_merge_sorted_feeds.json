@@ -1,0 +1,460 @@
+{
+  "id": "py_17_merge_sorted_feeds",
+  "pack": "federato",
+  "kind": "code",
+  "title": "Merge two sorted policy feeds",
+  "difficulty": "easy",
+  "pattern": "two pointers",
+  "tags": [
+    "two pointers",
+    "merge",
+    "sorting"
+  ],
+  "minutes": 12,
+  "mode": "function",
+  "prompt": "Two upstream systems each send a feed of policy records, each one\n`[effective_day, policy_id]`, and each feed is **already sorted ascending by\neffective day**. Merge them into one sorted feed.\n\nWhen two records share an effective day, the record from the **first** feed comes\nfirst. That is the ordering ops agreed on and you are not allowed to lose it.\n\n```\na = [[1, \"A1\"], [4, \"A2\"], [9, \"A3\"]]\nb = [[2, \"B1\"], [4, \"B2\"], [5, \"B3\"]]\nmerge_feeds(a, b) -> [[1,\"A1\"], [2,\"B1\"], [4,\"A2\"], [4,\"B2\"], [5,\"B3\"], [9,\"A3\"]]\n```\n\nConcatenating and re-sorting is not the answer. Do it in one pass.\n\n### Why this one\nIt is the merge half of merge sort, and it is asked because it is small enough to\nfinish in ten minutes while still having two places to fall over: the tie-break, and\nthe leftovers. An interviewer is listening for whether you say \"on a tie I take from\n`a`, because the spec says the merge is stable\" *before* you type the comparison, and\nwhether you remember that when one feed runs out the other still has records in it.\nThe second one is the bug that ships.",
+  "hints": [
+    "One index into each feed. At every step you are only ever choosing between two candidates: the front of what is left of a, and the front of what is left of b.",
+    "Take the smaller day. On a tie, take from `a` -- that is what makes the merge stable. Getting `<` where you needed `<=` silently reverses same-day records.",
+    "The loop ends the moment either feed is exhausted, and the other one is usually not. After the loop, append everything still left in a, then everything still left in b. Exactly one of those two appends does anything."
+  ],
+  "explanation": "### The shape, and the three questions it answers\nTwo pointers walking two sorted sequences is one template with three endings:\n\n| Ending | You get |\n|---|---|\n| Emit both sides | merge |\n| Emit only when the keys are equal | intersection (records in both feeds) |\n| Emit only when `a` is strictly smaller | difference (records only in `a`) |\n\nRecognise the shape and all three are the same twelve lines. This is also the reason\nthe answer to \"what if the feeds are too big for memory\" is *nothing changes*: the\nalgorithm only ever looks at one record from each side, so it streams. That sentence\nis worth having ready -- it is where a merge question turns into a systems question.",
+  "followups": [
+    "Return only the policy ids present in both feeds, matched on id. (Same walk, emit on equality; but if you match on id rather than day you need the feeds sorted by id.)",
+    "Return the records in the first feed and not the second. (Same walk, emit when a's key is strictly smaller, and drop both on a tie.)",
+    "The feeds are too large to hold in memory. (Nothing changes: this consumes one record from each side at a time, so point the two pointers at two open file handles.)",
+    "Merge k feeds, not two. (A heap of the k front records: O(n log k). Repeated pairwise merging is O(nk) and an interviewer will ask you to compare them.)"
+  ],
+  "signature": {
+    "name": {
+      "python": "merge_feeds",
+      "ruby": "merge_feeds",
+      "javascript": "mergeFeeds"
+    },
+    "params": [
+      {
+        "name": "a",
+        "type": "any[][]",
+        "description": "[[effective_day, policy_id], ...] sorted ascending by day"
+      },
+      {
+        "name": "b",
+        "type": "any[][]",
+        "description": "same shape, also sorted"
+      }
+    ],
+    "returns": "any[][]"
+  },
+  "tests": [
+    {
+      "args": [
+        [
+          [
+            1,
+            "A1"
+          ],
+          [
+            4,
+            "A2"
+          ],
+          [
+            9,
+            "A3"
+          ]
+        ],
+        [
+          [
+            2,
+            "B1"
+          ],
+          [
+            4,
+            "B2"
+          ],
+          [
+            5,
+            "B3"
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          "A1"
+        ],
+        [
+          2,
+          "B1"
+        ],
+        [
+          4,
+          "A2"
+        ],
+        [
+          4,
+          "B2"
+        ],
+        [
+          5,
+          "B3"
+        ],
+        [
+          9,
+          "A3"
+        ]
+      ],
+      "sample": true
+    },
+    {
+      "args": [
+        [],
+        [
+          [
+            3,
+            "B1"
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          3,
+          "B1"
+        ]
+      ],
+      "sample": true
+    },
+    {
+      "args": [
+        [
+          [
+            7,
+            "A1"
+          ]
+        ],
+        [
+          [
+            7,
+            "B1"
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          7,
+          "A1"
+        ],
+        [
+          7,
+          "B1"
+        ]
+      ],
+      "sample": true
+    },
+    {
+      "args": [
+        [],
+        []
+      ],
+      "expected": []
+    },
+    {
+      "args": [
+        [
+          [
+            1,
+            "A1"
+          ],
+          [
+            2,
+            "A2"
+          ]
+        ],
+        []
+      ],
+      "expected": [
+        [
+          1,
+          "A1"
+        ],
+        [
+          2,
+          "A2"
+        ]
+      ]
+    },
+    {
+      "args": [
+        [
+          [
+            1,
+            "A1"
+          ]
+        ],
+        [
+          [
+            2,
+            "B1"
+          ],
+          [
+            3,
+            "B2"
+          ],
+          [
+            4,
+            "B3"
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          "A1"
+        ],
+        [
+          2,
+          "B1"
+        ],
+        [
+          3,
+          "B2"
+        ],
+        [
+          4,
+          "B3"
+        ]
+      ]
+    },
+    {
+      "args": [
+        [
+          [
+            8,
+            "A1"
+          ],
+          [
+            9,
+            "A2"
+          ],
+          [
+            10,
+            "A3"
+          ]
+        ],
+        [
+          [
+            1,
+            "B1"
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          "B1"
+        ],
+        [
+          8,
+          "A1"
+        ],
+        [
+          9,
+          "A2"
+        ],
+        [
+          10,
+          "A3"
+        ]
+      ]
+    },
+    {
+      "args": [
+        [
+          [
+            1,
+            "A1"
+          ],
+          [
+            2,
+            "A2"
+          ]
+        ],
+        [
+          [
+            8,
+            "B1"
+          ],
+          [
+            9,
+            "B2"
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          1,
+          "A1"
+        ],
+        [
+          2,
+          "A2"
+        ],
+        [
+          8,
+          "B1"
+        ],
+        [
+          9,
+          "B2"
+        ]
+      ]
+    },
+    {
+      "args": [
+        [
+          [
+            2,
+            "A1"
+          ],
+          [
+            2,
+            "A2"
+          ]
+        ],
+        [
+          [
+            2,
+            "B1"
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          2,
+          "A1"
+        ],
+        [
+          2,
+          "A2"
+        ],
+        [
+          2,
+          "B1"
+        ]
+      ]
+    },
+    {
+      "args": [
+        [
+          [
+            5,
+            "A1"
+          ],
+          [
+            5,
+            "A2"
+          ]
+        ],
+        [
+          [
+            5,
+            "B1"
+          ],
+          [
+            5,
+            "B2"
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          5,
+          "A1"
+        ],
+        [
+          5,
+          "A2"
+        ],
+        [
+          5,
+          "B1"
+        ],
+        [
+          5,
+          "B2"
+        ]
+      ]
+    },
+    {
+      "args": [
+        [
+          [
+            -10,
+            "A1"
+          ],
+          [
+            0,
+            "A2"
+          ]
+        ],
+        [
+          [
+            -20,
+            "B1"
+          ],
+          [
+            -10,
+            "B2"
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          -20,
+          "B1"
+        ],
+        [
+          -10,
+          "A1"
+        ],
+        [
+          -10,
+          "B2"
+        ],
+        [
+          0,
+          "A2"
+        ]
+      ]
+    },
+    {
+      "args": [
+        [
+          [
+            3,
+            "A1"
+          ]
+        ],
+        []
+      ],
+      "expected": [
+        [
+          3,
+          "A1"
+        ]
+      ]
+    }
+  ],
+  "languages": {
+    "python": {
+      "starter": "def merge_feeds(a, b):\n    # a, b: list[[int, str]], each sorted ascending by day -> list[[int, str]]\n    pass\n",
+      "solution": "def merge_feeds(a, b):\n    out = []\n    i = j = 0\n    while i < len(a) and j < len(b):\n        if a[i][0] <= b[j][0]:      # <= keeps the merge stable: ties go to a\n            out.append(a[i])\n            i += 1\n        else:\n            out.append(b[j])\n            j += 1\n    out.extend(a[i:])               # exactly one of these two has anything left\n    out.extend(b[j:])\n    return out\n",
+      "notes": "### Ruby to Python notes\n- `i = j = 0` chains the assignment; both names end up bound to the same int. Safe for immutables, a trap for mutables -- `x = y = []` gives you **one** list under two names.\n- `a[i:]` on an out-of-range index is `[]`, not an error. That is why the two `extend` calls need no guard, and it is the single biggest reason this reads more cleanly in Python than in most languages. Ruby's `a[i..]` returns `nil` past the end, so the equivalent Ruby needs the guard.\n- `extend` is `concat`; `append` is `push`. `out.append(a[i:])` would push the *list* as one element -- append and extend are the trap pair here.\n- `heapq.merge(a, b)` does this lazily in the stdlib and generalises to k feeds. Write it by hand first, then name it."
+    },
+    "javascript": {
+      "starter": "function mergeFeeds(a, b) {\n  // a, b: [number, string][], each sorted ascending by day -> [number, string][]\n}\n",
+      "solution": "function mergeFeeds(a, b) {\n  const out = [];\n  let i = 0;\n  let j = 0;\n  while (i < a.length && j < b.length) {\n    if (a[i][0] <= b[j][0]) out.push(a[i++]);   // <= keeps ties in a's favour\n    else out.push(b[j++]);\n  }\n  // Exactly one of these two still has records in it.\n  while (i < a.length) out.push(a[i++]);\n  while (j < b.length) out.push(b[j++]);\n  return out;\n}\n",
+      "notes": "### Ruby to JavaScript notes\n- There is no `extend`/`concat!`. `out.concat(rest)` returns a **new** array and does not mutate `out`, so `out.concat(a.slice(i))` on its own line does nothing at all. Either reassign (`out = out.concat(...)`) or drain with a loop, as above.\n- `out.push(...a.slice(i))` works and is shorter, but spreading a long tail into an argument list can blow the call stack at somewhere around 100k elements. The drain loop has no such limit.\n- `a[i++]` reads then increments, exactly as in C. Ruby has no `++` at all, so this is genuinely new syntax rather than a translation -- and if you find it too clever, increment on its own line.\n- `a.slice(i)` past the end is `[]`, like Python's `a[i:]`. `splice` mutates and returns the removed elements; the names are one letter apart and do opposite things.\n\n### The shape, and the three questions it answers\nThe same twelve lines give you three answers depending on what you emit: both sides is a\nmerge, only-when-equal is an intersection, only-when-`a`-is-smaller is a difference. And\nbecause it only ever looks at one record from each side, it streams -- which is why \"the\nfeeds do not fit in memory\" changes nothing.\n"
+    }
+  },
+  "complexity": "O(n + m) time and O(n + m) output space. O(1) extra beyond the output if you stream it."
+}

@@ -5,6 +5,8 @@ import Credentials from "next-auth/providers/credentials";
 import { db } from "@/db";
 import { accounts, sessions, users, verificationTokens } from "@/db/schema";
 import { sendMagicLink } from "@/lib/email";
+import { assertProductionConfig } from "@/lib/config-guard";
+import { clientIp, rateLimit } from "@/lib/ratelimit";
 import { verifyPassword } from "@/lib/password";
 
 declare module "next-auth" {
@@ -12,6 +14,8 @@ declare module "next-auth" {
     user: { id: string; role: string; email: string; name?: string | null; image?: string | null };
   }
 }
+
+assertProductionConfig();
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: DrizzleAdapter(db, {
@@ -29,10 +33,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       id: "password",
       name: "Email and password",
       credentials: { email: {}, password: {} },
-      async authorize(raw) {
+      async authorize(raw, request) {
         const email = String(raw?.email ?? "").trim().toLowerCase();
         const password = String(raw?.password ?? "");
         if (!email || !password) return null;
+
+        // Password sign-in is the one endpoint worth brute forcing.
+        //
+        // The per-IP limit is the tight one, because that is where an attacker
+        // actually is. The per-account limit is deliberately loose: a strict
+        // one lets anybody lock a victim out of their own account just by
+        // guessing wrong at their address, turning a defence into a denial of
+        // service. It is a backstop against a distributed attempt, not the
+        // primary control.
+        const ip = request instanceof Request ? clientIp(request) : "unknown";
+        if (!rateLimit(`signin:ip:${ip}`, 10, 15 * 60_000).ok) return null;
+        if (!rateLimit(`signin:acct:${email}`, 50, 60 * 60_000).ok) return null;
         const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
         // verifyPassword still hashes when there is no stored digest, so a
         // missing account and a wrong password take the same time.

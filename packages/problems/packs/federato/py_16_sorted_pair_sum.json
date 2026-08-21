@@ -1,0 +1,223 @@
+{
+  "id": "py_16_sorted_pair_sum",
+  "pack": "federato",
+  "kind": "code",
+  "title": "Two accounts hitting a target, on a sorted book",
+  "difficulty": "easy",
+  "pattern": "two pointers",
+  "tags": [
+    "two pointers",
+    "array",
+    "sorting"
+  ],
+  "minutes": 10,
+  "mode": "function",
+  "prompt": "The book of business arrives **already sorted ascending by premium**. An underwriter\nwants exactly two accounts whose premiums add up to a target.\n\nReturn the **indices** `[i, j]` with `i < j`, or `[]` if no pair works. An account\ncannot pair with itself.\n\nIf several pairs work, return the outermost one: the smallest `i`, and with it the\nlargest `j`.\n\n```\nsorted_pair_sum([1000, 2500, 3000, 4500, 7000], 7000) -> [1, 3]\nsorted_pair_sum([1500, 1500, 3000], 3000)             -> [0, 1]\nsorted_pair_sum([1000, 2000], 5000)                   -> []\n```\n\nUse **O(1) extra space**. A dict solves this too, and that is the wrong answer here.\n\n### Why this one\nThis is Two Sum with the sort already done for you, and it is asked precisely to see\nwhether you notice. An interviewer is listening for one sentence -- \"it is sorted, so I\ncan converge two pointers and drop the hash map\" -- and then for whether you can say\n*why* moving a pointer is safe. Candidates who have only memorised the dict version\nwrite the dict version, and the follow-up (\"now do it in constant space\") is where the\nround goes quiet.",
+  "hints": [
+    "You already solved this with a dict. That costs O(n) space. What does the input being sorted let you rule out that an unsorted input would not?",
+    "Put one pointer at each end. If the two premiums add up to too little, the only way to increase the sum is to move the left pointer right; if too much, move the right pointer left.",
+    "while lo < hi: total = a[lo] + a[hi]; equal -> return [lo, hi]; total < target -> lo += 1; total > target -> hi -= 1. Note `lo < hi`, not `lo <= hi` -- with `<=` the two pointers can land on the same element and pair it with itself."
+  ],
+  "explanation": "### Why moving a pointer is safe\nThis is the sentence that separates \"I remember the trick\" from \"I understand it\", and\nit is worth rehearsing:\n\n> If `a[lo] + a[hi] < target`, then `a[lo]` paired with **anything** still in the window\n> is also too small, because `a[hi]` is the largest thing left. So `lo` has no partner\n> and can be discarded forever.\n\nThe mirror argument retires `hi`. Each step throws away exactly one index and never\nthrows away a valid pair, so one pass is enough and the answer, if it exists, survives\nuntil the pointers reach it.",
+  "followups": [
+    "Return every distinct pair that hits the target, not just one. (Same walk; on a hit, record it and then skip past the duplicate values on both sides before continuing.)",
+    "The list is not sorted. Which solution wins? (Sort first: O(n log n) time, O(1) space, but it destroys the original indices. The dict is O(n) time and O(n) space and keeps them. Say the trade-off rather than picking one.)",
+    "Three accounts summing to a target. (Fix the first with an outer loop, run this two-pointer scan on the rest: O(n^2).)"
+  ],
+  "signature": {
+    "name": {
+      "python": "sorted_pair_sum",
+      "ruby": "sorted_pair_sum",
+      "javascript": "sortedPairSum"
+    },
+    "params": [
+      {
+        "name": "premiums",
+        "type": "int[]",
+        "description": "sorted ascending"
+      },
+      {
+        "name": "target",
+        "type": "int"
+      }
+    ],
+    "returns": "int[]"
+  },
+  "tests": [
+    {
+      "args": [
+        [
+          1000,
+          2500,
+          3000,
+          4500,
+          7000
+        ],
+        7000
+      ],
+      "expected": [
+        1,
+        3
+      ],
+      "sample": true
+    },
+    {
+      "args": [
+        [
+          1500,
+          1500,
+          3000
+        ],
+        3000
+      ],
+      "expected": [
+        0,
+        1
+      ],
+      "sample": true
+    },
+    {
+      "args": [
+        [
+          1000,
+          2000
+        ],
+        5000
+      ],
+      "expected": [],
+      "sample": true
+    },
+    {
+      "args": [
+        [],
+        5000
+      ],
+      "expected": []
+    },
+    {
+      "args": [
+        [
+          4200
+        ],
+        4200
+      ],
+      "expected": []
+    },
+    {
+      "args": [
+        [
+          2500,
+          2500
+        ],
+        5000
+      ],
+      "expected": [
+        0,
+        1
+      ]
+    },
+    {
+      "args": [
+        [
+          3000,
+          3000,
+          3000,
+          3000
+        ],
+        6000
+      ],
+      "expected": [
+        0,
+        3
+      ]
+    },
+    {
+      "args": [
+        [
+          1000,
+          2000,
+          4000
+        ],
+        8000
+      ],
+      "expected": []
+    },
+    {
+      "args": [
+        [
+          -4000,
+          -1500,
+          0,
+          1500,
+          4000
+        ],
+        0
+      ],
+      "expected": [
+        0,
+        4
+      ]
+    },
+    {
+      "args": [
+        [
+          -5000,
+          -3000,
+          -1000,
+          2000
+        ],
+        -4000
+      ],
+      "expected": [
+        1,
+        2
+      ]
+    },
+    {
+      "args": [
+        [
+          1000,
+          2000,
+          3000,
+          4000,
+          5000
+        ],
+        9000
+      ],
+      "expected": [
+        3,
+        4
+      ]
+    },
+    {
+      "args": [
+        [
+          1000,
+          3000,
+          5000,
+          7000,
+          9000,
+          11000
+        ],
+        4000
+      ],
+      "expected": [
+        0,
+        1
+      ]
+    }
+  ],
+  "languages": {
+    "python": {
+      "starter": "def sorted_pair_sum(premiums, target):\n    # premiums: list[int], sorted ascending. target: int -> list[int]\n    pass\n",
+      "solution": "def sorted_pair_sum(premiums, target):\n    lo, hi = 0, len(premiums) - 1\n    while lo < hi:                      # strict: an account cannot pair with itself\n        total = premiums[lo] + premiums[hi]\n        if total == target:\n            return [lo, hi]\n        if total < target:\n            lo += 1                     # need more; the largest left is already in\n        else:\n            hi -= 1                     # need less; the smallest left is already in\n    return []\n",
+      "notes": "### Ruby to Python notes\n- `lo, hi = 0, len(premiums) - 1` is parallel assignment, same as Ruby. On an empty list `hi` is `-1`, the loop never runs, and you get `[]` for free -- no empty guard needed.\n- There is no `+=` on integers in the Ruby sense of mutation: `lo += 1` rebinds the name. Fine here, but it means you cannot mutate an int through a function call the way you might expect.\n- Do **not** reach for `while lo <= hi`. Python will happily let `lo == hi` and `premiums[lo] + premiums[hi]` will double one element, returning `[2, 2]` on input like `[1000, 2000, 4000]` with target 8000. The answer there is `[]`.\n- Tempted by `premiums.index(target - p)`? It is O(n) per call and returns the *first* match, which is the wrong tie-break and quietly turns this into O(n^2)."
+    },
+    "javascript": {
+      "starter": "function sortedPairSum(premiums, target) {\n  // premiums: number[], sorted ascending. target: number -> number[]\n}\n",
+      "solution": "function sortedPairSum(premiums, target) {\n  let lo = 0;\n  let hi = premiums.length - 1;\n  while (lo < hi) {                     // strict: an account cannot pair with itself\n    const total = premiums[lo] + premiums[hi];\n    if (total === target) return [lo, hi];\n    if (total < target) lo++;           // need more; the largest left is already in\n    else hi--;                          // need less; the smallest left is already in\n  }\n  return [];\n}\n",
+      "notes": "### Ruby to JavaScript notes\n- `premiums.length - 1` on an empty array is `-1`, the loop never runs, and `[]` falls out. No empty guard needed -- but note that `premiums[-1]` would be `undefined` rather than the last element, so never lean on negative indices the way Ruby lets you.\n- Use `===`, not `==`. `==` coerces, so `0 == \"0\"` and `0 == []` are both true; on a JSON-decoded feed where a premium arrived as a string that is a real bug, not a hypothetical one.\n- **Nothing is returned implicitly.** The trailing `return []` is load-bearing: falling off the end gives `undefined`, which is not an empty array and will fail every no-pair test.\n- `indexOf` is the reflex a Rubyist reaches for in place of `index`, and it is O(n) per call. Using it inside the loop turns a linear scan into a quadratic one without looking any different.\n\n### Why moving a pointer is safe\nIf `a[lo] + a[hi] < target`, then `a[lo]` paired with anything still in the window is also\ntoo small, because `a[hi]` is the largest thing left -- so `lo` has no partner and can be\ndiscarded forever. The mirror argument retires `hi`. Each step throws away exactly one\nindex and never throws away a valid pair.\n"
+    }
+  },
+  "complexity": "O(n) time, O(1) extra space. Sorting first, if the input were unsorted, would make it O(n log n)."
+}

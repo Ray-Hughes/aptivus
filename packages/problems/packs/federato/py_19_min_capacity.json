@@ -1,0 +1,252 @@
+{
+  "id": "py_19_min_capacity",
+  "pack": "federato",
+  "kind": "code",
+  "title": "Smallest capacity to clear the queue in n days",
+  "difficulty": "medium",
+  "pattern": "binary search on the answer",
+  "tags": [
+    "binary search",
+    "greedy",
+    "optimisation"
+  ],
+  "minutes": 18,
+  "mode": "function",
+  "prompt": "A submission queue holds a day's worth of work per entry: `workloads[i]` is the\nnumber of hours the i-th submission needs. The team works through them **in order**\nand cannot split a submission across two days.\n\nGiven a deadline of `days` working days, return the smallest daily capacity, in\nhours, that clears the whole queue in time.\n\n```\nmin_capacity([1,2,3,4,5,6,7,8,9,10], 5)   -> 15\nmin_capacity([1,2,3,4,5,6,7,8,9,10], 10)  -> 10\nmin_capacity([3,2,2,4,1,4], 3)            -> 6\n```\n\nAn empty queue needs no capacity: return `0`.\n\n### Why this one\nNothing in the prompt says \"binary search\", and that is the whole point. The candidate\nhas to notice that the answer lives in a range, that the range is **monotone** -- if\ncapacity `c` clears the queue in time then so does every capacity above it -- and that\nthis turns \"find the minimum\" into \"find the boundary\".\n\nAn interviewer is listening for three things, in this order: the predicate said out\nloud (\"can capacity `c` finish in `days` days?\"), the bounds justified rather than\nguessed (the low bound is the **largest single submission**, because a submission\ncannot be split; the high bound is the total, which always finishes in one day), and\nthe complexity stated as O(n log(sum)) rather than O(log n). Candidates who skip\nstraight to code usually pick `lo = 0` or `lo = 1` and then cannot explain why the\nanswer is still correct.",
+  "hints": [
+    "Do not try to compute the answer. Try to check one: given a fixed capacity c, how many days does the queue take? That is a simple greedy pass -- fill today until the next submission would overflow, then start a new day.",
+    "Now notice that `days_needed(c)` only ever goes down as c goes up. A monotone yes/no over a numeric range is the signature of binary search on the answer: you are searching for the smallest c where the answer flips from 'no' to 'yes'.",
+    "Bounds: lo = max(workloads), because one submission cannot be split across days; hi = sum(workloads), which always finishes in a single day. Then `while lo < hi: mid = (lo+hi)//2; if feasible(mid): hi = mid else: lo = mid + 1` and return lo. This is the 'smallest feasible' template -- note it is `hi = mid`, not `hi = mid - 1`, because mid itself is still a candidate."
+  ],
+  "explanation": "### Two binary search templates, and when to use which\n\nYou have already written `while lo <= hi` with `mid + 1` / `mid - 1` and a saved `ans`\nfor searching a sorted array. That is the right template there. It is **not** the right\none here, and knowing why is worth a lot in a debrief.\n\nSearching an array, you are looking for an element and you must be able to report \"not\nfound\". Searching an answer space, the answer always exists somewhere in `[lo, hi]` and\nyou are narrowing an interval onto it. That calls for:\n\n```\nwhile lo < hi:\n    mid = (lo + hi) // 2\n    if feasible(mid): hi = mid       # mid still a candidate - do not exclude it\n    else:             lo = mid + 1   # mid definitely not - exclude it\nreturn lo                            # lo == hi, the boundary\n```\n\nIt terminates because `mid < hi` whenever `lo < hi` (floor division rounds down), so\nevery branch strictly shrinks the interval. Write `hi = mid - 1` here and you can step\npast the answer; write `lo = mid` in the else branch and you get an infinite loop live\non a call.\n\n### Naming the predicate\nSay \"feasible\" or \"can_finish\", not \"check\". The name is the abstraction: once the\npredicate has a name, the binary search around it is four lines you have written\nbefore, and the interesting work is all in the greedy pass inside it.",
+  "followups": [
+    "Return the actual day-by-day split, not just the capacity. (Run the greedy pass once more at the answer and record where each day breaks.)",
+    "Submissions may be reordered freely. Does this still work? (No -- reordering makes it bin packing, which is NP-hard. The 'in order' constraint is what makes the greedy feasibility check exact, and saying so is the strongest answer you can give here.)",
+    "The workloads are floats, not integers. (The same search, but you iterate a fixed number of times or until hi - lo < epsilon, because there is no next-integer to land on.)",
+    "Same shape, different dressing: minimum eating speed to finish n piles in h hours, or splitting an array into k subarrays with the smallest largest sum. (All the same predicate-plus-boundary skeleton. Recognising the family is the skill.)"
+  ],
+  "signature": {
+    "name": {
+      "python": "min_capacity",
+      "ruby": "min_capacity",
+      "javascript": "minCapacity"
+    },
+    "params": [
+      {
+        "name": "workloads",
+        "type": "int[]",
+        "description": "hours per submission, processed in this order"
+      },
+      {
+        "name": "days",
+        "type": "int"
+      }
+    ],
+    "returns": "int"
+  },
+  "tests": [
+    {
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        5
+      ],
+      "expected": 15,
+      "sample": true
+    },
+    {
+      "args": [
+        [
+          3,
+          2,
+          2,
+          4,
+          1,
+          4
+        ],
+        3
+      ],
+      "expected": 6,
+      "sample": true
+    },
+    {
+      "args": [
+        [
+          1,
+          2,
+          3,
+          1,
+          1
+        ],
+        4
+      ],
+      "expected": 3,
+      "sample": true
+    },
+    {
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        10
+      ],
+      "expected": 10
+    },
+    {
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        1
+      ],
+      "expected": 55
+    },
+    {
+      "args": [
+        [],
+        3
+      ],
+      "expected": 0
+    },
+    {
+      "args": [
+        [
+          7
+        ],
+        1
+      ],
+      "expected": 7
+    },
+    {
+      "args": [
+        [
+          7
+        ],
+        5
+      ],
+      "expected": 7
+    },
+    {
+      "args": [
+        [
+          5,
+          5,
+          5,
+          5
+        ],
+        2
+      ],
+      "expected": 10
+    },
+    {
+      "args": [
+        [
+          5,
+          5,
+          5
+        ],
+        10
+      ],
+      "expected": 5
+    },
+    {
+      "args": [
+        [
+          4,
+          4,
+          4,
+          4
+        ],
+        4
+      ],
+      "expected": 4
+    },
+    {
+      "args": [
+        [
+          100000,
+          1,
+          1
+        ],
+        2
+      ],
+      "expected": 100000
+    },
+    {
+      "args": [
+        [
+          2,
+          3,
+          5,
+          7
+        ],
+        2
+      ],
+      "expected": 10
+    },
+    {
+      "args": [
+        [
+          1,
+          1,
+          1,
+          1
+        ],
+        2
+      ],
+      "expected": 2
+    },
+    {
+      "args": [
+        [
+          3,
+          1,
+          2
+        ],
+        10
+      ],
+      "expected": 3
+    }
+  ],
+  "languages": {
+    "python": {
+      "starter": "def min_capacity(workloads, days):\n    # workloads: list[int], processed strictly in order. days: int -> int\n    pass\n",
+      "solution": "def min_capacity(workloads, days):\n    if not workloads:\n        return 0\n\n    def days_needed(capacity):\n        used, load = 1, 0\n        for w in workloads:\n            if load + w > capacity:     # today is full; start tomorrow\n                used += 1\n                load = 0\n            load += w\n        return used\n\n    lo = max(workloads)                 # a submission cannot be split\n    hi = sum(workloads)                 # one day, everything\n    while lo < hi:                      # smallest-feasible template\n        mid = (lo + hi) // 2\n        if days_needed(mid) <= days:\n            hi = mid                    # mid works; it is still a candidate\n        else:\n            lo = mid + 1                # mid does not; exclude it\n    return lo\n",
+      "notes": "### Ruby to Python notes\n- `max(workloads)` on an empty list raises `ValueError`, it does not return `nil` the way Ruby's `.max` does. That is why the empty guard comes first -- or use `max(workloads, default=0)`, which is the idiom worth knowing.\n- `//` is floor division. `(lo + hi) / 2` gives a float and `days_needed` would then compare a float capacity, which happens to work here but will bite you the moment you index with it. Ruby's `/` on two ints already floors; this is the number one Ruby-to-Python arithmetic trap.\n- A `def` inside a `def` is an ordinary closure and reads `workloads` from the enclosing scope -- Ruby would need a lambda or a private method. Naming the predicate is the point; do not inline it.\n- Python integers are arbitrary precision, so `sum(workloads)` cannot overflow. In most other languages that upper bound is where the overflow bug lives.\n- `load + w > capacity` uses `>`, not `>=`. With `>=` a day that fills exactly to capacity would spill into the next one, and `[1,1,1,1]` in 2 days would come back as 4 instead of 2."
+    },
+    "javascript": {
+      "starter": "function minCapacity(workloads, days) {\n  // workloads: number[], processed strictly in order. days: number -> number\n}\n",
+      "solution": "function minCapacity(workloads, days) {\n  if (workloads.length === 0) return 0;\n\n  const daysNeeded = (capacity) => {\n    let used = 1;\n    let load = 0;\n    for (const w of workloads) {\n      if (load + w > capacity) {        // today is full; start tomorrow\n        used++;\n        load = 0;\n      }\n      load += w;\n    }\n    return used;\n  };\n\n  let lo = Math.max(...workloads);      // a submission cannot be split\n  let hi = workloads.reduce((a, w) => a + w, 0);   // one day, everything\n  while (lo < hi) {                     // smallest-feasible template\n    const mid = Math.floor((lo + hi) / 2);\n    if (daysNeeded(mid) <= days) hi = mid;         // still a candidate\n    else lo = mid + 1;                             // definitely not\n  }\n  return lo;\n}\n",
+      "notes": "### Ruby to JavaScript notes\n- `Math.max(...workloads)` on an empty array is `-Infinity`, not `nil` and not an error -- the search would then run from `-Infinity` and never terminate. The empty guard is not politeness, it is the fix.\n- Spreading is also a stack-size limit: `Math.max(...arr)` throws `RangeError: Maximum call stack size exceeded` somewhere north of 100k elements. `workloads.reduce((a, w) => Math.max(a, w), -Infinity)` has no such ceiling, which is why the sum above uses `reduce` rather than a spread.\n- There is one number type and it is a double. `(lo + hi) / 2` gives `2.5`, so `Math.floor` is mandatory -- and unlike Python, a fractional capacity will not raise, it will quietly search a real interval and return something ending in `.5`.\n- `reduce` is `inject`, but the initial value is the **second** argument and omitting it on an empty array throws. Always pass the `0`.\n- Integers above 2^53 lose precision silently. `sum` as an upper bound is fine for interview inputs; it is worth one sentence if the numbers are large.\n\n### Two binary search templates, and when to use which\nSearching a sorted array for an element you may not find, use `while (lo <= hi)` with\n`mid + 1` / `mid - 1` and a saved answer. Searching an *answer space*, where the answer\nis guaranteed to be in `[lo, hi]`, use `while (lo < hi)` with `hi = mid` on success and\n`lo = mid + 1` on failure, and return `lo`. It terminates because `Math.floor` makes\n`mid < hi` whenever `lo < hi`. Write `hi = mid - 1` here and you step past the answer;\nwrite `lo = mid` and you hang.\n"
+    }
+  },
+  "complexity": "O(n log(sum)) time -- each feasibility check is a single O(n) pass, and the search over the capacity range costs log(sum - max) of them. O(1) extra space."
+}
