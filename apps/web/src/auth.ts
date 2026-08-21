@@ -59,16 +59,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user?.id) token.uid = user.id;
       if (token.uid) {
         const [row] = await db
-          .select({ role: users.role, email: users.email, name: users.displayName, image: users.image })
+          .select({
+            role: users.role,
+            email: users.email,
+            name: users.displayName,
+            image: users.image,
+            deletedAt: users.deletedAt,
+          })
           .from(users)
           .where(eq(users.id, String(token.uid)))
           .limit(1);
-        if (row) {
-          token.role = row.role;
-          token.email = row.email;
-          token.name = row.name;
-          token.picture = row.image;
-        }
+        // Re-read on every request so a demotion or a soft delete takes effect
+        // on the next page load rather than whenever the 30-day JWT expires.
+        // Returning null invalidates the session.
+        if (!row || row.deletedAt) return null;
+        token.role = row.role;
+        token.email = row.email;
+        token.name = row.name;
+        token.picture = row.image;
       }
       return token;
     },

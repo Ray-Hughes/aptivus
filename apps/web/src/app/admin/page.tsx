@@ -133,7 +133,7 @@ export default async function DashboardPage() {
               ) : (
                 recentSignups.map((u) => (
                   <tr key={u.id} className="transition hover:bg-raised/40">
-                    <Td>
+                    <Td className="max-w-56">
                       <Link
                         href={`/admin/users/${u.id}`}
                         className="block min-w-0 hover:text-accent2"
@@ -180,13 +180,13 @@ export default async function DashboardPage() {
               ) : (
                 recentAttempts.map((a) => (
                   <tr key={a.id} className="transition hover:bg-raised/40">
-                    <Td>
+                    <Td className="max-w-56">
                       <span className="block truncate font-medium">
                         {a.problemTitle ?? "(deleted problem)"}
                       </span>
                       <span className="text-xs text-muted">{a.language}</span>
                     </Td>
-                    <Td>
+                    <Td className="max-w-32">
                       <Link
                         href={`/admin/users/${a.userId}`}
                         className="block truncate text-xs text-muted hover:text-accent2"

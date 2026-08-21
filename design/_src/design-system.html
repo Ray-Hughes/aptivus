@@ -1,0 +1,986 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aptivus — Design System</title>
+<meta name="description" content="Tokens, primitives and rules for the Aptivus interface.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/*@CORE@*/
+
+/* ============ design-system page ============ */
+body { background: var(--bg); }
+
+.ds-top {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: center; gap: var(--sp-4);
+  height: 60px; padding: 0 var(--sp-6);
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+}
+.ds-top .tag {
+  font-size: var(--t-xs); color: var(--text-3); padding-left: var(--sp-4);
+  border-left: 1px solid var(--border); margin-left: 2px;
+}
+
+.ds-layout { display: grid; grid-template-columns: 232px minmax(0,1fr); gap: var(--sp-8); max-width: 1400px; margin: 0 auto; padding: 0 var(--sp-6); }
+.ds-nav { position: sticky; top: 60px; align-self: start; height: calc(100vh - 60px); overflow-y: auto; padding: var(--sp-6) 0 var(--sp-16); }
+.ds-nav a {
+  display: block; padding: 6px 12px; border-radius: var(--r-sm); margin-bottom: 1px;
+  font-size: var(--t-sm); color: var(--text-3); border-left: 2px solid transparent;
+  transition: color var(--dur-2) var(--ease), background var(--dur-2) var(--ease);
+}
+.ds-nav a:hover { color: var(--text); background: var(--surface-2); }
+.ds-nav a.on { color: var(--text); border-left-color: var(--accent); background: var(--surface-2); }
+.ds-nav .grp { font-size: var(--t-3xs); text-transform: uppercase; letter-spacing: .1em; color: var(--text-3); padding: var(--sp-4) 12px 6px; font-weight: 600; }
+
+.ds-main { padding: var(--sp-8) 0 var(--sp-24); min-width: 0; }
+.sec { padding-top: var(--sp-10); scroll-margin-top: 76px; }
+.sec > h2 { font-size: var(--t-3xl); margin-bottom: 8px; }
+.sec > .lede { color: var(--text-2); font-size: var(--t-lg); max-width: 68ch; margin-bottom: var(--sp-6); }
+.sec h3.sub { font-size: var(--t-md); color: var(--text); margin: var(--sp-8) 0 var(--sp-3); letter-spacing: 0; }
+.sec h3.sub:first-of-type { margin-top: var(--sp-5); }
+
+.rules { list-style: none; display: grid; gap: 7px; margin: var(--sp-4) 0 0; }
+.rules li { position: relative; padding-left: 20px; font-size: var(--t-sm); color: var(--text-2); line-height: 1.55; }
+.rules li::before { content: ""; position: absolute; left: 4px; top: 8px; width: 5px; height: 5px; border-radius: 2px; background: var(--accent); }
+.rules li strong { color: var(--text); font-weight: 600; }
+.rules.dont li::before { background: var(--danger); }
+
+.demo { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); padding: var(--sp-5); box-shadow: inset 0 1px 0 var(--hairline); }
+.demo + .demo { margin-top: var(--sp-3); }
+.demo-label { font-size: var(--t-2xs); text-transform: uppercase; letter-spacing: .09em; color: var(--text-3); font-weight: 600; margin-bottom: var(--sp-3); }
+
+/* colour */
+.pal-head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4); flex-wrap: wrap; margin-bottom: var(--sp-3); }
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(178px,1fr)); gap: var(--sp-3); }
+.sw {
+  border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; cursor: copy;
+  background: var(--surface); text-align: left; padding: 0; transition: border-color var(--dur-2) var(--ease), transform var(--dur-2) var(--ease-out);
+}
+.sw:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+.sw .chipc { height: 56px; border-bottom: 1px solid var(--border); position: relative; }
+.sw .meta { padding: 8px 10px 10px; }
+.sw .nm { font-size: var(--t-xs); font-weight: 600; color: var(--text); font-family: var(--font-mono); }
+.sw .hx { font-size: var(--t-2xs); color: var(--text-3); font-family: var(--font-mono); text-transform: uppercase; }
+.sw .use { font-size: var(--t-2xs); color: var(--text-3); margin-top: 3px; line-height: 1.4; }
+.pal-box { border: 1px solid var(--border); border-radius: var(--r-lg); padding: var(--sp-4); background: var(--bg); }
+
+.contrast-tbl td.pass { color: var(--success); font-weight: 600; }
+.contrast-tbl td.fail { color: var(--danger); font-weight: 600; }
+
+/* type */
+.type-row { display: grid; grid-template-columns: 148px minmax(0,1fr); gap: var(--sp-4); align-items: baseline; padding: var(--sp-3) 0; border-bottom: 1px solid var(--border); }
+.type-row:last-child { border-bottom: 0; }
+.type-meta { font-family: var(--font-mono); font-size: var(--t-2xs); color: var(--text-3); line-height: 1.5; }
+.type-meta b { display: block; color: var(--text-2); font-size: var(--t-xs); }
+
+/* spacing */
+.sp-row { display: flex; align-items: center; gap: var(--sp-4); padding: 5px 0; }
+.sp-row .k { width: 76px; font-family: var(--font-mono); font-size: var(--t-2xs); color: var(--text-3); }
+.sp-row .v { width: 46px; font-family: var(--font-mono); font-size: var(--t-2xs); color: var(--text-2); }
+.sp-row .b { height: 14px; border-radius: 3px; background: var(--brand-grad); }
+
+.radius-grid { display: flex; gap: var(--sp-4); flex-wrap: wrap; }
+.radius-grid figure { margin: 0; text-align: center; }
+.radius-grid .box { width: 76px; height: 62px; background: var(--surface-3); border: 1px solid var(--border-strong); }
+.radius-grid figcaption { font-family: var(--font-mono); font-size: var(--t-2xs); color: var(--text-3); margin-top: 7px; }
+
+.elev-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: var(--sp-4); }
+.elev-grid .box { height: 84px; border-radius: var(--r-lg); background: var(--surface-2); border: 1px solid var(--border); display: grid; place-items: center; font-family: var(--font-mono); font-size: var(--t-2xs); color: var(--text-3); }
+
+.btn-grid { display: grid; grid-template-columns: 108px repeat(4, minmax(0,1fr)); gap: var(--sp-3); align-items: center; }
+.btn-grid .h { font-size: var(--t-2xs); text-transform: uppercase; letter-spacing: .08em; color: var(--text-3); font-weight: 600; }
+.btn-grid .cell { display: flex; }
+
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px,1fr)); gap: var(--sp-4); }
+
+.motion-row { display: grid; grid-template-columns: 130px 1fr; gap: var(--sp-4); align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: var(--t-sm); }
+.motion-row:last-child { border-bottom: 0; }
+.motion-row .k { font-family: var(--font-mono); font-size: var(--t-xs); color: var(--accent); }
+
+.copied-flash { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); z-index: 100;
+  background: var(--surface-3); border: 1px solid var(--border-strong); color: var(--text);
+  padding: 8px 16px; border-radius: var(--r-full); font-size: var(--t-sm); box-shadow: var(--shadow-3);
+  opacity: 0; transition: opacity var(--dur-2) var(--ease), transform var(--dur-2) var(--ease-out); pointer-events: none; }
+.copied-flash.on { opacity: 1; transform: translateX(-50%) translateY(-4px); }
+
+@media (max-width: 900px) {
+  .ds-layout { grid-template-columns: 1fr; }
+  .ds-nav { position: static; height: auto; display: flex; gap: 6px; overflow-x: auto; padding: var(--sp-3) 0; border-bottom: 1px solid var(--border); }
+  .ds-nav .grp { display: none; }
+  .ds-nav a { white-space: nowrap; border-left: 0; border-bottom: 2px solid transparent; }
+  .ds-nav a.on { border-left: 0; border-bottom-color: var(--accent); }
+  .btn-grid { grid-template-columns: 90px repeat(2, minmax(0,1fr)); }
+}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#ds-main">Skip to content</a>
+<svg width="0" height="0" aria-hidden="true" style="position:absolute">
+  <defs>
+    <linearGradient id="apGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00E5FF"/><stop offset="100%" stop-color="#7C4DFF"/>
+    </linearGradient>
+    <linearGradient id="apGradL" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0090B4"/><stop offset="100%" stop-color="#6A3BE0"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<header class="ds-top">
+  <a class="brand" href="#top">
+    <svg class="mark" width="26" height="26" viewBox="205 145 390 390" aria-hidden="true">
+      <polygon points="400,150 560,245 560,435 400,530 240,435 240,245" fill="none" stroke="url(#apGrad)" stroke-width="20" stroke-linejoin="round"/>
+      <g transform="translate(-12 0)" stroke="currentColor" stroke-width="28" stroke-linecap="round" stroke-linejoin="round" fill="none">
+        <path d="M355 280 L440 340 L355 400"/><line x1="440" y1="400" x2="480" y2="400"/>
+      </g>
+    </svg>
+    <span class="wordmark">Aptivus</span>
+  </a>
+  <span class="tag">Design system <span class="mono" style="color:var(--text-2)">v1.0</span></span>
+  <span class="spacer"></span>
+  <a class="btn btn-ghost btn-sm" href="landing.html">Landing</a>
+  <a class="btn btn-ghost btn-sm" href="profile.html">Profile</a>
+  <a class="btn btn-ghost btn-sm" href="coding.html">Solve</a>
+  <button class="theme-tgl" id="themeBtn" aria-label="Switch to light theme" aria-pressed="false">
+    <svg class="i-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    <svg class="i-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+  </button>
+</header>
+
+<div class="ds-layout" id="top">
+  <nav class="ds-nav" aria-label="Design system sections">
+    <div class="grp">Foundations</div>
+    <a href="#principles">Principles</a>
+    <a href="#brand">Brand</a>
+    <a href="#colour">Colour</a>
+    <a href="#type">Typography</a>
+    <a href="#space">Space &amp; shape</a>
+    <a href="#elevation">Elevation</a>
+    <div class="grp">Components</div>
+    <a href="#buttons">Buttons</a>
+    <a href="#forms">Forms</a>
+    <a href="#surfaces">Cards &amp; surfaces</a>
+    <a href="#badges">Badges &amp; status</a>
+    <a href="#nav">Tabs &amp; segments</a>
+    <a href="#tables">Tables</a>
+    <a href="#code">Code surfaces</a>
+    <a href="#feedback">Feedback</a>
+    <a href="#progress">Progress &amp; rewards</a>
+    <div class="grp">Behaviour</div>
+    <a href="#motion">Motion</a>
+    <a href="#a11y">Accessibility</a>
+  </nav>
+
+  <main class="ds-main" id="ds-main">
+
+    <div style="padding-top:var(--sp-6)">
+      <h1 style="font-size:var(--t-5xl);letter-spacing:-.035em">The Aptivus system</h1>
+      <p class="lede" style="margin-top:var(--sp-4);color:var(--text-2);font-size:var(--t-xl);max-width:64ch">
+        A dark-first interface language for a tool people open when they are nervous. Calm surfaces,
+        one confident accent, and every piece of state legible at a glance.
+      </p>
+    </div>
+
+    <!-- ============== PRINCIPLES ============== -->
+    <section class="sec" id="principles">
+      <h2>Principles</h2>
+      <p class="lede">Five rules that decide the arguments. When two options look equally good, the one that satisfies more of these wins.</p>
+      <div class="demo">
+        <ul class="rules">
+          <li><strong>The code is the subject.</strong> Chrome recedes. The editor, the trace and the problem text get the contrast budget; navigation, toolbars and metadata sit one step back in <code class="inline">--text-2</code> or <code class="inline">--text-3</code>.</li>
+          <li><strong>One accent, spent carefully.</strong> The cyan→violet gradient marks the primary action and the brand. If three things on screen glow, none of them do.</li>
+          <li><strong>State has a colour and a shape.</strong> Pass/fail, changed/unchanged, locked/unlocked never rely on hue alone — there is always an icon, a border, or a label alongside.</li>
+          <li><strong>Density where the work is, air where the story is.</strong> The solve screen runs at 13px and 8px gutters. Marketing and profile run at 16px with 24–96px rhythm.</li>
+          <li><strong>Nothing decorative moves.</strong> Motion confirms a change of state — a step advancing, a panel opening. It never loops for atmosphere.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============== BRAND ============== -->
+    <section class="sec" id="brand">
+      <h2>Brand</h2>
+      <p class="lede">A hexagon drawn in the brand gradient with a <code class="inline">&gt;_</code> prompt inside. The hexagon reads as a chip; the prompt reads as a terminal. Both are true.</p>
+
+      <div class="demo">
+        <div class="demo-label">Lockups</div>
+        <div style="display:flex;gap:var(--sp-10);align-items:flex-end;flex-wrap:wrap">
+          <figure style="margin:0;text-align:center">
+            <svg width="92" height="92" viewBox="205 145 390 390" role="img" aria-label="Aptivus mark">
+              <polygon points="400,150 560,245 560,435 400,530 240,435 240,245" fill="none" stroke="url(#apGrad)" stroke-width="16" stroke-linejoin="round"/>
+              <g transform="translate(-12 0)" stroke="currentColor" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" fill="none">
+                <path d="M355 280 L440 340 L355 400"/><line x1="440" y1="400" x2="480" y2="400"/>
+              </g>
+            </svg>
+            <figcaption class="muted" style="font-size:var(--t-2xs);margin-top:10px">Mark · 24px minimum</figcaption>
+          </figure>
+          <figure style="margin:0;text-align:center">
+            <div class="brand" style="gap:12px">
+              <svg class="mark" width="38" height="38" viewBox="205 145 390 390" aria-hidden="true">
+                <polygon points="400,150 560,245 560,435 400,530 240,435 240,245" fill="none" stroke="url(#apGrad)" stroke-width="18" stroke-linejoin="round"/>
+                <g transform="translate(-12 0)" stroke="currentColor" stroke-width="26" stroke-linecap="round" stroke-linejoin="round" fill="none">
+                  <path d="M355 280 L440 340 L355 400"/><line x1="440" y1="400" x2="480" y2="400"/>
+                </g>
+              </svg>
+              <span style="font-size:var(--t-3xl);font-weight:600;letter-spacing:-.03em">Aptivus</span>
+            </div>
+            <figcaption class="muted" style="font-size:var(--t-2xs);margin-top:10px">Horizontal lockup</figcaption>
+          </figure>
+          <figure style="margin:0;text-align:center">
+            <div style="text-align:center">
+              <div style="font-size:var(--t-2xl);font-weight:600;letter-spacing:.34em;padding-left:.34em">APTIVUS</div>
+              <div class="muted" style="font-size:var(--t-2xs);letter-spacing:.28em;padding-left:.28em;margin-top:6px">PREPARE. PERFORM.</div>
+            </div>
+            <figcaption class="muted" style="font-size:var(--t-2xs);margin-top:10px">Stacked · tagline lockup</figcaption>
+          </figure>
+        </div>
+      </div>
+
+      <div class="demo">
+        <div class="demo-label">Gradient</div>
+        <div style="height:76px;border-radius:var(--r-md);background:var(--brand-grad)"></div>
+        <div class="row" style="margin-top:12px;gap:var(--sp-6);flex-wrap:wrap">
+          <span class="mono" style="font-size:var(--t-xs)"><span style="color:var(--brand-cyan)">■</span> #00E5FF <span class="muted">0%</span></span>
+          <span class="mono" style="font-size:var(--t-xs)"><span style="color:var(--brand-violet)">■</span> #7C4DFF <span class="muted">100%</span></span>
+          <span class="mono muted" style="font-size:var(--t-xs)">135deg</span>
+        </div>
+        <ul class="rules">
+          <li>The gradient angle is always <strong>135deg</strong>, top-left cyan to bottom-right violet. Never re-angled per component.</li>
+          <li>Text on the gradient is <strong>ink</strong> (<code class="inline">--text-on-brand</code>, #04070E) in <em>both</em> themes, never white — white on #00E5FF is 1.7:1.</li>
+          <li>Buttons use <code class="inline">--brand-grad-cta</code>, the same sweep with the violet stop lifted to <span class="mono">#9E7BFF</span>. Ink on the true #7C4DFF is 4.2:1 — close, and still a fail. The lift is 0.3 of a step and nobody can see it; the contrast table below can.</li>
+          <li>Use it for: the mark, the primary button, level/XP fills, and one hero word. Nothing else.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============== COLOUR ============== -->
+    <section class="sec" id="colour">
+      <h2>Colour</h2>
+      <p class="lede">Every colour in the product is a token. Components reference roles — <code class="inline">--surface-2</code>, <code class="inline">--danger</code> — never hex. Swapping <code class="inline">data-theme</code> on <code class="inline">&lt;html&gt;</code> repoints all of them.</p>
+
+      <div class="pal-head">
+        <h3 class="sub" style="margin:0">Dark — the default</h3>
+        <span class="muted" style="font-size:var(--t-xs)">click a swatch to copy its token</span>
+      </div>
+      <div class="pal-box" data-theme="dark"><div class="swatches" id="palDark"></div></div>
+
+      <h3 class="sub">Light</h3>
+      <div class="pal-box" data-theme="light"><div class="swatches" id="palLight"></div></div>
+
+      <h3 class="sub">Contrast — measured, not assumed</h3>
+      <div class="demo">
+        <table class="table contrast-tbl">
+          <thead><tr><th>Pair</th><th>Dark</th><th>Light</th><th>Requirement</th></tr></thead>
+          <tbody id="contrastBody"></tbody>
+        </table>
+        <ul class="rules">
+          <li><code class="inline">--text-3</code> is the floor for body copy. Anything quieter is decorative and must repeat elsewhere.</li>
+          <li>Semantic colours are tuned <strong>per theme</strong>: dark success is #3FDD9A, light success is #0A8F5F. The same hex cannot pass on both grounds.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============== TYPE ============== -->
+    <section class="sec" id="type">
+      <h2>Typography</h2>
+      <p class="lede">Inter for interface, JetBrains Mono for anything a machine produced. Two families, no exceptions — a third font is how a product starts to look assembled rather than designed.</p>
+
+      <div class="demo">
+        <div class="demo-label">Scale</div>
+        <div id="typeScale"></div>
+      </div>
+
+      <div class="demo">
+        <div class="demo-label">Mono specimen</div>
+        <pre class="code" style="font-size:var(--t-sm)"><span class="tok-kw">def</span> <span class="tok-fn">find_pair</span>(premiums, target):
+    seen = {}                       <span class="tok-com"># value -> index we saw it at</span>
+    <span class="tok-kw">for</span> i, p <span class="tok-kw">in</span> <span class="tok-fn">enumerate</span>(premiums):
+        need = target - p
+        <span class="tok-kw">if</span> need <span class="tok-kw">in</span> seen:
+            <span class="tok-kw">return</span> [seen[need], i]
+        seen[p] = i                 <span class="tok-com"># insert AFTER the check</span>
+    <span class="tok-kw">return</span> []</pre>
+      </div>
+
+      <ul class="rules">
+        <li><strong>Tracking tightens as size grows.</strong> −0.022em on headings, −0.035em at display sizes, 0 at body, +0.07em on uppercase micro-labels.</li>
+        <li><strong>Weight 400/500/550/600/650.</strong> No 700 outside the mono specimen — Inter at 700 on a dark ground blooms.</li>
+        <li><strong>Numbers are tabular</strong> wherever they change in place: timers, step counters, gem balances, stat tiles.</li>
+        <li>Measure caps at <strong>68ch</strong> for prose and <strong>78ch</strong> for problem statements.</li>
+      </ul>
+    </section>
+
+    <!-- ============== SPACE ============== -->
+    <section class="sec" id="space">
+      <h2>Space &amp; shape</h2>
+      <p class="lede">A 4px base. Every gap, pad and offset in the product is one of these eleven values.</p>
+      <div class="demo">
+        <div class="demo-label">Spacing scale</div>
+        <div id="spaceScale"></div>
+      </div>
+      <div class="demo">
+        <div class="demo-label">Radius</div>
+        <div class="radius-grid">
+          <figure><div class="box" style="border-radius:var(--r-xs)"></div><figcaption>--r-xs · 6</figcaption></figure>
+          <figure><div class="box" style="border-radius:var(--r-sm)"></div><figcaption>--r-sm · 8</figcaption></figure>
+          <figure><div class="box" style="border-radius:var(--r-md)"></div><figcaption>--r-md · 10</figcaption></figure>
+          <figure><div class="box" style="border-radius:var(--r-lg)"></div><figcaption>--r-lg · 14</figcaption></figure>
+          <figure><div class="box" style="border-radius:var(--r-xl)"></div><figcaption>--r-xl · 20</figcaption></figure>
+          <figure><div class="box" style="border-radius:var(--r-full)"></div><figcaption>--r-full · pill</figcaption></figure>
+        </div>
+        <ul class="rules">
+          <li><strong>Controls 8–10px, cards 14px, sheets 20px, pills full.</strong> Nesting rule: an inner radius is the outer minus its padding, so corners stay concentric.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============== ELEVATION ============== -->
+    <section class="sec" id="elevation">
+      <h2>Elevation</h2>
+      <p class="lede">On a near-black ground, shadow alone is invisible. Aptivus separates layers with <em>surface value</em> first, a 1px border second, and shadow only for things that genuinely float.</p>
+      <div class="demo">
+        <div class="elev-grid">
+          <div class="box" style="background:var(--bg)">--bg</div>
+          <div class="box" style="background:var(--surface)">--surface</div>
+          <div class="box" style="background:var(--surface-2)">--surface-2</div>
+          <div class="box" style="background:var(--surface-3)">--surface-3</div>
+          <div class="box" style="background:var(--surface-in)">--surface-in</div>
+        </div>
+        <div class="elev-grid" style="margin-top:var(--sp-5)">
+          <div class="box" style="box-shadow:var(--shadow-1)">--shadow-1 · resting</div>
+          <div class="box" style="box-shadow:var(--shadow-2)">--shadow-2 · hover</div>
+          <div class="box" style="box-shadow:var(--shadow-3)">--shadow-3 · overlay</div>
+          <div class="box" style="box-shadow:var(--glow-brand)">--glow-brand · CTA</div>
+        </div>
+        <ul class="rules">
+          <li><code class="inline">--surface-in</code> goes <strong>darker</strong> than the card it sits in. Inputs, code wells and terminals are recessed, not raised.</li>
+          <li>Cards carry <code class="inline">inset 0 1px 0 var(--hairline)</code> — a one-pixel top highlight that gives an edge without a shadow.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============== BUTTONS ============== -->
+    <section class="sec" id="buttons">
+      <h2>Buttons</h2>
+      <p class="lede">One primary per view. Everything below it is quieter by design, so the eye always knows where the commit action is.</p>
+
+      <div class="demo">
+        <div class="demo-label">Variants × states — every cell is live, tab through them</div>
+        <div class="btn-grid">
+          <span class="h"></span><span class="h">Rest</span><span class="h">Hover</span><span class="h">Focus</span><span class="h">Disabled</span>
+
+          <span class="h">Primary</span>
+          <span class="cell"><button class="btn btn-primary">Submit</button></span>
+          <span class="cell"><button class="btn btn-primary" style="filter:brightness(1.09);box-shadow:var(--glow-brand)">Submit</button></span>
+          <span class="cell"><button class="btn btn-primary" style="outline:2px solid var(--ring);outline-offset:2px">Submit</button></span>
+          <span class="cell"><button class="btn btn-primary" disabled>Submit</button></span>
+
+          <span class="h">Secondary</span>
+          <span class="cell"><button class="btn btn-secondary">Run code</button></span>
+          <span class="cell"><button class="btn btn-secondary" style="background:var(--surface-3);border-color:var(--text-3)">Run code</button></span>
+          <span class="cell"><button class="btn btn-secondary" style="outline:2px solid var(--ring);outline-offset:2px">Run code</button></span>
+          <span class="cell"><button class="btn btn-secondary" disabled>Run code</button></span>
+
+          <span class="h">Outline</span>
+          <span class="cell"><button class="btn btn-outline">Trace</button></span>
+          <span class="cell"><button class="btn btn-outline" style="border-color:var(--accent);color:var(--accent);background:var(--accent-quiet)">Trace</button></span>
+          <span class="cell"><button class="btn btn-outline" style="outline:2px solid var(--ring);outline-offset:2px">Trace</button></span>
+          <span class="cell"><button class="btn btn-outline" disabled>Trace</button></span>
+
+          <span class="h">Ghost</span>
+          <span class="cell"><button class="btn btn-ghost">Reset code</button></span>
+          <span class="cell"><button class="btn btn-ghost" style="background:var(--surface-2);color:var(--text)">Reset code</button></span>
+          <span class="cell"><button class="btn btn-ghost" style="outline:2px solid var(--ring);outline-offset:2px">Reset code</button></span>
+          <span class="cell"><button class="btn btn-ghost" disabled>Reset code</button></span>
+
+          <span class="h">Accent</span>
+          <span class="cell"><button class="btn btn-accent">Ask</button></span>
+          <span class="cell"><button class="btn btn-accent" style="background:var(--accent);color:var(--text-on-brand)">Ask</button></span>
+          <span class="cell"><button class="btn btn-accent" style="outline:2px solid var(--ring);outline-offset:2px">Ask</button></span>
+          <span class="cell"><button class="btn btn-accent" disabled>Ask</button></span>
+
+          <span class="h">Danger</span>
+          <span class="cell"><button class="btn btn-danger">End round</button></span>
+          <span class="cell"><button class="btn btn-danger" style="background:var(--danger);color:#fff">End round</button></span>
+          <span class="cell"><button class="btn btn-danger" style="outline:2px solid var(--ring);outline-offset:2px">End round</button></span>
+          <span class="cell"><button class="btn btn-danger" disabled>End round</button></span>
+        </div>
+      </div>
+
+      <div class="demo">
+        <div class="demo-label">Sizes, icons, toggles, loading</div>
+        <div class="row-wrap" style="gap:var(--sp-4)">
+          <button class="btn btn-primary btn-lg">Start free</button>
+          <button class="btn btn-primary">Submit <span class="kbd-hint">⌘↵</span></button>
+          <button class="btn btn-primary btn-sm">Submit</button>
+          <button class="btn btn-secondary btn-xs">step</button>
+          <button class="btn btn-secondary btn-icon" aria-label="Next step">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+          <button class="btn btn-secondary" id="tglBtn" aria-pressed="false">Autoplay off</button>
+          <button class="btn btn-secondary" id="loadBtn">Run code</button>
+          <button class="btn btn-ghost tip" data-tip="Hover me — tooltips live on .tip">Tooltip</button>
+        </div>
+        <ul class="rules">
+          <li><strong>Primary = commit.</strong> Submit, Start free, Upgrade. Never Cancel, never a tab.</li>
+          <li>Destructive actions are <strong>outline-danger at rest</strong> and only fill on hover, so a mis-click is never one pixel away from red.</li>
+          <li>Keyboard shortcut hints live inside the button at 85% size and 62% opacity.</li>
+          <li>A loading button keeps its width and swaps its label for a spinner — the layout never jumps.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============== FORMS ============== -->
+    <section class="sec" id="forms">
+      <h2>Forms</h2>
+      <p class="lede">Recessed fields on raised cards. Focus is a border colour change plus a 3px quiet halo — never a bare browser outline, never nothing.</p>
+      <div class="demo">
+        <div class="form-grid">
+          <div class="field">
+            <label class="label" for="f1">Display name</label>
+            <input class="input" id="f1" value="Ray Hughes">
+          </div>
+          <div class="field">
+            <label class="label" for="f2">Search</label>
+            <div class="input-affix">
+              <span class="affix"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5" stroke-linecap="round"/></svg></span>
+              <input class="input" id="f2" placeholder="filter by title, tag, pattern…">
+            </div>
+          </div>
+          <div class="field">
+            <label class="label" for="f3">Target company</label>
+            <select class="select" id="f3">
+              <option>Federato</option><option>Stripe</option><option>Databricks</option><option>Ramp</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="label" for="f4">Email</label>
+            <input class="input" id="f4" value="not-an-email" aria-invalid="true" aria-describedby="f4e">
+            <span class="err" id="f4e">Enter an address we can send a sign-in link to.</span>
+          </div>
+          <div class="field">
+            <label class="label" for="f5">Disabled</label>
+            <input class="input" id="f5" value="Locked on the free plan" disabled>
+          </div>
+          <div class="field">
+            <label class="label" for="f6">Notes</label>
+            <textarea class="textarea" id="f6" placeholder="What tripped you up on this one?"></textarea>
+            <span class="help">Saved per problem, never sent anywhere.</span>
+          </div>
+        </div>
+        <div class="row-wrap" style="margin-top:var(--sp-5);gap:var(--sp-6)">
+          <label class="check"><input type="checkbox" checked> <span>Hide hidden test values</span></label>
+          <label class="check"><input type="checkbox"> <span>Warn at 5 minutes left</span></label>
+          <label class="check"><input type="radio" name="lang" checked> <span>Python 3</span></label>
+          <label class="check"><input type="radio" name="lang"> <span>MySQL</span></label>
+          <label class="switch"><input type="checkbox" checked><span style="font-size:var(--t-sm)">Autoplay the trace</span></label>
+        </div>
+        <div style="max-width:320px;margin-top:var(--sp-5)">
+          <label class="label" for="f7">Step <span class="mono" id="rangeOut" style="color:var(--accent)">14</span> / 22</label>
+          <input class="range" id="f7" type="range" min="1" max="22" value="14">
+        </div>
+      </div>
+      <ul class="rules">
+        <li>Labels sit above fields, always visible. <strong>No placeholder-as-label</strong> — it disappears exactly when the user needs it.</li>
+        <li>Errors use <code class="inline">aria-invalid</code> + <code class="inline">aria-describedby</code> and say what to do, not what went wrong.</li>
+        <li>Hit targets are <strong>≥ 34px tall</strong>; the 23px switch and 17px checkbox get their target from the wrapping label.</li>
+      </ul>
+    </section>
+
+    <!-- ============== SURFACES ============== -->
+    <section class="sec" id="surfaces">
+      <h2>Cards &amp; surfaces</h2>
+      <p class="lede">Three shapes cover the product: the plain <code class="inline">.card</code>, the header/body/footer card, and the recessed <code class="inline">.well</code>.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:var(--sp-4)">
+        <div class="card card-pad">
+          <div class="stat-n">4<span style="font-size:var(--t-lg);color:var(--text-3);margin-left:2px">/27</span></div>
+          <div class="muted" style="font-size:var(--t-xs);margin-top:6px">solved this week</div>
+        </div>
+        <div class="card card-hover" tabindex="0" style="cursor:pointer">
+          <div class="card-hd"><h3>Federato pack</h3><span class="spacer"></span><span class="badge badge-python">27</span></div>
+          <div class="card-bd" style="font-size:var(--t-sm);color:var(--text-2)">SQL and algorithms in P&amp;C underwriting vocabulary. Hover or focus this card.</div>
+          <div class="card-ft row"><span class="muted" style="font-size:var(--t-xs)">Updated 3 days ago</span><span class="spacer"></span><button class="btn btn-ghost btn-sm">Open</button></div>
+        </div>
+        <div class="card card-pad">
+          <div class="demo-label" style="margin-bottom:10px">Recessed well</div>
+          <div class="well" style="padding:12px;font-family:var(--font-mono);font-size:var(--t-xs);color:var(--text-2)">[2500, 7500, 11000, 4000], 6500</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== BADGES ============== -->
+    <section class="sec" id="badges">
+      <h2>Badges &amp; status</h2>
+      <p class="lede">Small, uppercase-adjacent, always paired with a word. Difficulty, language and plan each own a fixed colour across the whole product.</p>
+      <div class="demo">
+        <div class="demo-label">Difficulty · language · plan</div>
+        <div class="row-wrap">
+          <span class="badge badge-easy">easy</span>
+          <span class="badge badge-medium">medium</span>
+          <span class="badge badge-hard">hard</span>
+          <span class="badge badge-python">Python</span>
+          <span class="badge badge-sql">SQL</span>
+          <span class="badge badge-pro">PRO</span>
+          <span class="badge badge-new">generated</span>
+          <span class="badge">hash map</span>
+        </div>
+        <div class="demo-label" style="margin-top:var(--sp-5)">Problem status — colour plus a glyph, never colour alone</div>
+        <div class="row-wrap">
+          <span class="badge badge-dot" style="color:var(--success)"><span>Solved</span></span>
+          <span class="badge badge-dot" style="color:var(--warning)"><span>Attempted</span></span>
+          <span class="badge badge-dot" style="color:var(--text-3)"><span>Not started</span></span>
+          <span class="badge badge-dot" style="color:var(--danger)"><span>3 tests failing</span></span>
+        </div>
+        <div class="demo-label" style="margin-top:var(--sp-5)">Economy</div>
+        <div class="row-wrap">
+          <span class="gem-chip"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M6 2h12l4 7-10 13L2 9z" opacity=".9"/></svg> 148</span>
+          <span class="flame-chip"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2s5 4.5 5 9a5 5 0 0 1-10 0c0-1.5.6-2.8 1.4-3.8C8.7 8.6 9 10 10 10c0-3 2-5.6 2-8z"/></svg> 12 days</span>
+          <span class="badge" style="background:var(--accent-quiet);color:var(--accent);border-color:var(--accent-line)">5 hints left today</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== NAV ============== -->
+    <section class="sec" id="nav">
+      <h2>Tabs &amp; segments</h2>
+      <p class="lede">Tabs switch context and own a URL. Segments filter what is already on screen and never do.</p>
+      <div class="demo">
+        <div class="demo-label">Tabs — arrow keys move, Home/End jump</div>
+        <div class="tabs" role="tablist" id="dsTabs">
+          <button class="tab" role="tab" aria-selected="true" data-p="t1">Description</button>
+          <button class="tab" role="tab" aria-selected="false" data-p="t2">Hints</button>
+          <button class="tab" role="tab" aria-selected="false" data-p="t3">Solution</button>
+        </div>
+        <div style="padding:var(--sp-4) 2px;font-size:var(--t-sm);color:var(--text-2)">
+          <div data-panel="t1">Given a list of premiums and a target, return the indices of the two accounts that sum to it.</div>
+          <div data-panel="t2" hidden>Hint 1 of 3 — what would let you ask "have I already seen the number I need?" in O(1)?</div>
+          <div data-panel="t3" hidden>Costs 1 solution from today's allowance, or 3 gems. Free once you have passed the tests.</div>
+        </div>
+        <div class="demo-label" style="margin-top:var(--sp-5)">Segmented control</div>
+        <div class="seg" id="dsSeg">
+          <button aria-selected="true">All</button><button aria-selected="false">Python</button><button aria-selected="false">SQL</button>
+        </div>
+        <span class="muted" style="font-size:var(--t-xs);margin-left:12px" id="segOut">showing 27 problems</span>
+      </div>
+    </section>
+
+    <!-- ============== TABLES ============== -->
+    <section class="sec" id="tables">
+      <h2>Tables</h2>
+      <p class="lede">No vertical rules, no zebra. A hairline under each row, a hover tint, and a status glyph in the first column. Sortable headers are buttons.</p>
+      <div class="card" style="overflow:hidden">
+        <table class="table table-rows" id="dsTable">
+          <thead><tr>
+            <th style="width:34px"></th>
+            <th><button class="btn btn-ghost btn-xs" data-sort="title" style="padding:0;color:inherit;font:inherit">Problem ▲</button></th>
+            <th>Type</th><th>Pattern</th><th>Difficulty</th><th style="text-align:right">Target</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============== CODE ============== -->
+    <section class="sec" id="code">
+      <h2>Code surfaces</h2>
+      <p class="lede">Four of them: the inline token, the block, the numbered editor, and the terminal. All share one syntax palette, retuned per theme.</p>
+
+      <div class="demo">
+        <div class="demo-label">Numbered — with the trace line active</div>
+        <div class="code-frame">
+          <div class="code-hd"><span class="dots"><i></i><i></i><i></i></span> solution.py <span class="spacer"></span><span>Python 3.12</span></div>
+          <div class="codelines" style="padding:10px 0">
+            <span class="ln">1</span><span class="lc"><span class="tok-kw">def</span> <span class="tok-fn">find_pair</span>(premiums, target):</span>
+            <span class="ln">2</span><span class="lc">    seen = {}</span>
+            <span class="ln">3</span><span class="lc">    <span class="tok-kw">for</span> i, p <span class="tok-kw">in</span> <span class="tok-fn">enumerate</span>(premiums):</span>
+            <span class="ln active">4</span><span class="lc active">        need = target - p</span>
+            <span class="ln">5</span><span class="lc">        <span class="tok-kw">if</span> need <span class="tok-kw">in</span> seen:</span>
+            <span class="ln">6</span><span class="lc">            <span class="tok-kw">return</span> [seen[need], i]</span>
+            <span class="ln">7</span><span class="lc">        seen[p] = i</span>
+            <span class="ln">8</span><span class="lc">    <span class="tok-kw">return</span> []</span>
+          </div>
+        </div>
+        <div class="row" style="margin-top:10px;font-size:var(--t-xs);color:var(--text-3)">
+          <span>Active line: a left-to-right fade of <code class="inline">--accent-quiet</code> plus a 2px cyan spine on the gutter. Never a solid block — the code has to stay readable underneath.</span>
+        </div>
+      </div>
+
+      <div class="demo">
+        <div class="demo-label">Terminal / output well</div>
+        <pre class="code" style="color:var(--text-2)"><span style="color:var(--success)">✓</span> case 1  [2500, 7500, 11000, 4000], 6500  →  [0, 3]      <span class="muted">2ms</span>
+<span style="color:var(--success)">✓</span> case 2  [3000, 3000], 6000                →  [0, 1]      <span class="muted">1ms</span>
+<span style="color:var(--danger)">✗</span> case 3  [5, -2, 7, 1], 5                  →  <span style="color:var(--danger)">[0, 2]</span>      <span class="muted">expected [1, 2]</span></pre>
+      </div>
+
+      <div class="demo">
+        <div class="demo-label">Syntax tokens</div>
+        <div class="row-wrap" style="font-family:var(--font-mono);font-size:var(--t-xs)">
+          <span class="tok-kw">--c-kw keyword</span><span class="tok-str">--c-str string</span><span class="tok-num">--c-num number</span>
+          <span class="tok-fn">--c-fn function</span><span class="tok-type">--c-type builtin</span><span class="tok-punc">--c-punc operator</span><span class="tok-com">--c-com comment</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== FEEDBACK ============== -->
+    <section class="sec" id="feedback">
+      <h2>Feedback</h2>
+      <p class="lede">Inline notes explain a state that is on screen. Toasts confirm something that just happened and then leave.</p>
+      <div class="demo">
+        <div class="col" style="gap:10px">
+          <div class="note note-ok"><b>All 8 tests passed.</b> +2 gems · the write-up is now free on this problem.</div>
+          <div class="note note-bad"><b>3 of 8 tests failed.</b> Open the failing case and hit <em>Trace this case</em> to step it.</div>
+          <div class="note note-warn"><b>2 hints left today.</b> Resets in 6h 12m, or spend 1 gem.</div>
+          <div class="note note-info">Trace runs on a fresh execution, so calls with side effects cannot disturb your session.</div>
+          <div class="note">Neutral note — used for the quiet explanatory line under a control.</div>
+        </div>
+        <div class="row-wrap" style="margin-top:var(--sp-5)">
+          <button class="btn btn-secondary btn-sm" data-toast="ok">Toast · success</button>
+          <button class="btn btn-secondary btn-sm" data-toast="bad">Toast · error</button>
+          <button class="btn btn-secondary btn-sm" data-toast="gem">Toast · reward</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== PROGRESS ============== -->
+    <section class="sec" id="progress">
+      <h2>Progress &amp; rewards</h2>
+      <p class="lede">The retention surface has its own primitives: bars, rings, badge tiles and the streak grid. They are part of the system, not one-off profile decoration.</p>
+      <div class="demo">
+        <div class="demo-label">Bars</div>
+        <div class="col" style="gap:var(--sp-4);max-width:520px">
+          <div><div class="row" style="font-size:var(--t-xs);margin-bottom:6px"><span>Level 7 → 8</span><span class="spacer"></span><span class="mono muted">1,840 / 2,400 XP</span></div><div class="bar"><i style="width:76%"></i></div></div>
+          <div><div class="row" style="font-size:var(--t-xs);margin-bottom:6px"><span>hash map</span><span class="spacer"></span><span class="mono muted">6 / 6</span></div><div class="bar bar-success"><i style="width:100%"></i></div></div>
+          <div><div class="row" style="font-size:var(--t-xs);margin-bottom:6px"><span>dynamic programming</span><span class="spacer"></span><span class="mono muted">1 / 5</span></div><div class="bar bar-danger"><i style="width:20%"></i></div></div>
+        </div>
+        <div class="demo-label" style="margin-top:var(--sp-6)">Rings</div>
+        <div class="row-wrap" style="gap:var(--sp-6)" id="ringRow"></div>
+        <div class="demo-label" style="margin-top:var(--sp-6)">Achievement tiles — earned and locked</div>
+        <div class="row-wrap" style="gap:var(--sp-3)" id="badgeRow"></div>
+      </div>
+    </section>
+
+    <!-- ============== MOTION ============== -->
+    <section class="sec" id="motion">
+      <h2>Motion</h2>
+      <p class="lede">Three durations, two curves. Anything longer than 280ms is a page transition, and Aptivus does not have those.</p>
+      <div class="demo">
+        <div class="motion-row"><span class="k">--dur-1 90ms</span><span>Press feedback, hover tint, chip highlight. Below the threshold where you notice it.</span></div>
+        <div class="motion-row"><span class="k">--dur-2 160ms</span><span>Default. Colour, border and shadow transitions on every control.</span></div>
+        <div class="motion-row"><span class="k">--dur-3 280ms</span><span>Something arriving or leaving: toast, panel, bar fill, ring sweep.</span></div>
+        <div class="motion-row"><span class="k">--ease</span><span>cubic-bezier(.4,0,.2,1) — state changes in place.</span></div>
+        <div class="motion-row"><span class="k">--ease-out</span><span>cubic-bezier(.16,1,.3,1) — things entering. Fast start, soft landing.</span></div>
+        <div class="note note-info" style="margin-top:var(--sp-4)"><span><b>prefers-reduced-motion</b> collapses every duration to 0.01ms and cancels the solve confetti. It is in the core stylesheet, not per component, so nothing can forget it.</span></div>
+      </div>
+    </section>
+
+    <!-- ============== A11Y ============== -->
+    <section class="sec" id="a11y">
+      <h2>Accessibility</h2>
+      <p class="lede">Non-negotiable, and cheaper to hold than to retrofit.</p>
+      <div class="demo">
+        <ul class="rules">
+          <li><strong>One focus rule for the whole product.</strong> <code class="inline">:focus-visible</code> → 2px <code class="inline">--ring</code> at 2px offset. It is never removed; components that need a different look change <code class="inline">--ring</code>, not the rule.</li>
+          <li><strong>Body text meets 4.5:1, large text 3:1</strong> on its own surface, verified per theme in the contrast table above.</li>
+          <li><strong>Colour is never the only signal.</strong> Passing tests get a ✓, failing get an ✗, changed variables get a border <em>and</em> a tint.</li>
+          <li><strong>The solve screen is fully keyboard-driven:</strong> ⌘↵ submits, ⌘⇧↵ runs, ← → step the trace, <kbd>T</kbd> toggles it, <kbd>N</kbd> takes the next problem.</li>
+          <li><strong>Live regions</strong> announce run results and step narration, so a screen-reader user hears "line 4 set need = 4000" rather than nothing.</li>
+          <li><strong>Panels are resizable but never below their minimum</strong>, and the drag handles are also arrow-key adjustable when focused.</li>
+        </ul>
+      </div>
+    </section>
+
+    <p class="muted" style="margin-top:var(--sp-16);font-size:var(--t-xs);text-align:center">
+      Aptivus design system · tokens live in one <code class="inline">core.css</code> shared by every prototype in this folder.
+    </p>
+  </main>
+</div>
+
+<div class="toast-stack" id="toasts" aria-live="polite"></div>
+<div class="copied-flash" id="flash" role="status"></div>
+
+<script>
+(function () {
+  "use strict";
+  const $ = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+
+  /* ---------- theme ---------- */
+  const root = document.documentElement, tBtn = $("#themeBtn");
+  function setTheme(t) {
+    root.setAttribute("data-theme", t);
+    tBtn.setAttribute("aria-pressed", String(t === "light"));
+    tBtn.setAttribute("aria-label", t === "light" ? "Switch to dark theme" : "Switch to light theme");
+    try { localStorage.setItem("aptivus.theme", t); } catch (e) {}
+  }
+  tBtn.addEventListener("click", () => setTheme(root.getAttribute("data-theme") === "light" ? "dark" : "light"));
+  try { const s = localStorage.getItem("aptivus.theme"); if (s) setTheme(s); } catch (e) {}
+
+  /* ---------- palette data ---------- */
+  const PAL = [
+    ["--bg",           "#08090C", "#F7F8FB", "app ground"],
+    ["--bg-elev",      "#0C0E13", "#FFFFFF", "raised ground: bars, sheets"],
+    ["--surface",      "#111319", "#FFFFFF", "cards, panels"],
+    ["--surface-2",    "#171A22", "#F2F4F9", "toolbars, table hover"],
+    ["--surface-3",    "#1E222C", "#E8ECF4", "chips, tracks, hover fill"],
+    ["--surface-in",   "#06070A", "#F7F9FC", "recessed: inputs, code, terminal"],
+    ["--border",       "#23262F", "#E1E6EF", "default hairline"],
+    ["--border-strong","#333846", "#C7D0DE", "focusable edges, dividers"],
+    ["--text",         "#E9ECF3", "#0B0E15", "primary copy"],
+    ["--text-2",       "#A7AEBF", "#4B5468", "secondary copy"],
+    ["--text-3",       "#7C8494", "#6B7486", "meta — the quiet floor"],
+    ["--accent",       "#2ED8F0", "#0A7490", "links, active tab, trace line"],
+    ["--violet",       "#A38BFF", "#6234D8", "SQL, generated content"],
+    ["--success",      "#3FDD9A", "#0A7A50", "passing tests, easy, solved"],
+    ["--warning",      "#FFC15E", "#9A5B00", "medium, allowance running out"],
+    ["--danger",       "#FF7A85", "#C22A3A", "failing tests, hard"],
+    ["--gem",          "#59C7FF", "#0A66AA", "gem balance"],
+    ["--flame",        "#FF9153", "#C1470E", "streak"],
+    ["--ring",         "#4FD1F0", "#0A7490", "focus ring"]
+  ];
+  function paint(el, idx) {
+    el.innerHTML = PAL.map(function (p) {
+      return '<button class="sw" data-tok="' + p[0] + '" data-hex="' + p[idx] + '">' +
+        '<div class="chipc" style="background:' + p[idx] + '"></div>' +
+        '<div class="meta"><div class="nm">' + p[0] + '</div><div class="hx">' + p[idx] + '</div>' +
+        '<div class="use">' + p[3] + "</div></div></button>";
+    }).join("");
+  }
+  paint($("#palDark"), 1);
+  paint($("#palLight"), 2);
+
+  const flash = $("#flash");
+  let flashT = null;
+  document.addEventListener("click", function (e) {
+    const sw = e.target.closest(".sw");
+    if (!sw) return;
+    const txt = "var(" + sw.dataset.tok + ")";
+    if (navigator.clipboard) navigator.clipboard.writeText(txt).catch(function () {});
+    flash.textContent = "Copied " + txt + "  ·  " + sw.dataset.hex;
+    flash.classList.add("on");
+    clearTimeout(flashT);
+    flashT = setTimeout(function () { flash.classList.remove("on"); }, 1400);
+  });
+
+  /* ---------- contrast: computed, not claimed ---------- */
+  function lum(hex) {
+    const c = [1, 3, 5].map(function (i) {
+      let v = parseInt(hex.substr(i, 2), 16) / 255;
+      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  }
+  function ratio(a, b) {
+    const l1 = lum(a), l2 = lum(b);
+    return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+  }
+  const PAIRS = [
+    ["--text on --bg",        "#E9ECF3", "#08090C", "#0B0E15", "#F7F8FB", 4.5],
+    ["--text-2 on --surface", "#A7AEBF", "#111319", "#4B5468", "#FFFFFF", 4.5],
+    ["--text-3 on --surface", "#7C8494", "#111319", "#6B7486", "#FFFFFF", 4.5],
+    ["--accent on --surface", "#2ED8F0", "#111319", "#0A7490", "#FFFFFF", 4.5],
+    ["--success on --surface","#3FDD9A", "#111319", "#0A7A50", "#FFFFFF", 4.5],
+    ["--warning on --surface","#FFC15E", "#111319", "#9A5B00", "#FFFFFF", 4.5],
+    ["--danger on --surface", "#FF7A85", "#111319", "#C22A3A", "#FFFFFF", 4.5],
+    ["ink on CTA sweep · cyan end",   "#04070E", "#00E5FF", "#04070E", "#00E5FF", 4.5],
+    ["ink on CTA sweep · violet end", "#04070E", "#9E7BFF", "#04070E", "#9E7BFF", 4.5],
+    ["ink on raw #7C4DFF (why the CTA stop is lifted)", "#04070E", "#7C4DFF", "#04070E", "#7C4DFF", 4.5]
+  ];
+  $("#contrastBody").innerHTML = PAIRS.map(function (p) {
+    const d = ratio(p[1], p[2]), l = ratio(p[3], p[4]);
+    const cell = function (v) {
+      return '<td class="' + (v >= p[5] ? "pass" : "fail") + '">' + v.toFixed(2) + ":1 " + (v >= p[5] ? "✓" : "✗") + "</td>";
+    };
+    return "<tr><td>" + p[0] + "</td>" + cell(d) + cell(l) +
+      '<td class="muted">AA · ' + p[5].toFixed(1) + ":1</td></tr>";
+  }).join("");
+
+  /* ---------- type scale ---------- */
+  const TYPE = [
+    ["--t-6xl", "64px", "600 / -.035em", "Prepare. Perform."],
+    ["--t-5xl", "48px", "600 / -.035em", "Step through what your code did"],
+    ["--t-4xl", "36px", "600 / -.028em", "Built for the round you are sitting"],
+    ["--t-3xl", "28px", "600 / -.022em", "Two accounts hitting a premium target"],
+    ["--t-2xl", "22px", "600 / -.022em", "Rewards and achievements"],
+    ["--t-xl",  "18px", "400 / -.006em", "Lead paragraph — one size above body."],
+    ["--t-lg",  "16px", "400 / 0",       "Marketing body copy sits here."],
+    ["--t-md",  "14px", "400 / 0",       "Default application body text."],
+    ["--t-sm",  "13px", "400 / 0",       "Dense application UI: the solve screen."],
+    ["--t-xs",  "12px", "400 / 0",       "Metadata, table cells, help text."],
+    ["--t-2xs", "11px", "600 / .015em",  "BADGES AND GUTTERS"],
+    ["--t-3xs", "10px", "600 / .1em",    "SECTION MICRO-LABEL"]
+  ];
+  $("#typeScale").innerHTML = TYPE.map(function (t) {
+    const up = t[0] === "--t-3xs" || t[0] === "--t-2xs";
+    return '<div class="type-row"><div class="type-meta"><b>' + t[0] + "</b>" + t[1] + "<br>" + t[2] + "</div>" +
+      '<div style="font-size:var(' + t[0] + ');font-weight:' + t[2].split(" ")[0] +
+      ";letter-spacing:" + t[2].split("/ ")[1] + (up ? ";text-transform:uppercase" : "") +
+      ';line-height:1.25;overflow:hidden;text-overflow:ellipsis">' + t[3] + "</div></div>";
+  }).join("");
+
+  /* ---------- spacing scale ---------- */
+  const SP = [1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24];
+  const SPV = { 1: 4, 2: 8, 3: 12, 4: 16, 5: 20, 6: 24, 8: 32, 10: 40, 12: 48, 16: 64, 20: 80, 24: 96 };
+  $("#spaceScale").innerHTML = SP.map(function (k) {
+    return '<div class="sp-row"><span class="k">--sp-' + k + '</span><span class="v">' + SPV[k] +
+      'px</span><span class="b" style="width:' + SPV[k] + 'px"></span></div>';
+  }).join("");
+
+  /* ---------- toggle + loading buttons ---------- */
+  const tgl = $("#tglBtn");
+  tgl.addEventListener("click", function () {
+    const on = tgl.getAttribute("aria-pressed") === "true";
+    tgl.setAttribute("aria-pressed", String(!on));
+    tgl.textContent = on ? "Autoplay off" : "Autoplay on";
+  });
+  const load = $("#loadBtn");
+  load.addEventListener("click", function () {
+    if (load.disabled) return;
+    const w = load.offsetWidth, label = load.textContent;
+    load.style.width = w + "px";
+    load.disabled = true;
+    load.innerHTML = '<span class="spin" style="width:14px;height:14px;border-radius:50%;border:2px solid currentColor;border-top-color:transparent;display:inline-block;animation:sp .7s linear infinite"></span>';
+    setTimeout(function () { load.disabled = false; load.textContent = label; load.style.width = ""; toast("ok", "8 of 8 sample tests passed"); }, 1200);
+  });
+  const kf = document.createElement("style");
+  kf.textContent = "@keyframes sp{to{transform:rotate(360deg)}}";
+  document.head.appendChild(kf);
+
+  /* ---------- tabs ---------- */
+  const tabs = $$("#dsTabs .tab");
+  function selectTab(btn) {
+    tabs.forEach(function (t) {
+      const on = t === btn;
+      t.setAttribute("aria-selected", String(on));
+      t.tabIndex = on ? 0 : -1;
+      const panel = $('[data-panel="' + t.dataset.p + '"]');
+      if (panel) panel.hidden = !on;
+    });
+    btn.focus();
+  }
+  tabs.forEach(function (t, i) {
+    t.tabIndex = t.getAttribute("aria-selected") === "true" ? 0 : -1;
+    t.addEventListener("click", function () { selectTab(t); });
+    t.addEventListener("keydown", function (e) {
+      const map = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 };
+      if (!(e.key in map)) return;
+      e.preventDefault();
+      selectTab(tabs[(map[e.key] + tabs.length) % tabs.length]);
+    });
+  });
+
+  /* ---------- segmented ---------- */
+  const segBtns = $$("#dsSeg button");
+  const COUNTS = { All: 27, Python: 15, SQL: 12 };
+  segBtns.forEach(function (b) {
+    b.addEventListener("click", function () {
+      segBtns.forEach(function (x) { x.setAttribute("aria-selected", String(x === b)); });
+      $("#segOut").textContent = "showing " + COUNTS[b.textContent] + " problems";
+      renderTable(b.textContent);
+    });
+  });
+
+  /* ---------- table ---------- */
+  const ROWS = [
+    ["Two accounts hitting a premium target", "Python", "hash map", "easy", 10, "solved"],
+    ["Top K brokers by submission volume", "Python", "counting + heap", "easy", 12, "solved"],
+    ["Merge overlapping coverage periods", "Python", "intervals / sort", "medium", 15, "tried"],
+    ["Order the workflow steps", "Python", "topological sort", "hard", 20, "none"],
+    ["Submissions by appetite tier", "SQL", "LEFT JOIN + GROUP BY", "easy", 12, "solved"],
+    ["Running exposure by month", "SQL", "window function", "medium", 15, "none"],
+    ["Broker hierarchy rollup", "SQL", "recursive CTE", "hard", 18, "none"]
+  ];
+  let sortAsc = true, filter = "All";
+  function renderTable(f) {
+    if (f) filter = f;
+    const glyph = { solved: ['<span style="color:var(--success)">✓</span>', "Solved"],
+                    tried: ['<span style="color:var(--warning)">◐</span>', "Attempted"],
+                    none:  ['<span style="color:var(--text-3)">○</span>', "Not started"] };
+    const rows = ROWS.filter(function (r) { return filter === "All" || r[1] === filter; })
+      .slice().sort(function (a, b) { return sortAsc ? a[0].localeCompare(b[0]) : b[0].localeCompare(a[0]); });
+    $("#dsTable tbody").innerHTML = rows.map(function (r) {
+      return "<tr><td>" + glyph[r[5]][0] + '<span class="sr-only">' + glyph[r[5]][1] + "</span></td>" +
+        '<td style="font-weight:550">' + r[0] + "</td>" +
+        '<td><span class="badge badge-' + r[1].toLowerCase() + '">' + r[1] + "</span></td>" +
+        '<td class="muted">' + r[2] + "</td>" +
+        '<td><span class="badge badge-' + r[3] + '">' + r[3] + "</span></td>" +
+        '<td class="num" style="text-align:right">' + r[4] + " min</td></tr>";
+    }).join("");
+  }
+  renderTable();
+  $('[data-sort="title"]').addEventListener("click", function (e) {
+    sortAsc = !sortAsc;
+    e.target.textContent = "Problem " + (sortAsc ? "▲" : "▼");
+    renderTable();
+  });
+
+  /* ---------- range ---------- */
+  $("#f7").addEventListener("input", function (e) { $("#rangeOut").textContent = e.target.value; });
+
+  /* ---------- toasts ---------- */
+  const ICONS = {
+    ok:  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+    bad: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>',
+    gem: '<svg width="16" height="16" viewBox="0 0 24 24" fill="var(--gem)"><path d="M6 2h12l4 7-10 13L2 9z"/></svg>'
+  };
+  const MSG = {
+    ok:  "<b>Solved.</b><br><span class='muted'>Two accounts hitting a premium target · 4m 12s</span>",
+    bad: "<b>3 of 8 tests failed.</b><br><span class='muted'>Open case 3 to trace it</span>",
+    gem: "<b>+2 gems</b><br><span class='muted'>Clean solve, no hints. Balance 150.</span>"
+  };
+  function toast(kind, override) {
+    const el = document.createElement("div");
+    el.className = "toast";
+    el.innerHTML = ICONS[kind] + "<div style='flex:1'>" + (override ? "<b>" + override + "</b>" : MSG[kind]) + "</div>";
+    $("#toasts").appendChild(el);
+    setTimeout(function () { el.classList.add("out"); setTimeout(function () { el.remove(); }, 200); }, 3200);
+  }
+  $$("[data-toast]").forEach(function (b) { b.addEventListener("click", function () { toast(b.dataset.toast); }); });
+
+  /* ---------- rings ---------- */
+  const RINGS = [["hash map", 100], ["sliding window", 66], ["graphs", 40], ["DP", 20]];
+  $("#ringRow").innerHTML = RINGS.map(function (r) {
+    const C = 2 * Math.PI * 26;
+    return '<figure style="margin:0;text-align:center;width:86px">' +
+      '<svg class="ring" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="' + r[0] + " " + r[1] + '% complete">' +
+      '<circle class="track" cx="32" cy="32" r="26" stroke-width="6"/>' +
+      '<circle class="fill" cx="32" cy="32" r="26" stroke-width="6" stroke-dasharray="' + C +
+      '" stroke-dashoffset="' + (C * (1 - r[1] / 100)) + '"/></svg>' +
+      '<figcaption style="font-size:var(--t-2xs);color:var(--text-3);margin-top:7px">' + r[0] +
+      '<br><span style="color:var(--text-2);font-weight:600">' + r[1] + "%</span></figcaption></figure>";
+  }).join("");
+
+  /* ---------- achievement tiles ---------- */
+  const BADGES = [
+    ["◆", "First blood", 1], ["⚡", "Clean sweep", 1], ["🔥", "7-day streak", 1],
+    ["◎", "SQL surgeon", 0], ["★", "No hints, hard", 0]
+  ];
+  $("#badgeRow").innerHTML = BADGES.map(function (b) {
+    const on = b[2] === 1;
+    return '<div class="tip" data-tip="' + (on ? "Earned" : "Locked — keep going") + '" tabindex="0" ' +
+      'style="width:88px;text-align:center;padding:12px 6px;border-radius:var(--r-md);border:1px solid ' +
+      (on ? "var(--accent-line)" : "var(--border)") + ";background:" + (on ? "var(--accent-quiet)" : "var(--surface-2)") +
+      ";opacity:" + (on ? "1" : ".55") + '">' +
+      '<div style="font-size:22px;line-height:1;filter:' + (on ? "none" : "grayscale(1)") + '">' + b[0] + "</div>" +
+      '<div style="font-size:var(--t-2xs);margin-top:8px;color:' + (on ? "var(--text)" : "var(--text-3)") + '">' + b[1] + "</div></div>";
+  }).join("");
+
+  /* ---------- scrollspy ---------- */
+  const links = $$(".ds-nav a");
+  const secs = links.map(function (a) { return document.getElementById(a.getAttribute("href").slice(1)); }).filter(Boolean);
+  const spy = new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) {
+      if (!en.isIntersecting) return;
+      links.forEach(function (a) { a.classList.toggle("on", a.getAttribute("href") === "#" + en.target.id); });
+    });
+  }, { rootMargin: "-70px 0px -70% 0px", threshold: 0 });
+  secs.forEach(function (s) { spy.observe(s); });
+  document.documentElement.style.scrollBehavior = "smooth";
+})();
+</script>
+</body>
+</html>
