@@ -296,7 +296,8 @@ code, pre, kbd { font-family: var(--font-mono); font-variant-ligatures: none; }
 .btn[aria-pressed="true"], .btn.is-on {
   background: var(--accent); color: var(--text-on-brand); border-color: var(--accent);
 }
-.btn .kbd-hint { font-family: var(--font-mono); font-size: .85em; opacity: .62; }
+/* .75, not .62: at .62 the hint computes to 3.56:1 against the violet end of the CTA sweep. */
+.btn .kbd-hint { font-family: var(--font-mono); font-size: .85em; opacity: .75; }
 
 kbd {
   display: inline-block; padding: 1px 6px; font-size: var(--t-2xs);
@@ -1587,6 +1588,16 @@ let CUR = PROBLEMS.py01;
 let hintsUsed = 0, hintsLeft = 5, solsLeft = 3, solRevealed = false, solved = false;
 let gems = 148, submitLocked = false;
 
+/* The starter is a planted wrong attempt — a demo device, not a shipping default.
+   The toast says so for 3 seconds; this says so for as long as the tab is open. */
+function demoBanner() {
+  return '<div class="note note-info" style="margin:var(--sp-4) var(--sp-5) 0;font-size:var(--t-2xs)">' + '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex:0 0 auto;margin-top:2px"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>' +
+    "<span><b>This pad opens mid-attempt, on purpose.</b> The starter is a deliberate half-right attempt — " +
+    (CUR.kind === "sql"
+      ? "an <code>INNER JOIN</code> where the answer needs a <code>LEFT JOIN</code>"
+      : "line 5 inserts into <code>seen</code> before line 6 checks it") +
+    " — so there is something to Run, fail and Trace. The product ships starters as an empty body.</span></div>";
+}
 function renderProblem() {
   $("#pTitle").textContent = CUR.title;
   $("#pDiff").textContent = CUR.difficulty;
@@ -1594,7 +1605,7 @@ function renderProblem() {
   $("#pKind").textContent = CUR.kind === "sql" ? "SQL" : "Python";
   $("#pKind").className = "badge meta-badge badge-" + (CUR.kind === "sql" ? "sql" : "python");
   $("#pPattern").textContent = CUR.pattern;
-  $("#probDesc").innerHTML = '<div class="prose">' + CUR.body + "</div>";
+  $("#probDesc").innerHTML = demoBanner() + '<div class="prose">' + CUR.body + "</div>";
   $("#fileName").textContent = CUR.file;
   $("#langSel").value = CUR.kind;
   $("#followups").innerHTML = CUR.followups.map(function (f) { return "<li>" + f + "</li>"; }).join("");

@@ -296,7 +296,8 @@ code, pre, kbd { font-family: var(--font-mono); font-variant-ligatures: none; }
 .btn[aria-pressed="true"], .btn.is-on {
   background: var(--accent); color: var(--text-on-brand); border-color: var(--accent);
 }
-.btn .kbd-hint { font-family: var(--font-mono); font-size: .85em; opacity: .62; }
+/* .75, not .62: at .62 the hint computes to 3.56:1 against the violet end of the CTA sweep. */
+.btn .kbd-hint { font-family: var(--font-mono); font-size: .85em; opacity: .75; }
 
 kbd {
   display: inline-block; padding: 1px 6px; font-size: var(--t-2xs);
@@ -1296,9 +1297,9 @@ body.col-resizing { cursor: col-resize; user-select: none; }
           </div>
           <div class="preflight" id="preflight">
             <label class="check"><input type="checkbox"><span class="lbl"><b>Water, pen and paper.</b> You will want to walk an example by hand — every unstuck moment comes from that.</span></label>
-            <label class="check"><input type="checkbox"><span class="lbl"><b>Phone off, door shut, Slack closed.</b> Forty-five minutes is short.</span></label>
+            <label class="check"><input type="checkbox"><span class="lbl"><b>Phone off, door shut, Slack closed.</b> The clock is shorter than it sounds.</span></label>
             <label class="check"><input type="checkbox"><span class="lbl"><b>Say it out loud.</b> Silence reads as being stuck. Narrate the decisions, not the characters.</span></label>
-            <label class="check"><input type="checkbox"><span class="lbl"><b>Record yourself on one of these.</b> Play it back. It is unpleasant and it is the highest-value 45 minutes you will spend.</span></label>
+            <label class="check"><input type="checkbox"><span class="lbl"><b>Record yourself on one of these.</b> Play it back. It is unpleasant and it is the highest-value time you will spend tonight.</span></label>
           </div>
           <div class="divider" style="margin:16px 0 14px"></div>
           <label class="switch" style="font-size:var(--t-sm);color:var(--text-2)">
@@ -2099,7 +2100,7 @@ function onSecond() {
     R.said.zero = 1; say("Time. You are into overtime — it is counted separately.");
     toast("info", "Time", "Nothing has closed. Overtime is scored on its own line.");
   }
-  if (SETUP.nudge && R.elapsed - R.lastKeyAt === 45 && R.elapsed - R.nudgeShownAt > 120 && R.lastKeyAt > 0) {
+  if (SETUP.nudge && R.elapsed - R.lastKeyAt === 45 && R.elapsed - R.nudgeShownAt > 120 && R.lastKeyAt >= 0) {
     R.nudgeShownAt = R.elapsed; $("#nudge").hidden = false;
     setTimeout(() => { $("#nudge").hidden = true; }, 9000);
   }
@@ -2490,9 +2491,14 @@ function buildVerdict(S) {
     p1 = "Neither problem closed" + (S.over ? ", and you were " + mmss(S.over) + " past the end when you stopped" : "") +
          ". Read that as information, not as a verdict — you have the shape of both, and both stalled in the same place, which makes it a fixable round rather than a bad one.";
     const worst = S.P.slice().sort((x, y) => y.t.debug - x.t.debug)[0];
-    p2 = "You spent " + dur(worst.t.debug) + " debugging the " + half(worst) + " after the first failing run. " +
-         "That is the pattern to break: at three minutes stuck, a real interviewer wants to hear <em>“I know I want a " +
-         worst.ref.pattern + " here, I am not sure how to …”</em> rather than silence with a cursor blinking.";
+    const anyRun = S.P.some(p => p.runs > 0);
+    p2 = !anyRun
+      ? "You never ran either one. Whatever else happens in a round, get something running — a partial answer you can point at and reason about beats a perfect one nobody ever saw execute."
+      : worst.t.debug < 120
+      ? "Neither one reached a passing run, and neither stalled in debugging — which means the gap was the approach rather than the execution. Spend the first ninety seconds stating the brute force out loud before you type."
+      : "You spent " + dur(worst.t.debug) + " debugging the " + half(worst) + " after the first failing run. " +
+        "That is the pattern to break: at three minutes stuck, a real interviewer wants to hear <em>“I know I want a " +
+        worst.ref.pattern + " here, I am not sure how to …”</em> rather than silence with a cursor blinking.";
   }
 
   const st = S.P.find(p => p.stopped);

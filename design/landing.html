@@ -296,7 +296,8 @@ code, pre, kbd { font-family: var(--font-mono); font-variant-ligatures: none; }
 .btn[aria-pressed="true"], .btn.is-on {
   background: var(--accent); color: var(--text-on-brand); border-color: var(--accent);
 }
-.btn .kbd-hint { font-family: var(--font-mono); font-size: .85em; opacity: .62; }
+/* .75, not .62: at .62 the hint computes to 3.56:1 against the violet end of the CTA sweep. */
+.btn .kbd-hint { font-family: var(--font-mono); font-size: .85em; opacity: .75; }
 
 kbd {
   display: inline-block; padding: 1px 6px; font-size: var(--t-2xs);

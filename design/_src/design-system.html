@@ -70,6 +70,7 @@ body { background: var(--bg); }
 .sw .use { font-size: var(--t-2xs); color: var(--text-3); margin-top: 3px; line-height: 1.4; }
 .pal-box { border: 1px solid var(--border); border-radius: var(--r-lg); padding: var(--sp-4); background: var(--bg); }
 
+#dsTable tbody tr { cursor: default; }   /* specimen — nothing to open */
 .contrast-tbl td.pass { color: var(--success); font-weight: 600; }
 .contrast-tbl td.fail { color: var(--danger); font-weight: 600; }
 
@@ -280,6 +281,10 @@ body { background: var(--bg); }
         </table>
         <ul class="rules">
           <li><code class="inline">--text-3</code> is the floor for body copy. Anything quieter is decorative and must repeat elsewhere.</li>
+          <li>One deliberate exception, stated so it is not mistaken for an oversight: code comments
+            (<code class="inline">--c-com</code>) sit at 3.35:1 on <code class="inline">--surface-in</code>.
+            Dimming comments below the code is the convention every editor uses, and a comment never
+            carries information the code does not. Nothing else is allowed under 4.5:1.</li>
           <li>Semantic colours are tuned <strong>per theme</strong>: dark success is #3FDD9A, light success is #0A7A50. The same hex cannot pass on both grounds.</li>
         </ul>
       </div>
@@ -498,13 +503,13 @@ body { background: var(--bg); }
       <p class="lede">Three shapes cover the product: the plain <code class="inline">.card</code>, the header/body/footer card, and the recessed <code class="inline">.well</code>.</p>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:var(--sp-4)">
         <div class="card card-pad">
-          <div class="stat-n">4<span style="font-size:var(--t-lg);color:var(--text-3);margin-left:2px">/27</span></div>
+          <div class="stat-n">4<span style="font-size:var(--t-lg);color:var(--text-3);margin-left:2px">/32</span></div>
           <div class="muted" style="font-size:var(--t-xs);margin-top:6px">solved this week</div>
         </div>
         <div class="card card-hover" tabindex="0" style="cursor:pointer">
-          <div class="card-hd"><h3>Federato pack</h3><span class="spacer"></span><span class="badge badge-python">27</span></div>
+          <div class="card-hd"><h3>Federato pack</h3><span class="spacer"></span><span class="badge badge-python">32</span></div>
           <div class="card-bd" style="font-size:var(--t-sm);color:var(--text-2)">SQL and algorithms in P&amp;C underwriting vocabulary. Hover or focus this card.</div>
-          <div class="card-ft row"><span class="muted" style="font-size:var(--t-xs)">Updated 3 days ago</span><span class="spacer"></span><button class="btn btn-ghost btn-sm">Open</button></div>
+          <div class="card-ft row"><span class="muted" style="font-size:var(--t-xs)">Updated 3 days ago</span><span class="spacer"></span><button class="btn btn-ghost btn-sm" title="Specimen — this page shows the component, the pack pages do the navigating">Open <span class="muted" style="font-weight:400">· specimen</span></button></div>
         </div>
         <div class="card card-pad">
           <div class="demo-label" style="margin-bottom:10px">Recessed well</div>
@@ -565,15 +570,17 @@ body { background: var(--bg); }
         <div class="seg" id="dsSeg">
           <button aria-selected="true">All</button><button aria-selected="false">Python</button><button aria-selected="false">SQL</button>
         </div>
-        <span class="muted" style="font-size:var(--t-xs);margin-left:12px" id="segOut">showing 27 problems</span>
+        <span class="muted" style="font-size:var(--t-xs);margin-left:12px" id="segOut">showing 32 problems</span>
       </div>
     </section>
 
     <!-- ============== TABLES ============== -->
     <section class="sec" id="tables">
       <h2>Tables</h2>
-      <p class="lede">No vertical rules, no zebra. A hairline under each row, a hover tint, and a status glyph in the first column. Sortable headers are buttons.</p>
+      <p class="lede">No vertical rules, no zebra. A hairline under each row, a hover tint, and a status glyph in the first column. Sortable headers are buttons.
+         Sorting and the filter above are live; the rows themselves are specimens and do not navigate.</p>
       <div class="card" style="overflow:hidden">
+        <!-- specimen: the hover tint is the point; these rows do not navigate -->
         <table class="table table-rows" id="dsTable">
           <thead><tr>
             <th style="width:34px"></th>
@@ -876,7 +883,7 @@ body { background: var(--bg); }
 
   /* ---------- segmented ---------- */
   const segBtns = $$("#dsSeg button");
-  const COUNTS = { All: 27, Python: 15, SQL: 12 };
+  const COUNTS = { All: 32, Python: 20, SQL: 12 };
   segBtns.forEach(function (b) {
     b.addEventListener("click", function () {
       segBtns.forEach(function (x) { x.setAttribute("aria-selected", String(x === b)); });
