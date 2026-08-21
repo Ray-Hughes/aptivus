@@ -6,6 +6,7 @@ import { profiles, users } from "@/db/schema";
 import { sendVerifyEmail } from "@/lib/email";
 import { hashPassword, passwordProblem } from "@/lib/password";
 import { clientIp, rateLimit } from "@/lib/ratelimit";
+import { siteOrigin } from "@/lib/origin";
 import { issueToken } from "@/lib/tokens";
 
 const Body = z.object({
@@ -35,7 +36,7 @@ export async function POST(req: Request) {
   if (existing) {
     // Do not confirm that an address is registered. Tell the owner instead.
     const token = await issueToken(existing.id, "password_reset", ip);
-    await sendVerifyEmail(email, `${process.env.AUTH_URL}/reset/${token}`);
+    await sendVerifyEmail(email, `${await siteOrigin()}/reset/${token}`);
     return NextResponse.json({ ok: true });
   }
 
@@ -47,6 +48,6 @@ export async function POST(req: Request) {
   await db.insert(profiles).values({ userId: user.id }).onConflictDoNothing();
 
   const token = await issueToken(user.id, "email_verify", ip);
-  await sendVerifyEmail(email, `${process.env.AUTH_URL}/verify/${token}`);
+  await sendVerifyEmail(email, `${await siteOrigin()}/verify/${token}`);
   return NextResponse.json({ ok: true });
 }

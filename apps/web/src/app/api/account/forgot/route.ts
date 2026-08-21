@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import { sendPasswordReset } from "@/lib/email";
 import { clientIp, rateLimit } from "@/lib/ratelimit";
+import { siteOrigin } from "@/lib/origin";
 import { issueToken } from "@/lib/tokens";
 
 const Body = z.object({ email: z.string().email().max(254) });
@@ -23,7 +24,7 @@ export async function POST(req: Request) {
   const [user] = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
   if (user) {
     const token = await issueToken(user.id, "password_reset", ip);
-    await sendPasswordReset(email, `${process.env.AUTH_URL}/reset/${token}`);
+    await sendPasswordReset(email, `${await siteOrigin()}/reset/${token}`);
   }
   return same;
 }

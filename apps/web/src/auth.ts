@@ -24,6 +24,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     sessionsTable: sessions as never,
     verificationTokensTable: verificationTokens as never,
   }),
+  // Pinned rather than inferred. next-auth derives basePath from AUTH_URL's
+  // pathname, so an AUTH_URL carrying any path other than "/" silently makes
+  // every /api/auth/* route reject with "Bad request." - and every auth route
+  // fails identically, which reads like a broken deployment rather than a
+  // misconfigured variable.
+  basePath: "/api/auth",
   // JWT sessions: the Credentials provider cannot use database sessions.
   session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
   pages: { signIn: "/signin", error: "/signin", verifyRequest: "/signin/check-email" },
