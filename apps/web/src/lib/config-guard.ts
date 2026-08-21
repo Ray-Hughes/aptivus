@@ -9,6 +9,11 @@ const WEAK = [
 ];
 
 export function assertProductionConfig() {
+  // `next build` runs with NODE_ENV=production, but a build is not a
+  // deployment: AUTH_URL is still localhost on a developer's machine and there
+  // are no requests to protect. Guard the server that serves, not the compile.
+  if (process.env.NEXT_PHASE === "phase-production-build") return;
+
   const isProd =
     process.env.NODE_ENV === "production" || process.env.APTIVUS_ENV === "production";
   if (!isProd) return;
