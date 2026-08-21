@@ -149,6 +149,10 @@ JavaScript simulator of `find_pair`, so they **respond to what you actually type
 The starter code ships with the classic bug — `seen[p] = i` above the membership
 check — so Run fails sample 2 with `[0, 0]`, and if you move that line below the
 check, the tests genuinely pass, Submit fires the confetti and credits 2 gems.
+That bug is a **demo device and is labelled as one, permanently**: a comment on the
+line itself, a note under the Description tabs, and a line in the Tests empty state.
+A real starter ships as an empty body; this one opens mid-attempt so there is
+something to Run, fail and Trace within ten seconds of landing.
 The trace steps are generated from that same simulator, so they are correct for
 every case and for both versions of the code. The `>>>` console really evaluates:
 `seen[need]`, `len(seen)`, `need in seen`, `target - p` all work, and an unknown
@@ -230,7 +234,8 @@ product claims to do that a problem list cannot.
 - **The pinned inspector grid is `auto-fit minmax(250px, 1fr)`.** Pin four variables
   in a narrow editor pane and the cards get cramped. A real implementation probably
   wants a horizontal scroller past three pins, or a maximum.
-- **Mock Interview is a nav item, not a screen.** It links to the solve view. It
+- **Mock Interview is a nav item, not a screen.** It links to the solve view and now
+  says so in its `title` instead of pretending otherwise. It
   needs its own design — two problems, one clock, a scorecard at the end — and that
   is the obvious next deliverable.
 - **The gem economy is drawn, not modelled.** Balances, ledger entries and earn
@@ -241,4 +246,7 @@ product claims to do that a problem list cannot.
   collapses to a burger, the tables scroll — but a phone is not a place to sit a
   45-minute coding round, and designing for it properly would mean deciding what the
   phone experience *is* (review? flashcards? reading write-ups?) rather than
-  shrinking the pad.
+  shrinking the pad. What *is* guaranteed below 700px, because `body { overflow: hidden }`
+  makes anything clipped genuinely unreachable: the solve top bar wraps to two rows so
+  every control in it stays on screen and hittable at 375px, and no page scrolls
+  sideways at any width. That is a floor, not a design.

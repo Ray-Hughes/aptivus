@@ -393,20 +393,20 @@ body.row-resizing { cursor: row-resize; user-select: none; }
   <section class="pane" id="paneProblem" data-pane="problem" aria-label="Problem">
     <div class="pane-hd">
       <div class="tabs" role="tablist" id="probTabs">
-        <button class="tab" role="tab" aria-selected="true" data-t="desc">Description</button>
-        <button class="tab" role="tab" aria-selected="false" data-t="hints">Hints <span class="badge" id="hintBadge" style="font-size:var(--t-3xs);padding:0 6px">0/3</span></button>
-        <button class="tab" role="tab" aria-selected="false" data-t="sol">Solution</button>
-        <button class="tab" role="tab" aria-selected="false" data-t="ask">Ask</button>
+        <button class="tab" role="tab" id="tabDesc" aria-controls="probDesc" aria-selected="true" data-t="desc">Description</button>
+        <button class="tab" role="tab" id="tabHints" aria-controls="probHints" aria-selected="false" data-t="hints">Hints <span class="badge" id="hintBadge" style="font-size:var(--t-3xs);padding:0 6px">0/3</span></button>
+        <button class="tab" role="tab" id="tabSol" aria-controls="probSol" aria-selected="false" data-t="sol">Solution</button>
+        <button class="tab" role="tab" id="tabAsk" aria-controls="probAskBody" aria-selected="false" data-t="ask">Ask</button>
       </div>
     </div>
 
-    <div class="pane-bd" id="probDesc"></div>
+    <div class="pane-bd" id="probDesc" role="tabpanel" aria-labelledby="tabDesc" tabindex="0"></div>
 
-    <div class="pane-bd" id="probHints" hidden></div>
+    <div class="pane-bd" id="probHints" role="tabpanel" aria-labelledby="tabHints" tabindex="0" hidden></div>
 
-    <div class="pane-bd" id="probSol" hidden></div>
+    <div class="pane-bd" id="probSol" role="tabpanel" aria-labelledby="tabSol" tabindex="0" hidden></div>
 
-    <div class="pane-bd" id="probAskBody" hidden style="padding:var(--sp-5)">
+    <div class="pane-bd" id="probAskBody" role="tabpanel" aria-labelledby="tabAsk" tabindex="0" hidden style="padding:var(--sp-5)">
       <div class="ask-log" id="askLog">
         <div class="note note-info">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex:0 0 auto;margin-top:2px"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
@@ -519,14 +519,14 @@ body.row-resizing { cursor: row-resize; user-select: none; }
   <section class="pane" id="paneResults" data-pane="results" aria-label="Results">
     <div class="pane-hd">
       <div class="tabs" role="tablist" id="resTabs">
-        <button class="tab" role="tab" aria-selected="true" data-t="tests">Test cases</button>
-        <button class="tab" role="tab" aria-selected="false" data-t="stdout">Output</button>
-        <button class="tab" role="tab" aria-selected="false" data-t="notes">Notes</button>
+        <button class="tab" role="tab" id="tabTests" aria-controls="resTests" aria-selected="true" data-t="tests">Test cases</button>
+        <button class="tab" role="tab" id="tabStdout" aria-controls="resStdout" aria-selected="false" data-t="stdout">Output</button>
+        <button class="tab" role="tab" id="tabNotes" aria-controls="resNotes" aria-selected="false" data-t="notes">Notes</button>
       </div>
     </div>
-    <div class="pane-bd" id="resTests" aria-live="polite"></div>
-    <div class="pane-bd" id="resStdout" hidden></div>
-    <div class="pane-bd" id="resNotes" hidden style="padding:var(--sp-4)">
+    <div class="pane-bd" id="resTests" role="tabpanel" aria-labelledby="tabTests" tabindex="0" aria-live="polite"></div>
+    <div class="pane-bd" id="resStdout" role="tabpanel" aria-labelledby="tabStdout" tabindex="0" hidden></div>
+    <div class="pane-bd" id="resNotes" role="tabpanel" aria-labelledby="tabNotes" tabindex="0" hidden style="padding:var(--sp-4)">
       <div class="field">
         <label class="label" for="noteArea">Notes on this problem</label>
         <textarea class="textarea" id="noteArea" style="height:180px;font-size:var(--t-sm)" placeholder="What tripped you up? What would you say out loud next time?"></textarea>

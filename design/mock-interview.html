@@ -1091,7 +1091,8 @@ body.col-resizing { cursor: col-resize; user-select: none; }
 }
 .next.top .rank { background: var(--brand-grad-cta); color: var(--text-on-brand); }
 .next .nb { flex: 1 1 auto; min-width: 0; }
-.next .nb b { font-size: var(--t-md); color: var(--text); display: block; letter-spacing: -.01em; }
+.next .nb > b { font-size: var(--t-md); color: var(--text); display: block; letter-spacing: -.01em; }
+.next .nb p b { color: var(--text); font-weight: 600; }
 .next .nb p { font-size: var(--t-sm); color: var(--text-2); line-height: 1.6; margin-top: 6px; }
 .next .nb code { font-family: var(--font-mono); font-size: .88em; background: var(--surface-3); color: var(--text); padding: 1.5px 6px; border-radius: var(--r-xs); }
 .next .na { flex: 0 0 auto; }
@@ -2565,7 +2566,9 @@ function problemNote(p, S) {
 /* ---- what to work on ---- */
 function buildNext(S) {
   const out = [];
-  S.P.filter(p => !p.solved).forEach(p => out.push({ w: 100, t: p.ref.next.t, b: p.ref.next.b, cta: "Drill it", id: p.ref.id }));
+  const rateOf = (p) => { const h = HISTORY[p.ref.pattern]; return h ? h.w.reduce((a, x) => a + x, 0) / h.w.length : 1; };
+  /* weakest pattern first, so the ranking matches the patterns table above */
+  S.P.filter(p => !p.solved).forEach(p => out.push({ w: 100 + (1 - rateOf(p)) * 10, t: p.ref.next.t, b: p.ref.next.b, cta: "Drill it", id: p.ref.id }));
   S.P.filter(p => p.solved).forEach(p => {
     const h = HISTORY[p.ref.pattern];
     const rate = h ? h.w.reduce((a, x) => a + x, 0) / h.w.length : 1;
