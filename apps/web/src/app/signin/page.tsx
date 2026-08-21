@@ -7,7 +7,7 @@ export const metadata = { title: "Sign in · Aptivus" };
 
 export default async function SignInPage(props: PageProps<"/signin">) {
   const searchParams = await props.searchParams;
-  const next = safeNext(searchParams.next, "/admin");
+  const next = safeNext(searchParams.next, "/dashboard");
 
   const session = await auth();
   if (session?.user?.id) redirect(next);

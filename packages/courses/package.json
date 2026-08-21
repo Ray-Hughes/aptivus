@@ -1,0 +1,14 @@
+{
+  "name": "@aptivus/courses",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Course format, the authored courses, and the validator.",
+  "exports": {
+    "./schema.json": "./course-schema.json"
+  },
+  "types": "./src/types.ts",
+  "scripts": {
+    "validate": "node validate.mjs"
+  }
+}

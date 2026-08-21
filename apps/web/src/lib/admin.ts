@@ -103,7 +103,7 @@ export function fieldErrors(error: z.ZodError): Record<string, string> {
 }
 
 /** Only same-origin absolute paths survive, so `next=` cannot be an open redirect. */
-export function safeNext(value: unknown, fallback = "/admin"): string {
+export function safeNext(value: unknown, fallback = "/dashboard"): string {
   if (typeof value !== "string") return fallback;
   if (!value.startsWith("/") || value.startsWith("//") || value.startsWith("/\\")) {
     return fallback;

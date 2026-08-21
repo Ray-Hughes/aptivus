@@ -67,11 +67,14 @@ export default async function DashboardPage() {
       .limit(8),
   ]);
 
-  const since = Math.floor(Date.now() / 1000) - 7 * 86400;
+  // The cutoff is computed by SQLite, not by the render: a component must not
+  // read the clock, and the database already has one.
   const [weekly] = await db
     .select({ n: count() })
     .from(users)
-    .where(and(isNull(users.deletedAt), sql`${users.createdAt} >= ${since}`));
+    .where(
+      and(isNull(users.deletedAt), sql`${users.createdAt} >= unixepoch() - 604800`),
+    );
 
   return (
     <div className="space-y-6">

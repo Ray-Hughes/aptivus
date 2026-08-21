@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { and, count, desc, eq, sql } from "drizzle-orm";
+import { and, count, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { companies, problems } from "@/db/schema";
 import { requireAdminPage } from "@/lib/admin";

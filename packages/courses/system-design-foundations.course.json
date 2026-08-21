@@ -1,0 +1,547 @@
+{
+  "$schema": "./course-schema.json",
+  "slug": "system-design-foundations",
+  "title": "System Design Foundations",
+  "subtitle": "Running the hour, and the asynchronous patterns that most rounds are actually about",
+  "audience": "Engineers who build and operate real systems but have not sat a system design round recently, or who have and found that they ran out of time before reaching the interesting part. It is about running the hour and having the right vocabulary, not about distributed systems theory.",
+  "level": "advanced",
+  "estimatedHours": 7,
+  "timeNote": "About seven hours, and unlike the other courses most of it is not typing. Three of the modules are drawing and speaking practice, which people consistently skip and consistently should not - the difference between candidates in this round is pacing and narration, not knowledge.",
+  "prerequisites": [
+    "You have built or operated a production service",
+    "You know roughly what a message queue, a cache and a relational database are for"
+  ],
+  "prerequisiteCourses": [],
+  "outcomes": [
+    "Run a sixty-minute design round in phases, spending the first eight minutes on questions",
+    "Produce a scale estimate that justifies an architectural decision rather than filling time",
+    "Draw an asynchronous ingestion pipeline from memory and narrate one record end to end",
+    "Name and apply bulkheads, circuit breakers, jittered retries, dead letter queues and backpressure",
+    "Explain the outbox pattern and why the write-then-publish arrow is not atomic",
+    "Raise three failure modes before being asked, and close with build-first, deferred, and monitoring"
+  ],
+  "tags": [
+    "system design",
+    "distributed systems",
+    "event driven",
+    "interview technique"
+  ],
+  "version": 1,
+  "modules": [
+    {
+      "id": "running-the-hour",
+      "title": "How to run the hour",
+      "summary": "The round has a shape, and most people fail it by drawing too early. Five phases, what belongs in each, and the questions that make the first eight minutes the strongest part of your hour.",
+      "estimatedMinutes": 45,
+      "objectives": [
+        "Run a design round in phases rather than as one continuous ramble",
+        "Ask scoping questions that change the design rather than filling time",
+        "Know what is being assessed at each stage"
+      ],
+      "teaching": "## What is actually being assessed\n\nNot whether you know a particular architecture. There is no answer key. What the\ninterviewer is trying to find out is:\n\n- Can you take a vague problem and make it concrete enough to build?\n- Do you make trade-offs explicitly, or do you produce a design and defend it?\n- Do you know what breaks in production, and do you raise it before being asked?\n- Can they follow you? A design nobody can follow is worthless regardless of quality.\n\nEverything below is in service of demonstrating those four things.\n\n## The five phases\n\n| Time | Phase | What you do |\n|---|---|---|\n| 0-8 min | **Scope** | Ask questions. Write the requirements on the board. Do not draw. |\n| 8-15 min | **Estimate and contract** | Scale numbers. Core entities. The API or event contract. |\n| 15-40 min | **The happy path** | One clean box-and-arrow diagram. Narrate one record end to end. |\n| 40-52 min | **Break it** | Failure modes, retries, idempotency, backpressure, hot keys. |\n| 52-60 min | **Trade-offs and close** | What you would build first, what you deferred, what you would monitor. |\n\n**The single most common failure is drawing too early.** Eight minutes of questions costs\nyou nothing - the diagram takes as long as it takes - and it is the strongest signal you\nsend in the whole hour, because it is the part that most resembles the actual job. Someone\nwho starts drawing at minute two is telling you they will start building at minute two.\n\nThe second most common failure is spending forty minutes on the happy path and never\ngetting to failure modes. That is the section where senior candidates separate themselves,\nso protect the time for it: if you are still drawing boxes at minute forty, stop drawing\nand start breaking.\n\n## The questions to ask\n\nPick five or six. Asking all of them is its own failure - it reads as a checklist rather\nthan as thinking.\n\n**Scale and shape**\n- How many users or tenants, and how many events per day at peak?\n- Is the load spiky, and what drives the spikes? Anything time-driven - month end,\n  business hours, a seasonal deadline - changes the design more than the average rate does.\n- What is the payload size? A 2KB record and a 200MB file attachment are different systems.\n\n**Latency and consistency**\n- Is this synchronous, with someone waiting for the result, or can it be asynchronous?\n  This one question usually decides the whole architecture.\n- What is acceptable staleness for the derived data? Seconds or minutes?\n- Does someone need read-after-write consistency on their own edits?\n\n**Failure semantics**\n- If a dependency is down, do we block or proceed degraded?\n- Is duplicate processing acceptable, or must the observed effect be exactly once?\n- What is the cost of losing one record? That decides how much durability machinery is\n  justified.\n\n**Multi-tenancy**\n- Shared infrastructure with isolation, or separate deployments per tenant?\n- Can one tenant's bulk job degrade another tenant's interactive experience?\n\nThat last pair is worth asking in almost any round involving more than one customer. It\ndistinguishes a system that works in a demo from one that works with twenty customers on it.\n\n## Write the requirements down\n\nOn the board, before the diagram, in two short lists: functional (what it does) and\nnon-functional (how fast, how reliable, how big). Six lines is enough.\n\nThis is not ceremony. It gives you something to point at when you make a trade-off later -\n*\"I am choosing this because we agreed a minute of staleness is acceptable\"* - and it\nstops the interviewer from moving the goalposts mid-round, which some of them will do\ndeliberately to see whether you notice.\n\n## Narrate continuously\n\nSilence while drawing is dead air, and there will be a lot of drawing. Say what each box\nis for as you place it: *\"I am putting a queue here because I want the ingest endpoint to\nreturn before we call any third party.\"* The reason is the content; the box is just the\nnotation.",
+      "problems": [],
+      "checkpoint": {
+        "id": "running-the-hour-checkpoint",
+        "title": "Running the hour checkpoint",
+        "questions": [
+          {
+            "id": "q-draw",
+            "kind": "choice",
+            "prompt": "The interviewer states the problem. It is minute two. What are you doing?",
+            "options": [
+              "Drawing the first two or three boxes to get something concrete on the board",
+              "Asking scoping questions and writing the requirements down",
+              "Stating your proposed architecture so they can redirect you early"
+            ],
+            "answer": 1,
+            "explanation": "Drawing early is the most common failure in a design round. The first eight minutes of questions cost nothing and demonstrate the part of the job most like the real thing. Getting something concrete on the board matters at minute fifteen, not minute two."
+          },
+          {
+            "id": "q-question",
+            "kind": "choice",
+            "prompt": "Which of these questions is most likely to change your architecture?",
+            "options": [
+              "What programming language should I assume?",
+              "Is this synchronous, with a user waiting, or can it be asynchronous?",
+              "How many engineers are on the team?"
+            ],
+            "answer": 1,
+            "explanation": "Synchronous versus asynchronous decides whether there is a queue at all, what your latency budget is, and how you handle a slow dependency - it is usually the highest-leverage single question. Language rarely changes a design; team size is a delivery question and can be worth raising at the close, not the start."
+          },
+          {
+            "id": "q-phases",
+            "kind": "recall",
+            "prompt": "From memory: the five phases and roughly how long each takes.",
+            "modelAnswer": "Scope with questions, about eight minutes. Estimates and the core contract, about seven. The happy path diagram, about twenty-five. Failure modes, about twelve. Trade-offs and close, the last eight. The two you have to protect are the first and the fourth, because the middle expands to fill whatever you let it."
+          },
+          {
+            "id": "q-multitenant",
+            "kind": "explain",
+            "prompt": "Out loud: ask the multi-tenancy question and say why the answer matters.",
+            "modelAnswer": "'Is this shared infrastructure with tenant isolation, or a deployment per tenant? And can one tenant's bulk backfill degrade another tenant's interactive traffic?' It matters because it decides partition keys, whether you need priority lanes or separate queues, how you do capacity planning, and how a noisy-neighbour incident gets handled. It is also the question that most reliably shows you have run a multi-customer system rather than designed one."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "checkpoint-only",
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.75
+      }
+    },
+    {
+      "id": "estimates-that-justify-the-design",
+      "title": "Estimates that justify the design",
+      "summary": "Back-of-envelope numbers are not arithmetic for its own sake. One number - usually a gap between what you receive and what a dependency can absorb - justifies every decision you make afterwards.",
+      "estimatedMinutes": 45,
+      "objectives": [
+        "Produce a peak rate from a daily volume with a defensible peak factor",
+        "Find the number that justifies the architecture and state it out loud",
+        "Size storage and payloads well enough to decide where data lives"
+      ],
+      "teaching": "## The point of the arithmetic\n\nEstimates in a design round exist for one reason: **to justify a decision**. An estimate\nyou do not use is wasted time. An estimate that makes an architectural choice inevitable is\nthe strongest thing you can put on the board.\n\nSo do the arithmetic in the direction of a decision, and say the conclusion out loud.\n\n## The standard chain\n\nWork from a daily volume to a peak rate:\n\n```\n1,000,000 records/day\n  / 86,400 seconds            ~ 12 per second, average\n  x peak factor                 <- this is the number that matters\n```\n\n**Average rates are almost never the design constraint.** Ask what drives the spikes, and\npick a factor you can defend:\n\n- Business-hours traffic in one timezone: everything arrives in about eight hours, so 3x.\n- Time-driven deadlines - month end, a filing date, a renewal cycle: 10-50x on those days.\n- Batch uploads from partners: whatever the largest single batch is, arriving at once.\n\nThen say the sentence: *\"So I will design for around 500 per second, not 12, and the\ndifference is driven by month-end batches.\"*\n\n## Find the gap\n\nThe most useful estimate is usually a **mismatch between two rates**. For example:\n\n```\n500 records/sec at peak\nx 5 enrichment calls each        = 2,500 external calls/sec needed\nexternal provider rate limit     =    50 calls/sec allowed\n```\n\nThat fifty-fold gap is the entire design. It is why there is a queue, why you cache\naggressively, why bulk work runs in a slower lane, and why the ingest endpoint must not\ncall the provider inline. **Say the number and then say what it forces**, and every\nsubsequent decision reads as derived rather than decorative.\n\nOther gaps worth looking for: write rate against what one database can absorb; read rate\nagainst what a cache miss costs; total data volume against what fits in memory; a\ndownstream system's throughput against what you want to send it.\n\n## Size the payloads\n\nRough sizes are enough, but they decide where data lives:\n\n```\n50KB average x 1M/day  = 50GB/day  ~ 18TB/year\n```\n\nThen the decisions follow: 18TB is not a problem for object storage and is a problem for a\nsingle database instance. If payloads can be very large - a file attachment, a large\nexport - keep the blob in object storage and pass a **reference** through your queue or\nevent stream. Message brokers usually cap messages at around 1MB, and even where they do\nnot, large messages destroy throughput for everything sharing the topic.\n\nThat is a concrete, checkable decision produced by one multiplication, which is exactly\nwhat this phase is for.\n\n## Numbers worth carrying in your head\n\nRough, current-generation, order-of-magnitude only:\n\n| | Order of magnitude |\n|---|---|\n| Memory read | ~100 ns |\n| SSD random read | ~100 microseconds |\n| Same-datacentre round trip | ~0.5 ms |\n| Cross-continent round trip | ~100 ms |\n| Single relational database, simple writes | thousands per second |\n| Single queue partition | thousands of messages per second |\n| One modern server, in-memory work | tens of thousands of requests per second |\n\nNobody is checking these to a factor of two. They exist so you can say *\"a cross-region\ncall is a hundred milliseconds, so doing five of them serially blows the latency budget -\nI would parallelise or move the work off the request path\"* and have the conclusion be\nsound.\n\n## Say the conclusion, not the sum\n\nThe failure mode here is doing arithmetic out loud for three minutes and then not using\nit. Every estimate should end in a sentence of the form **\"so I will ...\"**:\n\n- *\"So the ingest endpoint returns 202 and the enrichment happens off the request path.\"*\n- *\"So the blob goes to object storage and the queue carries a reference.\"*\n- *\"So I need a cache keyed on the provider's natural key - most lookups repeat.\"*\n- *\"So bulk backfills get their own lane, or one tenant's import delays everyone.\"*",
+      "problems": [],
+      "checkpoint": {
+        "id": "estimates-checkpoint",
+        "title": "Estimates checkpoint",
+        "questions": [
+          {
+            "id": "q-peak",
+            "kind": "choice",
+            "prompt": "You have 1M records a day. What do you design for?",
+            "options": [
+              "About 12 per second - the average",
+              "A peak rate derived from what drives the spikes, with the factor stated and justified",
+              "The theoretical maximum the client could send"
+            ],
+            "answer": 1,
+            "explanation": "The average is almost never the constraint. What matters is the shape of the load - business hours, month-end deadlines, partner batch uploads - and a factor you can defend. Designing for the theoretical maximum over-provisions everything and reads as not having thought about the actual workload."
+          },
+          {
+            "id": "q-blob",
+            "kind": "choice",
+            "prompt": "Some payloads are 100MB files. What goes through the message queue?",
+            "options": [
+              "The payload, with the broker's message size limit raised",
+              "A reference to the payload in object storage",
+              "The payload, compressed"
+            ],
+            "answer": 1,
+            "explanation": "Brokers typically cap messages around 1MB, and raising the cap does not fix the real problem: a large message occupies a partition for a long time and destroys throughput for everything sharing it. Write the blob to object storage, pass the key. Compression buys a factor, not an order of magnitude."
+          },
+          {
+            "id": "q-gap",
+            "kind": "explain",
+            "prompt": "Out loud: state a rate mismatch in a system you know, and say what it forces you to build.",
+            "modelAnswer": "Any of: incoming write rate against what one database absorbs; requests against a rate-limited third party; produced events against consumer throughput. The form matters more than the example - 'we need X per second and can only do Y per second, so we need a buffer, a cache, and a way to shed the lower-priority half of the load.' A number followed by a consequence."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "checkpoint-only",
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.66
+      }
+    },
+    {
+      "id": "ingestion",
+      "title": "Ingestion: accept fast, process later",
+      "summary": "The most commonly asked design shape: take high-volume input from outside systems without letting those systems degrade yours. One diagram, five decisions, each with a reason.",
+      "estimatedMinutes": 60,
+      "objectives": [
+        "Draw the ingest pipeline from memory and narrate one record end to end",
+        "Explain why the ingest endpoint must not call a third party inline",
+        "Justify keeping the raw payload immutably",
+        "Choose a partition key that isolates tenants"
+      ],
+      "teaching": "## The question\n\nSome version of *\"how would you handle high-volume ingestion from external systems without\ndegrading your platform\"* is the most commonly asked design question in this shape. Learn\none diagram well enough to draw it in two minutes.\n\n```\n  external      +---------------------------+\n  senders  -->  |  Ingest API / gateway     |\n  (API, SFTP,   |  authenticate, validate   |\n   email, UI)   |  cheaply, dedupe by       |\n                |  idempotency key          |\n                +-------------+-------------+\n                              |  write raw payload, then return 202\n                              v\n                +---------------------------+\n                |  Raw landing store        |   object storage, immutable\n                |  + metadata row in the DB |\n                +-------------+-------------+\n                              |  emit event\n                              v\n      +=====================================================+\n      |  Queue / log:  record.received                      |\n      |  partition key = (tenant, record id)                |\n      +=========================+===========================+\n                                |\n            +-------------------+-------------------+\n            v                   v                   v\n     +-------------+     +-------------+     +-------------+\n     | parse and   |     | enrich from |     | enrich from |\n     | normalise   |     | provider A  |     | provider B  |\n     +------+------+     +------+------+     +------+------+\n            |                   |                   |\n            |  each: own pool, retry with backoff,  |\n            |  circuit breaker, cache, DLQ          |\n            +-------------------+-------------------+\n                                v\n      +=====================================================+\n      |  Queue / log:  record.enriched                      |\n      +=========================+===========================+\n                                |\n             +------------------+------------------+\n             v                                     v\n    +-------------------+                +--------------------+\n    | Canonical store   |                | Derived aggregates |\n    | (relational)      |                | / read models      |\n    | serves the app    |                +--------------------+\n    +-------------------+\n```\n\n## The five decisions, and why\n\nDraw the boxes, but **the narrative is what is being scored.** Say each of these.\n\n**1. Accept fast, process later.** The ingest endpoint does authentication, cheap schema\nvalidation, an idempotency check and a durable write, then returns 202 Accepted. It does\nnot call a third party inline. That single decision is what stops an external system's bad\nday from becoming your bad day - which is literally what the question asks. If a provider's\np99 goes to thirty seconds and you call it inline, your endpoint's p99 goes to thirty\nseconds, your connection pool fills, and you are down because someone else is.\n\n**2. Keep the raw payload, immutably.** When a partner says \"you dropped my file\", you\nneed the bytes they sent. It also lets you reprocess after fixing a parser bug without\nasking anyone to resend, which is the difference between a two-hour fix and a two-week\napology. Cheap to build on day one, effectively impossible to add retrospectively for data\nyou have already thrown away.\n\n**3. Validate cheaply at the edge, thoroughly downstream.** The gateway checks structure -\nis this well-formed, is the tenant real, is the size sane - and rejects synchronously with\na clear error, because a synchronous rejection is far more useful to a sender than an\nemail an hour later. Business validation, which needs data you do not have yet, happens\ndownstream and produces a record in an error state rather than a rejection.\n\n**4. Idempotency at the door.** Senders retry. Networks duplicate. Require or derive an\nidempotency key - a sender-supplied id, or a hash of the payload plus tenant - and store\nit. A repeat returns the original result rather than creating a second record. Doing this\nat the edge is much cheaper than deduplicating downstream, where the duplicate has already\nfanned out into five enrichment calls.\n\n**5. Partition by tenant and record.** The partition key decides both ordering and\nisolation. Including the tenant lets you reason about one tenant's traffic; including the\nrecord id spreads load within a tenant. Order is guaranteed only within a partition, so\nkeying by record id gives you per-record ordering, which is what you actually need -\nglobal ordering is not available and asking for it is a design smell.\n\n## The bulk lane\n\nThe moment you have more than one customer, someone will upload two million historical\nrecords on a Tuesday morning.\n\nBulk and interactive traffic have different latency requirements and must not share a\nqueue. Separate topics, separate consumer groups, or an explicit priority lane. Then say\nthe sentence that shows you have made the trade deliberately:\n\n> *\"I would rather delay a backfill by six hours than delay a person who is waiting.\"*\n\nThat is a product decision expressed as an architectural one, and it is exactly the kind\nof thing an interviewer is listening for.\n\n## Where the caching goes\n\nEnrichment lookups repeat heavily - the same entity, the same address, the same\nidentifier, queried over and over across records. A cache keyed on\n`(provider, natural key)` with a sensible TTL is often the difference between fitting\ninside a provider's rate limit and not.\n\nSay what the TTL depends on: how often the underlying data changes, and what a stale\nanswer costs. \"A day for reference data, minutes for anything priced\" is a reasonable\ndefault to state and then adjust.",
+      "problems": [
+        {
+          "slug": "py_14_lru_cache",
+          "note": "Build the cache from the diagram by hand. The eviction policy discussion in a design round is the same conversation as the invariant in this problem, one level up.",
+          "optional": true
+        }
+      ],
+      "checkpoint": {
+        "id": "ingestion-checkpoint",
+        "title": "Ingestion checkpoint",
+        "questions": [
+          {
+            "id": "q-inline",
+            "kind": "choice",
+            "prompt": "Why must the ingest endpoint not call a third-party enrichment API inline?",
+            "options": [
+              "Because third-party APIs are usually not idempotent",
+              "Because their latency and availability become yours: their p99 becomes your p99 and their outage fills your connection pool",
+              "Because it would exceed the request body size limit"
+            ],
+            "answer": 1,
+            "explanation": "Calling a dependency synchronously couples your availability to theirs, multiplicatively. Accepting durably and processing asynchronously means a provider outage delays enrichment rather than rejecting intake - which is the whole point of the question."
+          },
+          {
+            "id": "q-raw",
+            "kind": "choice",
+            "prompt": "What is the strongest argument for storing the raw payload immutably?",
+            "options": [
+              "It is required for compliance in most industries",
+              "It lets you reprocess after a parser bug without asking anyone to resend, and settles disputes about what was actually sent",
+              "It is faster than parsing on the way in"
+            ],
+            "answer": 1,
+            "explanation": "Reprocessing and dispute resolution are the operational arguments, and they hold regardless of regulation. It is cheap on day one and impossible to add retrospectively for data you have already discarded. Compliance may also apply, but it is not the general reason."
+          },
+          {
+            "id": "q-idem",
+            "kind": "recall",
+            "prompt": "From memory: where does the idempotency check go, what is the key, and why there rather than downstream?",
+            "modelAnswer": "At the gateway, before the durable write. The key is a sender-supplied id where one exists, otherwise a hash of tenant plus payload. At the edge, because a duplicate caught downstream has already been written, emitted and fanned out into several enrichment calls - so you are undoing work rather than not doing it."
+          },
+          {
+            "id": "q-diagram",
+            "kind": "explain",
+            "prompt": "Draw the ingest pipeline from memory on paper, then narrate one record end to end out loud, saying why each box exists.",
+            "modelAnswer": "Gateway (authenticate, cheap validation, idempotency) to raw store (immutable, plus metadata) to a queue keyed by tenant and record, to parallel enrichment workers each with their own pool, retries, breaker and cache, to an enriched event, to the canonical store and the derived read models. Say the reason for each arrow, not just its name. If it took more than two minutes, draw it again tomorrow."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "checkpoint-only",
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.75,
+        "notes": "The checkpoint's last question is the real work: draw it from memory and narrate it. Do that three times before the round."
+      }
+    },
+    {
+      "id": "unreliable-dependencies",
+      "title": "Working with dependencies you do not control",
+      "summary": "Bulkheads, circuit breakers, retries with jitter, dead letter queues and backpressure. Five named patterns, each solving one specific failure, and the honest answer that some bottlenecks cannot be fixed at all.",
+      "estimatedMinutes": 55,
+      "objectives": [
+        "Name the five containment patterns and what each one prevents",
+        "Explain why retries need jitter",
+        "Describe a dead letter queue with an operator-visible replay path",
+        "Use queue lag as the backpressure signal and say what you shed first"
+      ],
+      "teaching": "## The premise\n\nEvery interesting system depends on something it does not control: a third-party API, a\ncustomer's on-premises system, a partner's SFTP server, another team's service. Those\nthings are slow, rate-limited and occasionally down, and none of that is negotiable.\n\nDesign assuming they will fail, and name the patterns as you use them. Named patterns are\nthe vocabulary of this round.\n\n## Bulkhead\n\n**Prevents:** one slow dependency consuming all your capacity.\n\nGive each dependency its own worker pool, connection pool or consumer group. If provider A\nis timing out at thirty seconds, its threads are all blocked - but provider B's are not,\nand work that needs only B carries on.\n\nWithout this, one slow dependency saturates a shared pool and every request queues behind\nit, including requests that never needed that dependency at all. That is how a single\nprovider's degradation becomes total unavailability, and it is the most common way a\ndistributed system fails in a way that surprises the team.\n\nThe name comes from ships: compartments so that one breach does not sink the vessel.\n\n## Circuit breaker\n\n**Prevents:** hammering a dependency that is already down, and paying full timeout latency\non every call to learn it.\n\nAfter N consecutive failures, stop calling. Fail fast, serve degraded, and retry a single\nprobe request on a timer. When the probe succeeds, close the circuit.\n\nThe second benefit is the one people forget: while the circuit is open, you are not\nspending thirty seconds per request discovering what you already know. Your own latency\nrecovers immediately even though the dependency is still down.\n\nSay what \"serve degraded\" means concretely for your design: continue with the enrichment\nmissing and mark the record, use the cached value past its TTL, or park the work and carry\non. All three are legitimate; choosing one and saying why is the point.\n\n## Retry with exponential backoff and jitter\n\n**Prevents:** a transient failure becoming a permanent one; and your retries becoming a\ndenial-of-service attack on a recovering dependency.\n\n```\nattempt 1: fail -> wait ~1s\nattempt 2: fail -> wait ~2s\nattempt 3: fail -> wait ~4s   ... then give up and dead-letter\n```\n\nTwo things that must be said out loud:\n\n**Jitter.** Randomise each delay - `random() * base * 2^attempt`. Without it, everything\nthat failed during a ten-second outage retries at exactly the same instant, and the\ndependency that just recovered falls over again. This is the thundering herd, and it is\none of the most common causes of a system failing to recover from an outage it had already\nsurvived.\n\n**Only retry what is retryable.** A 500 or a timeout is worth retrying. A 400 will fail\nidentically forever and every retry is pure waste plus load. Retrying a non-idempotent\noperation without an idempotency key creates duplicates, which is worse than the original\nfailure.\n\n## Dead letter queue\n\n**Prevents:** one poison message blocking a partition forever.\n\nAfter the retry budget is exhausted, move the message to a dead letter queue and continue.\nThen say the three things that make a DLQ real rather than decorative:\n\n- **Alert on depth.** A DLQ nobody looks at is a data loss mechanism with extra steps.\n- **Keep the failure reason** with the message, or triage is archaeology.\n- **Have a replay path** an operator can run after the bug is fixed - and make replay\n  idempotent, because some of those messages may have partially succeeded.\n\nNever retry in place forever. Ordered partitions in particular will block behind a single\nmessage that can never succeed, and the symptom - one tenant's data stops flowing while\neverything else is fine - is unpleasant to diagnose.\n\n## Backpressure\n\n**Prevents:** unbounded queue growth, and out-of-memory failures in the buffering layer.\n\nThe queue is the buffer. **Consumer lag is the backpressure signal**, and it is the single\nmost useful metric in an asynchronous system: it is an early warning for everything, and\nit is measured in time as well as messages (\"we are forty minutes behind\"), which is what\nanyone actually wants to know.\n\nWhen lag grows, in order: scale consumers; if you cannot, shed load - and shed the\n*right* load. Bulk backfills, historical reprocessing and low-priority notifications get\ndelayed before anything with a person waiting on it. Say the priority order explicitly,\nbecause \"we shed load\" without saying what gets shed is not a design.\n\nUnbounded in-memory buffering is the failure this prevents: the queue absorbs a spike, but\na consumer that reads faster than it can process and holds the difference in memory simply\nmoves the failure into your own process.\n\n## The dependency you cannot fix\n\nSometimes the bottleneck belongs to someone else and will not change: a customer's\non-premises system that handles five requests per second and will not be upgraded for\nthree years.\n\nYou cannot design that away. What you do is design *around* it - a queue in front, a rate\nlimiter matched to their capacity, an honest service level statement that says results\nappear within hours rather than seconds, and monitoring that distinguishes \"we are behind\"\nfrom \"they are down\".\n\nSaying that plainly is a senior answer. Pretending the constraint does not exist, or\nproposing that the customer upgrade, is not.",
+      "problems": [],
+      "checkpoint": {
+        "id": "dependencies-checkpoint",
+        "title": "Dependencies checkpoint",
+        "questions": [
+          {
+            "id": "q-jitter",
+            "kind": "choice",
+            "prompt": "Why does exponential backoff need jitter?",
+            "options": [
+              "To spread load evenly across the retry window for accounting purposes",
+              "Because without it, everything that failed during an outage retries at the same instant and knocks the recovering dependency over again",
+              "Because exponential backoff alone grows too slowly"
+            ],
+            "answer": 1,
+            "explanation": "Synchronised retries are the thundering herd. Ten thousand clients that all failed at the same moment all wait the same one, two and four seconds and hit simultaneously. Randomising the delay spreads them, and it is a one-line change that decides whether the system recovers."
+          },
+          {
+            "id": "q-bulkhead",
+            "kind": "choice",
+            "prompt": "Provider A starts timing out at 30 seconds. Without bulkheads, what happens to work that only needs provider B?",
+            "options": [
+              "Unaffected - it uses a different code path",
+              "It queues behind A's blocked workers, because they share the pool, so B's work also stops",
+              "It speeds up, since A's work is no longer completing"
+            ],
+            "answer": 1,
+            "explanation": "A shared pool means A's blocked calls occupy every worker. Work needing only B waits for a free worker that never comes. Separate pools per dependency contain the failure to the dependency that caused it - which is the whole idea."
+          },
+          {
+            "id": "q-dlq",
+            "kind": "choice",
+            "prompt": "What makes a dead letter queue real rather than decorative?",
+            "options": [
+              "That it is durable and replicated",
+              "An alert on its depth, the failure reason stored with the message, and an idempotent replay path an operator can run",
+              "That messages expire from it automatically after 30 days"
+            ],
+            "answer": 1,
+            "explanation": "A DLQ nobody monitors is a data loss mechanism with extra steps. Durability is necessary and insufficient; automatic expiry actively destroys the evidence. The replay must be idempotent because a dead-lettered message may have partially succeeded before it failed."
+          },
+          {
+            "id": "q-shed",
+            "kind": "explain",
+            "prompt": "Out loud: consumer lag is growing and you cannot scale consumers further. What do you shed, and how do you say it?",
+            "modelAnswer": "Shed the work with no one waiting on it: bulk backfills, historical reprocessing, non-urgent notifications, analytics refreshes. Say it as a priority order that was decided in advance rather than during the incident - 'I would rather delay a backfill by six hours than delay someone who is waiting.' Then say how it is implemented: separate lanes or topics, so shedding is a routing decision rather than a code change under pressure."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "checkpoint-only",
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.75
+      }
+    },
+    {
+      "id": "asynchronous-correctness",
+      "title": "Asynchronous correctness: idempotency, ordering, and the outbox",
+      "summary": "What you actually get from a message system is at-least-once delivery and per-partition ordering. Everything else - exactly once, global order, atomic write-and-publish - you build, or you design around.",
+      "estimatedMinutes": 55,
+      "objectives": [
+        "Make a consumer idempotent, and say what the key is",
+        "Explain the dual-write problem and solve it with the outbox pattern",
+        "State what ordering guarantees a partitioned log actually gives you"
+      ],
+      "teaching": "## At-least-once is what you get\n\nMessage systems deliver at least once. A consumer that processes a message and then dies\nbefore acknowledging it will see that message again. This is not a defect to be\nconfigured away; it is the consequence of not having distributed transactions.\n\nSo: **you will process some messages twice, and your job is to make that harmless.**\n\nThe phrase to use is **effectively-once** or *exactly-once as observed*: the delivery is\nat-least-once, the *effect* is once, because the consumer is idempotent.\n\n## Making a consumer idempotent\n\nThree approaches, in order of preference:\n\n1. **Naturally idempotent operations.** `SET status = 'enriched'` is safe to repeat.\n   `balance = balance + 10` is not. Where you can express the work as a state assignment\n   rather than an increment, do.\n2. **Idempotency key with a processed-messages table.** Record the message id in the same\n   transaction as the effect; on a duplicate, the insert conflicts and you skip. The \"same\n   transaction\" is what makes it work - two separate writes reintroduce the problem you\n   were solving.\n3. **Conditional writes.** `UPDATE ... WHERE version = n` or a compare-and-set. The second\n   attempt matches nothing and does nothing, and you can tell the difference between \"I did\n   it\" and \"someone already did it\".\n\nSay the key explicitly. *\"The idempotency key is (tenant, external record id), because\nthat is what the sender can reproduce on a retry.\"* A key nobody can reproduce is not a\nkey.\n\n## The dual-write problem\n\nYou update the database and publish an event. Those are two systems, so there is no\ntransaction across them:\n\n```\nBEGIN; UPDATE record SET status='enriched'; COMMIT;\npublish(\"record.enriched\")          <- process dies here\n```\n\nNow the state changed and nobody was told. Reverse the order and you can publish an event\nfor a change that then rolls back - a downstream system acting on something that never\nhappened, which is worse.\n\n**This is not a rare edge case.** It is a normal consequence of a process being killed at\nan arbitrary moment, which happens on every deploy.\n\n## The outbox pattern\n\nWrite the event into an `outbox` table **in the same transaction** as the state change.\nA relay process - polling the table, or reading the database's change log with something\nlike a CDC connector - publishes from the outbox and marks rows as sent.\n\n```\nBEGIN;\n  UPDATE record SET status = 'enriched';\n  INSERT INTO outbox (topic, payload) VALUES ('record.enriched', ...);\nCOMMIT;\n-- relay: read unsent outbox rows, publish, mark sent\n```\n\nNow the state change and the intent to publish are atomic, because they are one\ntransaction in one database. If the relay dies, it republishes on restart - so publication\nbecomes at-least-once, which the consumer already handles, because you made it idempotent.\n\n**This is the single most valuable thing you can say in an event-driven design round.**\nMost candidates draw an arrow from the service to the queue and never notice the arrow is\nnot atomic. Noticing it, naming the pattern, and observing that it converts an\nimpossible-to-solve problem into an already-solved one is a genuinely senior move.\n\n## Ordering\n\nA partitioned log guarantees order **within a partition only**. There is no global order,\nand asking for one throws away the parallelism the log exists to provide.\n\nSo choose the partition key to match the ordering you actually need:\n\n- Key by record id: that record's events stay ordered. Different records interleave freely.\n- Key by tenant: that tenant's events are ordered, but one large tenant becomes a hot\n  partition and limits your throughput to what one consumer can do.\n- Key by entity for ordering, and accept that cross-entity ordering is not available.\n\nThen handle the residual case: two events about the same entity from two different sources\ncan still arrive out of order. The standard answers are a **version or sequence number on\nthe event**, with the consumer ignoring anything older than what it has already applied, or\nmaking the operation commutative so the order does not matter. Say which one you are\nchoosing.\n\n## Consumer groups and rebalancing\n\nTwo operational realities worth mentioning briefly, because they show experience rather\nthan reading:\n\n- Consumers in a group split the partitions between them, so **more consumers than\n  partitions does not scale further** - partitions are the unit of parallelism, and\n  repartitioning later is disruptive. Pick a number with room to grow.\n- When a consumer joins or leaves, partitions are reassigned and in-flight work may be\n  reprocessed by a different consumer. That is another route to duplicates, and another\n  reason idempotency is not optional.",
+      "problems": [],
+      "checkpoint": {
+        "id": "async-checkpoint",
+        "title": "Asynchronous correctness checkpoint",
+        "questions": [
+          {
+            "id": "q-outbox",
+            "kind": "choice",
+            "prompt": "A service commits a database change and then publishes an event, and is killed between the two. What is the standard fix?",
+            "options": [
+              "A distributed transaction across the database and the broker",
+              "Write the event to an outbox table in the same transaction, and have a relay publish from it",
+              "Publish first, then write to the database"
+            ],
+            "answer": 1,
+            "explanation": "Distributed transactions across a database and a broker are not practically available. Publishing first is worse: you can announce a change that then rolls back. The outbox makes the state change and the intent to publish atomic within one database, and the relay's republishing is at-least-once, which an idempotent consumer already tolerates."
+          },
+          {
+            "id": "q-ordering",
+            "kind": "choice",
+            "prompt": "What ordering does a partitioned log actually give you?",
+            "options": [
+              "Global ordering across all messages",
+              "Ordering within a partition only, so the partition key decides what stays ordered",
+              "Ordering by timestamp, across all partitions"
+            ],
+            "answer": 1,
+            "explanation": "Global ordering would require a single partition and would remove the parallelism the log exists for. Choose the key so that the things which must stay ordered land together - usually the entity id - and handle cross-entity ordering with version numbers or commutative operations."
+          },
+          {
+            "id": "q-idem-key",
+            "kind": "recall",
+            "prompt": "From memory: three ways to make a consumer idempotent, best first.",
+            "modelAnswer": "Naturally idempotent operations - state assignment rather than increment. An idempotency key recorded in the same transaction as the effect, so a duplicate conflicts and is skipped. A conditional write - update where version equals n - which is a no-op on the second attempt. The 'same transaction' in the second one is what makes it work; two separate writes recreate the dual-write problem."
+          },
+          {
+            "id": "q-exactly-once",
+            "kind": "explain",
+            "prompt": "Out loud: an interviewer asks whether you can guarantee exactly-once processing. Answer it.",
+            "modelAnswer": "'Exactly-once delivery is not available; at-least-once is what a broker gives you. What I can give you is exactly-once as observed: at-least-once delivery plus an idempotent consumer, so duplicates have no additional effect. That means naming the idempotency key and storing it in the same transaction as the effect.' Answering with the mechanism rather than yes or no is the point."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "checkpoint-only",
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.75
+      }
+    },
+    {
+      "id": "workflow-orchestration",
+      "title": "Workflow orchestration and long-running processes",
+      "summary": "Processes with steps that take milliseconds to weeks, some automated and some human, that must survive deploys and answer 'where is this and why'. Three architectural approaches, and how to choose between them out loud.",
+      "estimatedMinutes": 60,
+      "objectives": [
+        "Compare choreography, central orchestration and durable execution honestly",
+        "Model a workflow as a DAG and connect it to topological ordering",
+        "Design the state store and the event log for auditability",
+        "Explain sagas and compensation without hand-waving about transactions"
+      ],
+      "teaching": "## The shape of the problem\n\nA multi-step business process - intake, validation, enrichment, review, approval,\nfulfilment, billing - has properties that make it different from a request pipeline:\n\n- Steps take **milliseconds to weeks**. A human review might sit for four days.\n- Steps are **heterogeneous**: some automated, some human, some third-party.\n- It must **survive deploys and crashes**. Losing an in-flight process because a pod\n  restarted is not acceptable, and pods restart constantly.\n- It needs **auditability**. \"Why was this declined, and by what rule, on what date\"\n  is a question someone will ask months later.\n- Steps have **dependencies**, which makes the process a DAG - and finding a valid\n  execution order is exactly topological sort. If you have written Kahn's algorithm, say\n  so: a queue of ready tasks whose dependencies are all satisfied is literally the same\n  structure one level up.\n\n## The three approaches\n\n| Approach | How it works | Good | Bad |\n|---|---|---|---|\n| **Choreography** | each service listens for events and emits the next | loosely coupled, easy to add a consumer, no central bottleneck | nobody knows the overall state; debugging is archaeology; \"where is this stuck\" is unanswerable without reconstructing from logs |\n| **Orchestration** | a workflow service drives each step | state is explicit and queryable; retries and timeouts in one place; auditable | the orchestrator is a critical dependency and can grow into a god service |\n| **Durable execution** | the workflow is written as code; an engine persists every step's result and replays on recovery | survives crashes and deploys; retries, timeouts and compensation built in; the code is the diagram | operational weight; another system to run; a genuine learning curve |\n\n**Recommend orchestration, often via a durable execution engine, and give the reason:**\nyou can always answer *\"where is this and why\"*. That is the first question anyone asks\nabout a stuck process, and choreography answers it by grep.\n\nThen say the cost honestly. A central orchestrator is a critical dependency; a durable\nexecution engine is another system to operate; both are overkill for a three-step process\nthat always completes in a second. Naming when you would *not* use it is what makes the\nrecommendation credible rather than fashionable.\n\n## The pieces to draw\n\n- **Workflow definition** - a versioned DAG of steps. Make it **configuration, not code**\n  if different customers need different processes; otherwise you get a code fork per\n  customer and the tenth one is unmaintainable. This is the single most consequential\n  decision in this design and worth stating plainly.\n- **State store** - a relational database. `workflow_instance` (id, definition version,\n  current state, tenant) and `step_execution` (instance, step, status, attempt count,\n  input, output, timestamps). Queryable state is the whole benefit; do not hide it inside\n  the engine.\n- **Task queue and workers** - workers claim tasks, execute, report the result. Claiming\n  needs a lease with a timeout so a dead worker's task is retried rather than lost.\n- **Durable timers** - \"escalate if not reviewed within 48 hours\". Something must fire\n  when nothing is happening, and a durable timer is a first-class requirement rather than\n  a cron job you add later.\n- **Event log** - every transition appended, immutable. This is your audit trail and your\n  debugging tool, and it is the answer to \"why was this declined\".\n- **Compensation** - see below.\n\n## Versioning, which is where this gets subtle\n\nYou deploy a change to the workflow definition while three thousand instances are in\nflight. Two rules, both worth saying:\n\n- **In-flight instances finish on the version they started with.** Otherwise an instance\n  that has completed step three under the old definition suddenly finds step three does\n  not exist.\n- **Definitions are versioned and immutable.** New instances start on the new version.\n\nWithout this you get split-brain behaviour that is very hard to reason about, and it comes\nup in practice on the first significant change after launch.\n\n## Sagas and compensation\n\nDistributed transactions across services do not exist. So a process that has done four\nirreversible things and fails on the fifth cannot roll back - it must **compensate**:\na defined undo per step, executed in reverse.\n\nThe honest parts to say:\n\n- **Compensation is not rollback.** It is a new action with its own effects. Cancelling a\n  reservation is not the same as never having reserved; someone may have seen the interim\n  state.\n- **Compensating actions can themselves fail**, so they need retries and eventually a\n  human. There is no bottom to this, which is why the practical answer is to reduce how\n  much can go wrong: make steps idempotent, order irreversible steps as late as possible,\n  and reserve rather than commit where you can.\n- **Some steps have no compensation.** An email that has been sent cannot be unsent. Design\n  so that irreversible steps happen after everything that could fail.\n\n## Answering the operational question\n\nWhatever you choose, the design must answer these three without a deploy:\n\n1. Where is instance X, and what is it waiting for?\n2. How many instances are stuck in each step, per tenant?\n3. Why did instance X take the branch it took?\n\nIf your design cannot answer those, say so and fix it. They are the questions that get\nasked in real operation, and being the person who asks them during a design round is a\nstrong signal in itself.",
+      "problems": [
+        {
+          "slug": "py_10_workflow_order",
+          "note": "Topological sort - the algorithm underneath a workflow engine's scheduler. Solving it makes 'a DAG of steps with a ready queue' something you have written rather than something you have read about."
+        }
+      ],
+      "checkpoint": {
+        "id": "workflow-checkpoint",
+        "title": "Workflow checkpoint",
+        "questions": [
+          {
+            "id": "q-choreo",
+            "kind": "choice",
+            "prompt": "The main argument against pure event choreography for a long-running business process is:",
+            "options": [
+              "It is slower than a central orchestrator",
+              "No component knows the overall state, so 'where is this instance and why is it stuck' cannot be answered without reconstructing it from logs",
+              "It cannot handle steps that take days"
+            ],
+            "answer": 1,
+            "explanation": "Choreography is often faster and is genuinely more loosely coupled. What it loses is a queryable notion of the whole - which happens to be the first thing anyone asks about a stuck process, and the thing an operations team needs daily."
+          },
+          {
+            "id": "q-version",
+            "kind": "choice",
+            "prompt": "You deploy a new workflow definition while thousands of instances are in flight. What should happen to them?",
+            "options": [
+              "They pick up the new definition immediately, for consistency",
+              "They finish on the version they started with; only new instances use the new definition",
+              "They are paused until an operator migrates them"
+            ],
+            "answer": 1,
+            "explanation": "Switching an in-flight instance to a new definition can leave it at a step that no longer exists, or skip a step it already passed. Version definitions immutably and pin each instance to the version it started on. Pausing everything is a valid emergency lever but not the default behaviour."
+          },
+          {
+            "id": "q-saga",
+            "kind": "explain",
+            "prompt": "Out loud: explain compensation to someone who asks why you cannot just roll back.",
+            "modelAnswer": "There is no transaction across services, so the earlier steps are already committed and visible. Compensation is a new action that undoes the business effect - cancel the reservation, issue the refund, mark the record withdrawn - executed in reverse order. It is not equivalent to never having acted, because other systems and people may have observed the interim state, and compensating actions can themselves fail and need retries. The practical mitigation is to order irreversible steps as late as possible."
+          },
+          {
+            "id": "q-three-questions",
+            "kind": "recall",
+            "prompt": "From memory: the three operational questions any workflow design must answer without a deploy.",
+            "modelAnswer": "Where is instance X and what is it waiting for. How many instances are stuck at each step, broken down by tenant. Why did instance X take the branch it took. The first two need queryable state; the third needs an immutable event log. Raising these unprompted in a design round is a strong signal on its own."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "all-required-problems",
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.75
+      }
+    },
+    {
+      "id": "read-paths-and-aggregates",
+      "title": "Read paths: precompute, or compute on read",
+      "summary": "The other half of every system. When an aggregate over millions of rows has to answer in interactive time, you maintain it incrementally - and then you deal with drift, hot keys, and the fact that streaming aggregates are approximate.",
+      "estimatedMinutes": 55,
+      "objectives": [
+        "Choose between computing on read, caching, and maintaining an incremental aggregate",
+        "Explain why streaming aggregates drift and what to do about it",
+        "Spot hot keys and say how you would handle them",
+        "Connect double counting in a stream to the same grain error in SQL"
+      ],
+      "teaching": "## The question behind every read path\n\nSomeone needs an answer that depends on a lot of data, quickly. There are three shapes,\nand choosing between them out loud is the content:\n\n**Compute on read.** Query the source, aggregate, return. Always correct, no extra moving\nparts, no staleness. It stops working when the data volume or the query rate outgrows what\nthe database can do inside the latency budget. **Start here** - proposing a materialised\npipeline for something a single indexed query answers in 20ms is over-engineering, and\nsaying \"I would compute this on read until it stops working, and here is the measurement\nthat would tell me\" is a better answer than any pipeline.\n\n**Cache the result.** Same query, memoised, with a TTL. Cheap, and the right answer when\nreads repeat and staleness of a few minutes is acceptable. The questions to answer are what\nthe key is, what the TTL is, and what happens on a miss when a thousand requests arrive at\nonce for a cold key - the answer being a single-flight lock or a lease, otherwise every\nmiss becomes a stampede on the database.\n\n**Maintain it incrementally.** Update a stored aggregate as events arrive, and serve reads\nfrom that. Constant-time reads regardless of the underlying volume. You now own a second\ncopy of the truth, and that is where the interesting parts live.\n\n## Incremental aggregates\n\n```\nevent stream --> aggregator --> aggregate table (tenant, dimension, period) --> API\n```\n\nThe read is a primary key lookup. The write is one small update per event. Both are cheap,\nand the system scales with the event rate rather than the total data volume.\n\nFour things to say about it, unprompted:\n\n**1. It drifts.** Every update is an opportunity to double count, miss an event, or apply\none out of order. Over months, a streaming aggregate will not match the source. The\nstandard answer is **reconciliation**: a periodic batch job recomputes from the source of\ntruth and corrects the aggregate, plus an alert on the size of the discrepancy.\nAcknowledging drift before being asked is one of the clearer senior signals available.\n\n**2. Double counting is the same error as SQL fan-out.** If a retried event is applied\ntwice, the total is silently wrong - no error, plausible number. It is exactly the mistake\nof aggregating at the wrong grain, and the fix is the same idea: make the update idempotent\nso applying an event twice has no additional effect. Where you can store per-source\ncontributions and sum them rather than accumulating a running total, do - it makes a repeat\na no-op by construction.\n\n**3. Hot keys.** Aggregates are keyed, and keys are never uniformly distributed. One\ntenant, one region, one product will attract a large share of the updates and become the\nbottleneck. The standard mitigations: shard the key with a suffix and sum the shards on\nread; batch updates over a short window rather than one write per event; or keep the hot\ncounter in memory and flush periodically.\n\n**4. What if I do this?** Interactive systems often need \"what would happen if I made this\nchange\" before committing. Compute the **delta against the cached aggregate** rather than\nrecomputing the base. That keeps the expensive part precomputed and the speculative part\ncheap, and it is a nice thing to volunteer.\n\n## Choosing the staleness budget\n\nAsk, and then design to the answer:\n\n- **Seconds**: streaming aggregate, updated per event.\n- **Minutes**: micro-batches, or a cache with a short TTL. Far simpler, and usually enough.\n- **Hours or overnight**: a batch job. Sometimes the right answer, and saying so when it is\n  demonstrates judgement rather than a preference for interesting machinery.\n\nMost requests for \"real time\" mean \"not yesterday\". Asking which is a good question and\nfrequently saves an entire subsystem.\n\n## Read models and CQRS, without the jargon\n\nIf the shape needed for reading differs from the shape needed for writing, keep two\nrepresentations and derive the read side from the write side's event stream. That is all\nCQRS means, and stating it plainly is better than naming it.\n\nThe trade you are making, and should say: the read model is **eventually consistent**. A\nuser who has just made a change may not see it in the derived view immediately, and that\nis a product decision as much as a technical one. The usual mitigations are to read the\nuser's own recent writes from the source of truth, or to show an optimistic version in the\nUI until the read model catches up.",
+      "problems": [
+        {
+          "slug": "sql_08_running_exposure",
+          "note": "A running total computed on read. The same number an incremental aggregate would maintain - useful for feeling the difference between the two approaches.",
+          "optional": true
+        },
+        {
+          "slug": "sql_09_loss_ratio",
+          "note": "The fan-out trap. Double counting in a streaming aggregate is the same error wearing different clothes, and having made it in SQL makes the streaming version obvious.",
+          "optional": true
+        }
+      ],
+      "checkpoint": {
+        "id": "read-paths-checkpoint",
+        "title": "Read path checkpoint",
+        "questions": [
+          {
+            "id": "q-drift",
+            "kind": "choice",
+            "prompt": "What is the standard answer to 'streaming aggregates drift from the source of truth'?",
+            "options": [
+              "Use exactly-once delivery so drift cannot occur",
+              "A periodic batch job that recomputes from the source and corrects the aggregate, with an alert on the size of the discrepancy",
+              "Recompute on read instead, always"
+            ],
+            "answer": 1,
+            "explanation": "Exactly-once delivery is not available, and idempotent updates reduce but do not eliminate drift - a missed event or a bug still causes it. Periodic reconciliation is what production systems actually do, and raising it before being asked is a strong signal."
+          },
+          {
+            "id": "q-hotkey",
+            "kind": "choice",
+            "prompt": "One tenant generates 40% of the updates to a keyed aggregate. What do you do?",
+            "options": [
+              "Nothing - the aggregate store will balance it",
+              "Shard the key with a suffix and sum the shards on read, or batch that key's updates over a window",
+              "Move that tenant to its own database"
+            ],
+            "answer": 1,
+            "explanation": "Key-based partitioning cannot balance a key that is intrinsically hot; all its updates go to one place by definition. Sharding the key spreads the writes at the cost of a fan-in on read, and batching reduces the write rate directly. A separate database is a much bigger hammer and does not help if the skew is within a tenant."
+          },
+          {
+            "id": "q-start",
+            "kind": "choice",
+            "prompt": "The interviewer asks for a dashboard aggregate over a large dataset. What is your first proposal?",
+            "options": [
+              "A streaming aggregation pipeline, since the dataset is large",
+              "Compute on read, with the measurement that would tell you when to change - then describe the incremental version as the next step",
+              "A nightly batch job into a reporting table"
+            ],
+            "answer": 1,
+            "explanation": "Starting with the simplest thing that works, and naming the signal that would make you change it, demonstrates judgement. Leading with a pipeline reads as reaching for machinery. You still describe the incremental version - you just present it as the second step rather than the default."
+          },
+          {
+            "id": "q-double-count",
+            "kind": "explain",
+            "prompt": "Out loud: explain why an idempotent aggregate update matters, using the SQL fan-out trap as the analogy.",
+            "modelAnswer": "In SQL, joining a one-to-many child and summing a parent column counts the parent once per child - no error, a plausible wrong number. In a stream, applying a retried event twice does the same thing to a running total. Both are grain errors, and both are silent. The fix in the stream is to make the update idempotent - store per-source contributions and sum, or record the event id with the update so a repeat is a no-op - so that at-least-once delivery cannot inflate the number."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "checkpoint-only",
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.75
+      }
+    },
+    {
+      "id": "failure-modes-and-closing",
+      "title": "Failure modes, the whiteboard, and closing the round",
+      "summary": "Seven failure modes to raise before being asked, the mechanics of drawing under observation, and the last five minutes - which are more scored than they look.",
+      "estimatedMinutes": 50,
+      "objectives": [
+        "Raise three failure modes unprompted, with the mitigation for each",
+        "Draw a legible diagram on a basic whiteboard tool under time pressure",
+        "Close with what you would build first, what you deferred, and what you would monitor"
+      ],
+      "teaching": "## Failure modes to raise unprompted\n\nHave three of these ready and volunteer them before minute forty-five. Raising them\nwithout being asked is the clearest single difference between a mid-level and a senior\nanswer, because it demonstrates that you have operated a system rather than only designed\none.\n\n- **Duplicate events.** At-least-once means you will process twice. Idempotency keys, a\n  processed-messages table, or naturally idempotent operations.\n- **Poison messages.** One malformed payload blocks an ordered partition indefinitely.\n  Retry budget, then dead letter, then alert. Never infinite retry in place.\n- **Consumer lag.** The early warning for everything. Monitor it as a first-class\n  indicator, in time as well as message count.\n- **Schema evolution.** A sender adds a field, a provider changes a type. Tolerant readers,\n  versioned events, and compatibility rules - a schema registry when the number of\n  producers justifies it.\n- **Thundering herd on recovery.** The dependency comes back and four hundred thousand\n  queued calls arrive at once, knocking it over again. Jittered retries and rate-limited\n  egress.\n- **Split brain on deploy.** Two versions of a workflow or consumer running concurrently\n  during a rolling deploy. Version the definitions; let in-flight work finish on the\n  version it started with.\n- **The customer's system is the bottleneck.** Their system does five requests per second\n  and will not change. You design around it - queue, matched rate limit, honest service\n  levels - rather than pretending it away.\n\nPick the three most relevant to what you drew. Reciting all seven reads as a memorised\nlist, which is the opposite of the intended effect.\n\n## Drawing under observation\n\nMost interview whiteboards are basic. Plan for that.\n\n- **Practise once, in the actual tool, before the day.** Find the shape, text, arrow and\n  undo controls. Do not learn a UI while being evaluated.\n- **Boxes and labelled arrows only.** No colours, no icons, no beauty. Nobody has ever\n  scored a point for a nice diagram.\n- **Left to right, request flow along the top, data stores underneath.** A consistent\n  layout beats a detailed one, because the interviewer is holding your design in their head\n  and a consistent layout is easier to hold.\n- **Label every arrow with what flows along it**: `record.received`, `HTTP 202`,\n  `enriched payload`. Unlabelled arrows are where designs quietly become vague, and an\n  interviewer cannot tell whether you were being brief or did not know.\n- **Start far left and leave room.** You will add things, and redrawing costs minutes you\n  do not have.\n- **Narrate while drawing.** Silence while drawing is the largest single block of dead air\n  available in the hour.\n\n## The last five minutes\n\nWhen they ask \"anything else\", or the clock says five minutes, do these four things. They\nare heavily scored and most candidates spend the time adding another box instead.\n\n**1. What you would build first.**\n> *\"Week one I would ship the ingest endpoint, the raw store and one enrichment provider\n> end to end, because that proves the contract with the sender's real data. Everything else\n> is elaboration.\"*\n\nThis shows you can sequence work, which is a different skill from designing it and a\nbetter predictor of whether you are useful in the first month.\n\n**2. What you deliberately did not build.**\n> *\"I did not add a schema registry today. With two producers it is overhead; at twenty it\n> is essential.\"*\n\nNaming a deferred decision *with its trigger* is what makes it judgement rather than an\nomission.\n\n**3. What you would monitor.** Be specific, and pick a single headline metric:\n> *\"Consumer lag, dead letter queue depth, provider error rate and p99, and end-to-end\n> record age. If I could have one dashboard it would be the age of the oldest unprocessed\n> record per tenant - it catches almost everything and it is expressed in the units the\n> customer cares about.\"*\n\n**4. The honest risk.** Not the architecture - the thing that actually goes wrong:\n> *\"In a real deployment the risk is usually not the architecture, it is that the sender's\n> data does not look like their documentation said it would. Which is why I want the raw\n> store and a reconciliation report from day one.\"*\n\nThat last one tends to be the sentence people remember, because it is the one that sounds\nlike experience rather than preparation.\n\n## Afterwards\n\nWithin thirty minutes, write down what you were asked, what you drew, what you fumbled and\nwhat they pushed on. The questions an interviewer chooses to push on are the most accurate\nsignal you will ever get about the gaps in your design vocabulary - more useful than the\noutcome of the round.",
+      "problems": [],
+      "checkpoint": {
+        "id": "closing-checkpoint",
+        "title": "Closing checkpoint",
+        "questions": [
+          {
+            "id": "q-unprompted",
+            "kind": "choice",
+            "prompt": "Why does raising failure modes unprompted matter so much?",
+            "options": [
+              "It fills time that would otherwise be awkward",
+              "It demonstrates that you have operated a system rather than only designed one, which is what the seniority judgement rests on",
+              "It prevents the interviewer from asking harder questions"
+            ],
+            "answer": 1,
+            "explanation": "Anyone can answer a failure question once asked. Volunteering the failure mode, with a mitigation and a reason, is evidence of having been on call for something. It is the most reliable seniority signal in the round."
+          },
+          {
+            "id": "q-monitor",
+            "kind": "choice",
+            "prompt": "One dashboard for an asynchronous ingestion system. What is on it?",
+            "options": [
+              "CPU and memory per service",
+              "The age of the oldest unprocessed record per tenant, plus consumer lag and dead letter depth",
+              "Requests per second and error rate at the gateway"
+            ],
+            "answer": 1,
+            "explanation": "Oldest-unprocessed-age is the metric that catches slow consumers, stuck partitions, poison messages and dependency outages at once, and it is expressed in the unit a customer actually experiences. Resource metrics tell you a machine is busy, not that anyone is being kept waiting."
+          },
+          {
+            "id": "q-close",
+            "kind": "recall",
+            "prompt": "From memory: the four things you say in the last five minutes.",
+            "modelAnswer": "What you would build first and why. What you deliberately deferred, with the trigger that would change your mind. What you would monitor, with one headline metric. The honest risk - usually that the real data does not match its documentation. Most candidates spend these minutes adding another box; these four are worth more."
+          },
+          {
+            "id": "q-full-run",
+            "kind": "explain",
+            "prompt": "Run a full sixty-minute design out loud, alone, on any system you use: scope, estimate, draw, break it, close. Time yourself.",
+            "modelAnswer": "The point is the pacing, not the design. Check three things afterwards: did you spend at least six minutes asking questions before drawing; did you reach failure modes by minute forty; did you close with the four items rather than another box. If you ran out of time before the failure modes, you spent too long on the happy path - which is the standard failure and the standard fix is drawing fewer boxes, not drawing faster."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "self-attested",
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.75,
+        "notes": "The last question is a full timed dry run. Nothing here can be auto-graded; tick it off honestly when you have actually done it out loud."
+      },
+      "recap": "Seven modules and one diagram you can draw from memory. The pacing matters more than the content: ask for eight minutes, draw for twenty-five, break it for twelve, and close deliberately."
+    }
+  ]
+}

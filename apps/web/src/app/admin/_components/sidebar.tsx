@@ -2,38 +2,61 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { NavGlyph } from "./icons";
 import { NAV, activeItem } from "./nav";
 
 const STORAGE_KEY = "aptivus.admin.sidebar";
 
+/*
+ * The collapsed flag lives in localStorage, which is a store outside React.
+ * useSyncExternalStore is the supported way to read one: it hydrates from the
+ * server snapshot (expanded) and then re-reads on the client, so there is no
+ * setState-in-an-effect and no hydration mismatch.
+ */
+let cached: boolean | null = null;
+let listeners: Array<() => void> = [];
+
+function readStore(): boolean {
+  try {
+    return window.localStorage.getItem(STORAGE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function subscribe(onChange: () => void) {
+  listeners.push(onChange);
+  window.addEventListener("storage", onChange);
+  return () => {
+    listeners = listeners.filter((fn) => fn !== onChange);
+    window.removeEventListener("storage", onChange);
+  };
+}
+
+function getSnapshot(): boolean {
+  if (cached === null) cached = readStore();
+  return cached;
+}
+
+function getServerSnapshot(): boolean {
+  return false;
+}
+
+function writeStore(next: boolean) {
+  cached = next;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, next ? "1" : "0");
+  } catch {
+    /* private mode: the preference just does not persist */
+  }
+  for (const fn of listeners) fn();
+}
+
 export default function Sidebar() {
   const pathname = usePathname() ?? "/admin";
   const active = activeItem(pathname);
-  const [collapsed, setCollapsed] = useState(false);
-  const [hydrated, setHydrated] = useState(false);
-
-  useEffect(() => {
-    setHydrated(true);
-    try {
-      setCollapsed(window.localStorage.getItem(STORAGE_KEY) === "1");
-    } catch {
-      /* private mode: fall back to expanded */
-    }
-  }, []);
-
-  function toggle() {
-    setCollapsed((prev) => {
-      const next = !prev;
-      try {
-        window.localStorage.setItem(STORAGE_KEY, next ? "1" : "0");
-      } catch {
-        /* ignore */
-      }
-      return next;
-    });
-  }
+  const collapsed = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   return (
     <nav
@@ -50,11 +73,7 @@ export default function Sidebar() {
           collapsed ? "flex-col items-center gap-2 py-3" : "h-14 items-center gap-2"
         }`}
       >
-        <Link
-          href="/admin"
-          className="flex min-w-0 items-center gap-2"
-          title="Aptivus admin"
-        >
+        <Link href="/admin" className="flex min-w-0 items-center gap-2" title="Aptivus admin">
           <span className="brand-bar grid h-8 w-8 shrink-0 place-items-center rounded-md text-sm font-bold text-[#0d0d10]">
             A
           </span>
@@ -67,8 +86,8 @@ export default function Sidebar() {
 
         <button
           type="button"
-          onClick={toggle}
-          aria-expanded={hydrated ? !collapsed : undefined}
+          onClick={() => writeStore(!collapsed)}
+          aria-expanded={!collapsed}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           className={`grid h-8 w-8 shrink-0 place-items-center rounded-md text-muted transition hover:bg-raised hover:text-fg ${
