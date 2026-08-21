@@ -9,7 +9,13 @@ import { PackSchema, parseProblem } from "./schema.mjs";
 
 export * from "./schema.mjs";
 
-export const PACKS_DIR = join(dirname(dirname(fileURLToPath(import.meta.url))), "packs");
+/**
+ * Where the packs live. `APTIVUS_PACKS` points the loader somewhere else, which
+ * is how a generated problem gets run through the verifier before anyone sees
+ * it without being written into the curated library first.
+ */
+export const PACKS_DIR =
+  process.env.APTIVUS_PACKS ?? join(dirname(dirname(fileURLToPath(import.meta.url))), "packs");
 
 const isDir = (p) => {
   try {

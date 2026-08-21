@@ -225,8 +225,10 @@ export const PackSchema = z.object({
   name: z.string().min(1),
   title: z.string().min(1),
   description: z.string().default(""),
-  /** Companies this pack is targeted at, matched against `companies.slug`. */
-  companies: z.array(z.string()).default([]),
+  /** Companies this pack is targeted at. The importer upserts these rows. */
+  companies: z
+    .array(z.object({ slug: z.string().min(1), name: z.string().min(1), industry: z.string().optional() }))
+    .default([]),
   source: z.string().default(""),
 });
 

@@ -1,0 +1,484 @@
+{
+  "$schema": "./course-schema.json",
+  "slug": "interview-sprint",
+  "title": "Interview Sprint",
+  "subtitle": "Five days to a coding round you can actually perform in",
+  "audience": "Experienced engineers with a coding round in the calendar this week, most likely part SQL and part data structures. Not a first programming course, and not for anyone with three months to spare - if you have longer, do Patterns That Actually Come Up and SQL for Interviews properly instead.",
+  "level": "intermediate",
+  "estimatedHours": 13,
+  "timeNote": "Roughly 13 hours over five days: a light evening, three working sessions of two to three hours, a three-hour mock day, and an hour on the morning of. The problem target times account for about three hours of that; the rest is teaching, re-solving from memory, and talking out loud. If you cannot give it 13 hours, cut Day 4 to one mock rather than skipping a day.",
+  "prerequisites": [
+    "You can already program fluently in at least one language",
+    "You can read SQL, even if you have not written a window function in years",
+    "Python installed, or the browser runner working"
+  ],
+  "outcomes": [
+    "Produce the eight core patterns from a blank editor without hesitating",
+    "Run the first ninety seconds of a round deliberately: restate, clarify, plan, then type",
+    "Narrate continuously while coding, including while stuck",
+    "Choose joins deliberately and avoid the fan-out trap before it happens",
+    "Write the ROW_NUMBER dedupe and top-N-per-group from memory"
+  ],
+  "tags": [
+    "sprint",
+    "python",
+    "sql",
+    "algorithms",
+    "interview technique"
+  ],
+  "version": 1,
+  "modules": [
+    {
+      "id": "setup-and-orientation",
+      "title": "Day 0: set up, and type something",
+      "summary": "Get the environment working, find out where your actual risk is, and end the evening having typed code rather than read about it.",
+      "estimatedMinutes": 75,
+      "objectives": [
+        "Have the practice environment and the real interview pad both open and working",
+        "Name your own three biggest risks rather than practising everything equally",
+        "Solve two easy problems for finger memory, not for difficulty"
+      ],
+      "teaching": "## Where the risk actually is\n\nIf you are an experienced engineer, you are not going to fail this round on\nproblem-solving. Five days is not enough to make you better at thinking, and you do not\nneed it. Five days is exactly enough to remove the three things that sink otherwise\nstrong candidates:\n\n1. **Syntax hesitation under time pressure.** Forty-five minutes is short. Ten seconds\n   lost per line to *is it `.length` or `len()`* compounds into a round where you ran out\n   of time on the second question. The fix is volume, and the fix is typing. Reading\n   solutions does nothing for this.\n2. **The SQL half, if there is one.** It is often half the round and it is the half most\n   candidates under-prepare, because SQL feels easy right up to the point where someone\n   asks for the latest row per group. Window functions, the fan-out trap, and NULL\n   semantics are where it stops being easy.\n3. **Not narrating.** Silent correct code scores worse than narrated near-miss code,\n   because the interviewer is assessing whether they want to debug something with you at\n   11pm, not whether you can produce output. The fix is practising out loud, alone,\n   feeling ridiculous, before it counts.\n\nNotably not on that list: exotic algorithms. Nobody is asking you for a segment tree.\nSpending Wednesday on advanced graph theory is a way of avoiding the boring work that\nwould actually raise your score.\n\n## The shape of every session from here\n\nSame three parts, every time:\n\n1. **Ten minutes of warm-up.** Retype yesterday's solutions from memory. Do not read\n   them first. What you cannot reproduce is your real study list.\n2. **The main block.** New problems, timer running, talking out loud.\n3. **Five minutes of close.** Write down every syntax thing you had to look up. That\n   list, not the problem list, is the thing to review tomorrow.\n\n## The stop rule\n\n**When the target time is up, stop and read the solution.**\n\nGrinding for forty minutes on a fifteen-minute problem teaches you nothing except how to\nfeel bad, and it burns the time you needed for the next four problems. Read the solution,\nclose it, retype it from memory, move on. Every problem in the library carries an honest\ntarget time for exactly this reason.\n\nThis is the single most commonly ignored piece of advice in interview preparation and it\nis the one that most changes how much you get through in a week.\n\n## Tonight, specifically\n\n- Get the environment running and open the real interview pad your interviewer sent, if\n  they sent one. Type in it. Find the run button, the input box, the language dropdown,\n  and the whiteboard tab if it has one. Do not discover that UI on the day.\n- Solve the two problems below. They are easy on purpose. The goal is that your fingers\n  produce a function definition, a loop, and a dict lookup without your brain being\n  involved.\n\nEnd the evening having typed code, not having read about code. That is the whole\nobjective for Day 0.",
+      "problems": [
+        {
+          "slug": "py_01_two_sum_premium",
+          "note": "The canonical warm-up: reach for a dict instead of nested loops. Time yourself; you should be done inside ten minutes."
+        },
+        {
+          "slug": "py_04_balanced_brackets",
+          "note": "A stack, and nothing clever. This is here for finger memory."
+        },
+        {
+          "slug": "sql_01_appetite_join",
+          "note": "One LEFT JOIN and one GROUP BY. Say the grain of each table out loud before you type."
+        }
+      ],
+      "checkpoint": {
+        "id": "day-0-checkpoint",
+        "title": "Before you close the laptop",
+        "questions": [
+          {
+            "id": "q-stop-rule",
+            "kind": "choice",
+            "prompt": "You are twenty-five minutes into a problem with a fifteen-minute target and you can feel that you are close. What do you do?",
+            "options": [
+              "Keep going - abandoning it now wastes the twenty-five minutes",
+              "Stop, read the solution, close it, retype it from memory, move on",
+              "Skip the solution and come back to the problem tomorrow with fresh eyes"
+            ],
+            "answer": 1,
+            "explanation": "The twenty-five minutes are already spent either way; the only question is what the next fifteen buy you. Reading and retyping converts a failure into a memorised pattern. 'Close to it' at 25 minutes on a 15-minute problem usually means you are missing one idea, and reading it is how you get that idea."
+          },
+          {
+            "id": "q-risks",
+            "kind": "explain",
+            "prompt": "Say out loud which of the three risks - syntax hesitation, the SQL half, not narrating - is your biggest, and what you will do differently this week because of it.",
+            "modelAnswer": "There is no right answer, but there is a wrong shape of answer. 'All three equally' means you have not thought about it, and you will end up spreading five days thinly. Pick one, say the specific evidence ('I have not written a window function in two years'), and name the specific change ('the window function module twice, and I will retype the ROW_NUMBER dedupe every morning')."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "all-required-problems",
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.5,
+        "notes": "Two Python problems and one SQL problem. If this took more than ninety minutes, the plan still works - do Day 1 in two sittings."
+      },
+      "recap": "You now have a working environment, a named risk, and three solved problems. Tomorrow is the highest-yield day of the week: hash maps and joins are what actually gets asked."
+    },
+    {
+      "id": "hash-maps-and-joins",
+      "title": "Day 1: hash maps, counting, and joins",
+      "summary": "The bread and butter of both halves of the round. A dict for the algorithms half, a deliberate join for the SQL half, and the counting patterns that sit on top of both.",
+      "estimatedMinutes": 150,
+      "objectives": [
+        "Reach for a dict as the default answer to 'have I seen this before'",
+        "Write Counter and defaultdict(list) grouping without stopping to think",
+        "Choose INNER versus LEFT deliberately and say why out loud",
+        "Know what COUNT(*) counts after a LEFT JOIN, and why it is usually wrong"
+      ],
+      "teaching": "## The algorithms half: a dict is the answer to most questions\n\nMost easy and medium problems are one of three dict shapes. If you can produce all three\nwithout thinking, you have covered a large fraction of what gets asked.\n\n**Shape 1: seen-set / lookup.** You are asked whether something has occurred before, or\nyou need to find a partner element. Walk the input once, keep a dict of what you have\npassed, and check before you insert.\n\n```python\nseen = {}                        # value -> index\nfor i, x in enumerate(xs):\n    if target - x in seen:\n        return [seen[target - x], i]\n    seen[x] = i                  # insert AFTER the check, or x pairs with itself\n```\n\nThe check-before-insert ordering is the whole trick and it is where people lose the\npoint. Say it out loud when you write it.\n\n**Shape 2: count then rank.** Frequency of something, then top-K or a sorted report.\n\n```python\nfrom collections import Counter\ncounts = Counter(name for name, _premium in records)\nranked = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))   # desc count, asc name\n```\n\nThe tuple sort key is the part worth memorising. `(-count, name)` gives you \"most\nfrequent first, ties broken alphabetically\" in one expression, and a stable, total\nordering is what makes your output reproducible. An interviewer who sees an untied sort\nwill ask what happens on a tie, so answer it before they ask.\n\n**Shape 3: group by a derived key.** You need buckets, and the bucket label is something\nyou compute.\n\n```python\nfrom collections import defaultdict\nbuckets = defaultdict(list)\nfor w in words:\n    buckets[tuple(sorted(w))].append(w)      # canonical form as the key\n```\n\n`defaultdict(list)` removes the \"does the key exist yet\" ceremony. The interesting design\ndecision is always the key function, not the loop: a canonical form, a rounded date, a\nnormalised name. Name it out loud - *\"I'm keying on the sorted letters, because that is\nthe same for every anagram\"* - because that sentence is the actual answer to the problem.\n\n## The SQL half: grain first, join second\n\nBefore you write anything, read the schema and say the **grain** of each table out loud.\nOne row per what? *\"`submissions` is one row per submission, `quotes` is one row per\nquote, so a submission can have several quotes.\"* Ten seconds, and it prevents the two\nmost common SQL interview errors.\n\nThen choose your join deliberately and narrate the choice:\n\n- `INNER JOIN` drops non-matching rows **silently**. That is correct when you only want\n  matched records and a bug when you wanted a zero.\n- `LEFT JOIN` keeps every left row and fills the right side with NULL. That is what you\n  want any time the answer includes \"and the ones with none\".\n\n*\"I'm using a LEFT JOIN because a broker with zero submissions still needs a row with a\nzero in it\"* is a scored sentence. Say it.\n\n### The LEFT JOIN filter trap\n\nThis turns your LEFT JOIN back into an INNER JOIN and it looks completely innocent:\n\n```sql\nLEFT JOIN quotes q ON q.submission_id = s.submission_id\nWHERE q.status = 'bound'          -- every unmatched row has q.status = NULL,\n                                  -- NULL = 'bound' is UNKNOWN, so the row is dropped\n```\n\nIf the condition describes *which right-hand rows you want to join*, it belongs in the\n`ON`. If it describes *which result rows you want to keep*, it belongs in the `WHERE`.\n\n```sql\nLEFT JOIN quotes q ON q.submission_id = s.submission_id AND q.status = 'bound'\n```\n\n### COUNT(*) versus COUNT(col)\n\nAfter a LEFT JOIN, a parent with no children still produces one row, full of NULLs. So:\n\n- `COUNT(*)` counts that phantom row and reports **1**.\n- `COUNT(q.quote_id)` skips NULLs and reports **0**.\n\nAlmost always you want the second. This is the single most common wrong answer in a\nLEFT JOIN aggregate, and it is wrong in the direction that looks plausible.\n\n### Conditional aggregation\n\nYou will need \"of these, how many were X\" constantly:\n\n```sql\nSUM(CASE WHEN status = 'bound' THEN 1 ELSE 0 END)   AS bound_count\nCOUNT(CASE WHEN status = 'bound' THEN 1 END)        AS the_same_thing\n```\n\n`CASE` with no `ELSE` yields NULL, and every aggregate except `COUNT(*)` skips NULLs.\nThat is the entire mechanism.\n\nAnd when you divide, protect both ends:\n\n```sql\nROUND(100.0 * bound / NULLIF(total, 0), 1)\n```\n\n`100.0` forces float division - in several engines `100 * 3 / 4` floors to 0. `NULLIF(x, 0)`\nturns a zero denominator into NULL rather than an error. Write it as one unit, always,\nuntil it is muscle memory.",
+      "problems": [
+        {
+          "slug": "py_02_top_k_brokers",
+          "note": "Counter plus a tuple sort key. Get the (-count, name) ordering right first time."
+        },
+        {
+          "slug": "py_03_group_anagrams",
+          "note": "The grouping pattern. The lesson is the key function, not the loop."
+        },
+        {
+          "slug": "py_05_reconcile_feeds",
+          "note": "Do this one carefully. Comparing two sources of truth and reporting the differences is closer to real work than anything else in the set, and it is a favourite for that reason."
+        },
+        {
+          "slug": "py_12_stdin_totals",
+          "note": "Drill the input parsing until it is reflex. Losing four minutes to stdin handling in a round is a genuinely common way to run out of time."
+        },
+        {
+          "slug": "sql_02_broker_conversion",
+          "note": "LEFT JOIN, COUNT(*) versus COUNT(col), NULLIF. All three of today's SQL ideas in one query."
+        },
+        {
+          "slug": "sql_03_no_quote_accounts",
+          "note": "The anti-join. Use NOT EXISTS and be ready to say why not NOT IN."
+        },
+        {
+          "slug": "sql_06_monthly_trend",
+          "note": "Date bucketing. Note which engine's function you used and what the other engines call it."
+        }
+      ],
+      "checkpoint": {
+        "id": "day-1-checkpoint",
+        "title": "Day 1 checkpoint",
+        "questions": [
+          {
+            "id": "q-count-star",
+            "kind": "choice",
+            "prompt": "You LEFT JOIN quotes onto submissions and group by submission. A submission with no quotes returns what from COUNT(*) and COUNT(q.quote_id)?",
+            "options": [
+              "0 and 0",
+              "1 and 0",
+              "0 and 1",
+              "1 and NULL"
+            ],
+            "answer": 1,
+            "explanation": "The LEFT JOIN produces one row for the unmatched submission, with every quotes column NULL. COUNT(*) counts rows, so it sees 1. COUNT(q.quote_id) counts non-NULL values, so it sees 0. You almost always want 0."
+          },
+          {
+            "id": "q-where-on",
+            "kind": "choice",
+            "prompt": "You want every broker, plus a count of their bound quotes. Where does `status = 'bound'` go?",
+            "options": [
+              "In the WHERE clause, after the LEFT JOIN",
+              "In the LEFT JOIN's ON clause",
+              "Either - they are equivalent"
+            ],
+            "answer": 1,
+            "explanation": "In the WHERE it filters the joined result, and unmatched brokers have status NULL, so they are dropped and your LEFT JOIN has silently become an INNER JOIN. In the ON it restricts which quote rows are eligible to join, leaving unmatched brokers with a NULL row and therefore a zero."
+          },
+          {
+            "id": "q-sort-key",
+            "kind": "recall",
+            "prompt": "From memory, with a blank editor: given `counts = Counter(names)`, produce the names sorted by descending count with ties broken alphabetically.",
+            "modelAnswer": "sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))\n\nNegate the count to get descending while leaving the name ascending. Sorting twice, or reversing, gets the tie-break backwards. If you needed to look this up, put it on tomorrow's warm-up list."
+          },
+          {
+            "id": "q-narrate-join",
+            "kind": "explain",
+            "prompt": "Out loud: state the grain of a submissions table and a quotes table, and say which join you would use to count quotes per submission and why.",
+            "modelAnswer": "Something like: 'submissions is one row per submission; quotes is one row per quote, and a submission can have several quotes, so it is one-to-many. I want every submission in the output including the ones nobody quoted, so LEFT JOIN, and I will count quotes.quote_id rather than star so that an unquoted submission shows zero.' The grain sentence is what stops you fanning out later."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "all-required-problems",
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.75
+      },
+      "recap": "Close the session by writing these out from memory with nothing open: Counter, defaultdict(list), the (-count, name) sort key, sys.stdin.read().split(), and a LEFT JOIN with a conditional COUNT. Whatever you had to look up goes on tomorrow's warm-up."
+    },
+    {
+      "id": "windows-and-window-functions",
+      "title": "Day 2: sliding windows and window functions",
+      "summary": "Two unrelated things that share a name, and both come up. The two-pointer window on the algorithms side, and ROW_NUMBER, RANK and running totals on the SQL side.",
+      "estimatedMinutes": 150,
+      "objectives": [
+        "Write the sliding window template from a blank editor without hesitating",
+        "Recognise the sort-then-sweep shape for interval problems",
+        "Write the ROW_NUMBER dedupe from memory and explain why the filter needs a CTE",
+        "Know why you cannot put a window function in a WHERE clause"
+      ],
+      "teaching": "## The sliding window template\n\nMemorise one shape. Almost every \"longest / shortest / maximum subarray with property P\"\nproblem is this, with the invariant swapped:\n\n```python\nfrom collections import defaultdict\n\ndef longest_ok(xs):\n    counts = defaultdict(int)\n    left = 0\n    best = 0\n    for right, x in enumerate(xs):\n        counts[x] += 1                       # 1. extend the window right\n        while <window is invalid>:            # 2. shrink from the left until valid\n            counts[xs[left]] -= 1\n            if counts[xs[left]] == 0:\n                del counts[xs[left]]\n            left += 1\n        best = max(best, right - left + 1)   # 3. record, once the window is valid\n    return best\n```\n\nThree things to get right, and they are the three things people get wrong:\n\n- **`while`, not `if`.** One new element can force several to leave.\n- **Record after shrinking, not before.** Recording while the window is still invalid is\n  the classic off-by-one and it only shows up on specific inputs.\n- **Clean up the dict when a count hits zero**, if your validity test is `len(counts) > k`.\n  A key sitting there with a zero count silently breaks the test.\n\nThe window is `right - left + 1` long. Write that expression out rather than tracking a\nseparate size variable; one source of truth is fewer bugs at minute thirty.\n\nEach pointer only ever moves forward, so this is O(n) even though it is visibly nested.\nSay that out loud, because from the outside a `for` containing a `while` looks quadratic\nand you want the interviewer to know you know it is not.\n\n## Intervals: sort first, then sweep\n\nThe other pattern that shows up in the same breath. Whenever the input is\n`[start, end]` pairs, the first line is almost always a sort, and stating that is most of\nthe solution:\n\n```python\nperiods = sorted(periods)                # by start, then end\nout = [list(periods[0])]\nfor start, end in periods[1:]:\n    if start <= out[-1][1]:              # overlaps or touches the previous merged one\n        out[-1][1] = max(out[-1][1], end)\n    else:\n        out.append([start, end])\n```\n\nThe decision worth narrating is `<=` versus `<`: do intervals that merely touch count as\noverlapping? That depends on whether the ends are inclusive, which is a question you ask\nthe interviewer rather than guess.\n\n## Now the other kind of window\n\nSQL window functions have nothing to do with sliding windows. Same word, different idea:\na window function computes a value **per row** using a set of related rows, without\ncollapsing them the way `GROUP BY` does.\n\n```sql\n<fn>() OVER (PARTITION BY g ORDER BY d [ROWS BETWEEN ... AND ...])\n```\n\n`PARTITION BY` is \"restart per group\". `ORDER BY` inside `OVER` is \"in this sequence\",\nand is what turns a `SUM` into a running total.\n\n| Function | Gives you |\n|---|---|\n| `ROW_NUMBER()` | 1, 2, 3 - ties broken arbitrarily unless you break them yourself |\n| `RANK()` | 1, 1, 3 - ties share a rank, then it skips |\n| `DENSE_RANK()` | 1, 1, 2 - ties share, no skip |\n| `SUM(x) OVER (ORDER BY d)` | running total |\n| `SUM(x) OVER (PARTITION BY g)` | the group total, repeated on every row |\n| `LAG(x)` / `LEAD(x)` | the previous / next row's value |\n\n### The pattern to have in your fingers: latest row per key\n\nThis is the highest-value single query in interview SQL, because deduplicating a feed is\nsomething everyone has actually had to do:\n\n```sql\nWITH ranked AS (\n  SELECT *,\n         ROW_NUMBER() OVER (PARTITION BY natural_key\n                            ORDER BY updated_at DESC, id DESC) AS rn\n  FROM feed\n)\nSELECT * FROM ranked WHERE rn = 1;\n```\n\nTwo details that separate a good answer from a working one. The **tie-break in the ORDER\nBY** (`, id DESC`) makes the result deterministic when two rows share a timestamp -\nwithout it the query returns a different row on different days, which is a real\nproduction bug. And **why the CTE is not optional**: `WHERE` runs before window functions\nare computed, so `WHERE ROW_NUMBER() OVER (...) = 1` is a syntax error in every engine.\nYou have to materialise the number first, then filter it.\n\nThat evaluation order explains most SQL confusion, so learn the line:\n\n```\nFROM -> JOIN -> WHERE -> GROUP BY -> HAVING -> WINDOW -> SELECT -> ORDER BY -> LIMIT\n```\n\nIt is why you cannot use a SELECT alias in WHERE, why HAVING exists at all, and why\n`ORDER BY` *can* use a SELECT alias.\n\nSwap `ROW_NUMBER` for `RANK` and `= 1` for `<= 3` and you have top-N per group. That is\ntwo patterns for the price of one.\n\n### Frames, briefly\n\n`SUM(x) OVER (ORDER BY d)` with no explicit frame defaults to `RANGE BETWEEN UNBOUNDED\nPRECEDING AND CURRENT ROW`, which treats rows with an equal `ORDER BY` value as peers and\ngives them all the same running total. `ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW`\ncounts physical rows instead. On data with duplicate dates these give different answers.\nKnowing that difference is a strong signal and takes one sentence to say.",
+      "problems": [
+        {
+          "slug": "py_06_longest_unique_run",
+          "note": "The template above, with 'a duplicate is in the window' as the invalid condition. Do it twice: once now, once from memory at the end of the session."
+        },
+        {
+          "slug": "py_07_merge_intervals",
+          "note": "Sort, then sweep. Ask yourself whether touching counts as overlapping before you write the comparison."
+        },
+        {
+          "slug": "py_08_binary_search_rate",
+          "note": "The rightmost-value-not-exceeding variant, which is the one that actually comes up. Watch the // for the midpoint."
+        },
+        {
+          "slug": "sql_04_dedupe_submissions",
+          "note": "The single highest-value SQL pattern in the set. You should be able to write it from a blank editor by the end of today."
+        },
+        {
+          "slug": "sql_05_topn_per_group",
+          "note": "The same machinery with RANK and <= n. Decide deliberately between RANK and ROW_NUMBER and say why."
+        },
+        {
+          "slug": "sql_08_running_exposure",
+          "note": "A running total, and your chance to say something about ROWS versus RANGE."
+        }
+      ],
+      "checkpoint": {
+        "id": "day-2-checkpoint",
+        "title": "Day 2 checkpoint",
+        "questions": [
+          {
+            "id": "q-window-filter",
+            "kind": "choice",
+            "prompt": "Why can you not write `WHERE ROW_NUMBER() OVER (PARTITION BY k ORDER BY ts DESC) = 1`?",
+            "options": [
+              "Window functions are only allowed in the SELECT list by convention",
+              "WHERE is evaluated before window functions are computed, so the value does not exist yet",
+              "ROW_NUMBER needs a GROUP BY to be filterable"
+            ],
+            "answer": 1,
+            "explanation": "Logical evaluation order: FROM, JOIN, WHERE, GROUP BY, HAVING, then window functions, then SELECT. The window function has not run when WHERE is evaluated. Wrap it in a CTE or subquery and filter the materialised column."
+          },
+          {
+            "id": "q-while-if",
+            "kind": "choice",
+            "prompt": "In the sliding window template, why is the shrink step a `while` rather than an `if`?",
+            "options": [
+              "Style - they behave identically here",
+              "Because adding one element can require removing more than one from the left before the window is valid again",
+              "Because the left pointer must always move on every iteration"
+            ],
+            "answer": 1,
+            "explanation": "With an `if` you shrink at most one position per new element, so a window that has become badly invalid stays invalid and your answer is too large. In problems where the window can only break by one, an `if` happens to work, which is exactly why the bug survives casual testing."
+          },
+          {
+            "id": "q-dedupe-recall",
+            "kind": "recall",
+            "prompt": "Blank editor, no notes: write the query that keeps only the latest row per natural_key from a table called feed.",
+            "modelAnswer": "WITH ranked AS (\n  SELECT *, ROW_NUMBER() OVER (PARTITION BY natural_key\n                               ORDER BY updated_at DESC, id DESC) AS rn\n  FROM feed\n)\nSELECT * FROM ranked WHERE rn = 1;\n\nMark yourself down if you left out the tie-break in the ORDER BY, or if you tried to filter without the CTE."
+          },
+          {
+            "id": "q-window-recall",
+            "kind": "recall",
+            "prompt": "Blank editor: the sliding window template, including where you record the best answer.",
+            "modelAnswer": "Extend right, then `while` the window is invalid shrink from the left, then record `right - left + 1`. Recording before the shrink loop is the standard off-by-one. Deleting zero-count keys matters if your validity test is on len(counts)."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "all-required-problems",
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.75
+      },
+      "recap": "The test for today is not whether you solved six problems. It is whether you can produce the ROW_NUMBER dedupe and the sliding window template into an empty file, right now, with the app closed. If you cannot, that is tomorrow's warm-up."
+    },
+    {
+      "id": "graphs-recursion-and-multi-grain-sql",
+      "title": "Day 3: graphs, recursion, and the SQL that goes wrong quietly",
+      "summary": "Traversal and topological sort on one side; the fan-out trap and multi-stage CTEs on the other. This is the day with the highest ceiling and the most useful failure mode.",
+      "estimatedMinutes": 180,
+      "objectives": [
+        "Build an adjacency list and traverse it with BFS and DFS without pausing",
+        "Write Kahn's topological sort and detect a cycle from the queue result",
+        "Spot fan-out before it happens and pre-aggregate to the right grain",
+        "Break a hard query into named CTE steps and check each one"
+      ],
+      "teaching": "## Graphs are two lines of setup and one loop\n\nMost graph problems in an interview are not really about graphs. They are about whether\nyou can turn a list of pairs into an adjacency list quickly and then walk it without\nlosing track of what you have visited.\n\n```python\nfrom collections import defaultdict, deque\n\ngraph = defaultdict(list)\nfor parent, child in edges:\n    graph[parent].append(child)          # directed; append both ways if undirected\n\n# BFS - shortest path in an unweighted graph, level by level\nq = deque([start])\nseen = {start}\nwhile q:\n    node = q.popleft()                   # popleft, not pop(0)\n    for nxt in graph[node]:\n        if nxt not in seen:\n            seen.add(nxt)\n            q.append(nxt)\n```\n\nTwo details that cost people real points:\n\n- **`deque`, not a list.** `list.pop(0)` is O(n), which makes your BFS quadratic. Using a\n  deque and saying why is free signal.\n- **Mark as seen when you enqueue, not when you dequeue.** Otherwise a node with several\n  parents gets queued several times, and on a dense graph that is a blow-up rather than a\n  wrong answer, which makes it harder to spot.\n\nDFS recursively is often shorter and reads better for rolling a value up a tree:\n\n```python\ndef total(node):\n    return own[node] + sum(total(c) for c in graph[node])\n```\n\nIf the depth might be large, mention that Python's recursion limit is around 1000 and\nthat you would convert to an explicit stack. Saying it is enough; you rarely need to do it.\n\n## Topological sort, and why it is worth extra attention\n\nKahn's algorithm: repeatedly take a node with no unmet dependencies.\n\n```python\nindeg = {n: 0 for n in nodes}\nfor a, b in edges:                       # a must come before b\n    graph[a].append(b)\n    indeg[b] += 1\n\nq = deque([n for n in nodes if indeg[n] == 0])\norder = []\nwhile q:\n    n = q.popleft()\n    order.append(n)\n    for m in graph[n]:\n        indeg[m] -= 1\n        if indeg[m] == 0:\n            q.append(m)\n\nif len(order) != len(nodes):\n    raise ValueError(\"cycle\")            # the leftovers are the cycle\n```\n\nThe cycle detection falls out for free: if you could not emit every node, the ones you\ndid not emit are mutually blocked. Notice it out loud, because \"what if the input has a\ncycle\" is the follow-up roughly every time.\n\nTwo reasons this one earns more of your time than its frequency suggests. First, it is\nthe only place where a plain data-structures answer overlaps with the system design\nround - a pipeline of steps with dependencies is a DAG, and being able to say that fluently\nconnects the two halves of a loop. Second, if you want deterministic output you swap the\ndeque for a heap, and being asked to make the ordering stable is a common extension.\n\n## The fan-out trap\n\nThis is the most valuable SQL bug to be able to see coming, because it does not error.\nIt just quietly returns a plausible wrong number.\n\n```sql\n-- WRONG: a policy with two claims has its premium counted twice\nSELECT SUM(p.written_premium), SUM(c.incurred)\nFROM policies p\nJOIN claims c ON c.policy_id = p.policy_id;\n```\n\nJoining a one-to-many table **multiplies** rows on the \"one\" side. Every aggregate over\nthe parent's columns inflates by the number of children. Nothing is NULL, nothing looks\nwrong, and the total is 38% too high.\n\nThe fix is to collapse the child to the parent's grain first:\n\n```sql\nWITH claim_totals AS (\n  SELECT policy_id, SUM(incurred) AS incurred\n  FROM claims GROUP BY policy_id\n)\nSELECT SUM(p.written_premium),\n       SUM(COALESCE(ct.incurred, 0))\nFROM policies p\nLEFT JOIN claim_totals ct ON ct.policy_id = p.policy_id;\n```\n\n**The rule: never aggregate two different grains in one query.** If you are summing\ncolumns from two tables that are each one-to-many relative to your grouping key,\npre-aggregate each one in its own CTE, then join the results.\n\nThe sentence to say, before you write anything:\n\n> *\"Claims are one-to-many against policies, so joining them directly would fan out my\n> premium sum. Let me roll claims up to one row per policy in a CTE first.\"*\n\nThat sentence is worth more than the query. It is the difference between someone who\nwrites SQL and someone you would let near a customer's numbers.\n\n**How to prove it to yourself:** run `SELECT SUM(written_premium) FROM policies` on its\nown, then run your joined version and compare. Sanity-checking a total against a known\nfigure is a habit worth performing out loud in the round - *\"there are 24 submissions and\nmy groups sum to 24, good.\"*\n\n## CTEs are for you, not for the engine\n\nUnder time pressure, three readable named steps beat one nested monster. You can run each\nCTE on its own to see its rows, which is how you debug a query in real life:\n\n```sql\nWITH stage_one AS ( ... ),\n     stage_two AS ( SELECT ... FROM stage_one )\nSELECT * FROM stage_two;\n```\n\nNarrate the plan before typing: *\"first I aggregate claims per policy, then I join, then I\ngroup by line of business.\"* Now the interviewer is following you, and if step one is\nwrong they will say so while it is still cheap.\n\n## WHERE versus HAVING\n\n`WHERE` filters rows before grouping. `HAVING` filters groups after aggregation. If your\ncondition mentions an aggregate, it must be `HAVING`; if it does not, prefer `WHERE`,\nbecause filtering earlier is both faster and clearer.",
+      "problems": [
+        {
+          "slug": "py_09_broker_hierarchy",
+          "note": "DFS with an adjacency list, rolling a value up a tree. Build the graph out loud."
+        },
+        {
+          "slug": "py_10_workflow_order",
+          "note": "Topological sort. Do this one properly - it is also your bridge into a system design round."
+        },
+        {
+          "slug": "py_15_flatten_payload",
+          "note": "Recursion over a nested structure. Unglamorous and very close to real integration work."
+        },
+        {
+          "slug": "sql_09_loss_ratio",
+          "note": "The fan-out trap. If you take one thing from the SQL half of this course, take this one."
+        },
+        {
+          "slug": "sql_07_turnaround_having",
+          "note": "WHERE versus HAVING on a computed aggregate."
+        },
+        {
+          "slug": "sql_11_funnel_cte",
+          "note": "A multi-stage funnel. Practise narrating the plan before you type it."
+        }
+      ],
+      "checkpoint": {
+        "id": "day-3-checkpoint",
+        "title": "Day 3 checkpoint",
+        "questions": [
+          {
+            "id": "q-fanout",
+            "kind": "choice",
+            "prompt": "You join policies to claims (one-to-many) and SUM the policy premium. What happens?",
+            "options": [
+              "The query errors because the grains do not match",
+              "Premium for a policy with two claims is counted twice, and the total is silently too high",
+              "The premium is averaged across the claims"
+            ],
+            "answer": 1,
+            "explanation": "The join duplicates the policy row once per claim, so its premium enters the SUM once per claim. There is no error and no NULL - just a number that is wrong in a plausible direction. Pre-aggregate the claims to one row per policy first."
+          },
+          {
+            "id": "q-bfs-seen",
+            "kind": "choice",
+            "prompt": "In BFS, when should you add a node to the seen set?",
+            "options": [
+              "When you dequeue it, so you record the order you actually visited",
+              "When you enqueue it, before it is ever dequeued",
+              "It does not matter as long as you check before enqueuing"
+            ],
+            "answer": 1,
+            "explanation": "Marking on dequeue lets a node with several parents be enqueued several times before it is first processed. On a wide graph that is exponential duplication rather than a wrong answer, which makes it harder to notice."
+          },
+          {
+            "id": "q-cycle",
+            "kind": "recall",
+            "prompt": "From memory: in Kahn's algorithm, how do you know the graph had a cycle, and how do you name the nodes involved?",
+            "modelAnswer": "If the output order is shorter than the node count, there is a cycle. The nodes never emitted - the ones whose in-degree never reached zero - are exactly the ones inside or downstream of it. No extra bookkeeping required, which is why this is the version to remember."
+          },
+          {
+            "id": "q-grain-aloud",
+            "kind": "explain",
+            "prompt": "Out loud, in one breath: the sentence you say before writing a query that touches a parent table and a one-to-many child table.",
+            "modelAnswer": "'The child is one-to-many against the parent, so joining directly would fan out my parent-level sums. I will pre-aggregate the child to one row per parent in a CTE and then join.' If it did not come out fluently, say it five more times. This is a line you want available under pressure, not reconstructed."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "all-required-problems",
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.75
+      },
+      "recap": "Tomorrow you stop learning and start performing. Do not add new material tomorrow - the value is in the clock and in hearing yourself."
+    },
+    {
+      "id": "mocks-under-the-clock",
+      "title": "Day 4: full mocks, out loud, recorded",
+      "summary": "Two timed 45-minute sessions with no hints, at least one of them recorded. Today is about performance, not knowledge.",
+      "estimatedMinutes": 180,
+      "objectives": [
+        "Run a full 45-minute round: restate, clarify, plan, code, test, state complexity",
+        "Hear your own dead air and fix it",
+        "Practise the recovery script for being stuck and for blanking on syntax"
+      ],
+      "teaching": "## Today is a performance rehearsal\n\nYou have the patterns. What you have probably not practised is the forty-five minutes as\na *performance*: reading a prompt cold, deciding fast, and talking continuously while\nyour hands are busy. That is a separate skill and it is the one being assessed.\n\nTwo mocks, full length, timer visible, no hints, talking out loud the entire time. Break\nin between and review honestly.\n\n## The first ninety seconds\n\nDo not start typing. This is the highest-leverage part of the round.\n\n1. **Read the prompt aloud, then restate it in your own words.** *\"So I get a list of\n   records and I need to return X - is that right?\"* Cheap, and it catches the\n   misunderstanding that would otherwise cost you twenty minutes.\n2. **Ask one or two real clarifying questions.** Can the input be empty? Can there be\n   duplicates? Indices or values? Roughly how large is n - because that tells me whether\n   O(n log n) is fine.\n3. **Walk the given example by hand, out loud.** Almost every misunderstanding dies here.\n4. **State the brute force, then the improvement, then ask.** *\"Naive is nested loops,\n   O(n squared). I think I can get O(n) with a dict from value to index. Shall I do that?\"*\n\nNow type.\n\n## While coding\n\n- **Narrate the decisions, not the characters.** *\"I'm using a defaultdict so I do not\n  have to check whether the key exists\"* is useful. Reading your code aloud is not.\n- **Fifteen seconds of silence is your limit.** If you go quiet, say what you are\n  weighing: *\"I'm working out whether the left pointer should move before or after I\n  record the max.\"* Silence reads as stuck. Thinking aloud reads as competent.\n- **Name your variables properly.** `broker_totals`, not `d`. It is free signal and it\n  makes your own code easier to debug at minute thirty.\n- **If you blank on a method name, say so and keep moving.** *\"In the language I use\n  daily I would reach for a group-by here; in Python I believe that is a defaultdict and\n  a loop, let me write it out.\"* Nobody cares that you are new to a syntax. They care\n  that you can name the operation you want.\n\n## When it works, do not stop\n\nThree things worth real points, in this order:\n\n1. **Walk your own edge cases.** Empty input, one element, all duplicates, everything the\n   same. Out loud, and actually trace one.\n2. **State the complexity.** Time and space, in one sentence.\n3. **Offer the trade-off you did not take.** *\"If memory were tight and the input were\n   already sorted I could do this with two pointers and O(1) extra space.\"*\n\n## When you are stuck\n\nBeing stuck is normal and survivable. Being stuck **and silent** is not.\n\n- Say exactly where you are: *\"I know I want a sliding window; I am not sure yet what\n  tells me when to shrink it. Let me work a small example.\"*\n- Go back to a concrete example on paper. Nearly every unsticking comes from this.\n- After about three minutes, ask for a nudge: *\"Am I on the right track with the window\n  idea, or should I be thinking about this differently?\"* This is not a penalty - it is\n  what you would do with a colleague.\n- **A working brute force beats an unfinished clever solution.** Say *\"let me get the\n  O(n squared) version working and then optimise\"* and then actually do it.\n\n## Managing the clock\n\nIf the round is split between SQL and algorithms, assume roughly half each but let the\ninterviewer steer. If you finish the SQL in fifteen minutes, do not fill the silence -\nsay *\"I am happy with that, shall I move on?\"*\n\nAt around thirty-five minutes, if you have something partial, say *\"I want to make sure\nwe end with something working - let me finish the straightforward version and note where\nI would optimise.\"* Then do that. Leave two or three minutes for questions.\n\n## Record one of them\n\nRecord yourself on one mock and play it back. It is unpleasant and it is the single\nhighest-value forty-five minutes in this course. You will hear the dead air, the\ntrailing-off, the places where you stopped explaining and started muttering. Those are\nfixable in a day, and they are invisible to you any other way.",
+      "problems": [
+        {
+          "slug": "py_11_accumulation_window",
+          "note": "Mock A, part one. Two pointers over sorted events - harder than it looks because the sort is the insight."
+        },
+        {
+          "slug": "sql_10_coverage_gaps",
+          "note": "Mock A, part two. LAG against the previous row. Narrate the plan first."
+        },
+        {
+          "slug": "py_13_min_layers",
+          "note": "Mock B, part one. Unbounded-knapsack shaped DP. State the recurrence out loud before coding it."
+        },
+        {
+          "slug": "sql_12_recursive_hierarchy",
+          "note": "Mock B, part two. Recursive CTE - UNION ALL, not UNION."
+        },
+        {
+          "slug": "py_14_lru_cache",
+          "note": "If time remains. A design question rather than a puzzle: say the invariant before you write the class.",
+          "optional": true
+        }
+      ],
+      "checkpoint": {
+        "id": "day-4-checkpoint",
+        "title": "Review the recording",
+        "questions": [
+          {
+            "id": "q-dead-air",
+            "kind": "explain",
+            "prompt": "Play back your recording and find the longest silence. What were you doing, and what could you have said instead?",
+            "modelAnswer": "Most people find a silence of thirty seconds or more and are surprised by it. The fix is a stock sentence for each situation: 'let me think about the data structure for a second', 'I am checking the boundary condition here', 'I want to trace this on the example before I trust it'. Have three; they cost nothing and remove the worst signal you can send."
+          },
+          {
+            "id": "q-first-90",
+            "kind": "recall",
+            "prompt": "From memory, the four things you do before typing.",
+            "modelAnswer": "Restate the problem in your own words; ask one or two real clarifying questions; walk the provided example by hand out loud; state the brute force and the intended improvement, then check the interviewer is happy. Roughly ninety seconds, and it is the most reliably scored part of the round."
+          },
+          {
+            "id": "q-partial",
+            "kind": "choice",
+            "prompt": "It is minute thirty-five and you have a partially working clever solution. What is the strongest move?",
+            "options": [
+              "Push on - a finished clever solution is worth much more",
+              "Say you want to end with something working, finish the straightforward version, and note where you would optimise",
+              "Stop and explain what you would have done with more time"
+            ],
+            "answer": 1,
+            "explanation": "Working code plus a stated optimisation path demonstrates both judgement and the idea. An unfinished clever solution demonstrates the idea only, and leaves the interviewer guessing whether you could have landed it. Announcing the decision is part of the value: it shows you manage a clock."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "min-problems",
+        "minProblemsSolved": 4,
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.66,
+        "notes": "Four of the five, under the clock, out loud. A problem you failed inside the time limit still counts - the point today is the process, not the score."
+      },
+      "recap": "Write down every syntax thing you fumbled and every place you went quiet. Tomorrow morning you review that list and nothing else."
+    },
+    {
+      "id": "the-morning-of",
+      "title": "Day 5: the morning of, and the round itself",
+      "summary": "A short, light warm-up from memory, then a hard stop. No new material. What to do in the thirty minutes before, and what to do in the thirty minutes after.",
+      "estimatedMinutes": 60,
+      "objectives": [
+        "Reproduce the core patterns cold, as a confidence check rather than a study session",
+        "Stop studying well before the round starts",
+        "Capture what was asked, immediately afterwards"
+      ],
+      "teaching": "## The warm-up (forty-five minutes, no more)\n\nFrom memory, into an empty file, with nothing open:\n\n- the sliding window template\n- the ROW_NUMBER dedupe, with its tie-break\n- Kahn's topological sort\n- `Counter`, `defaultdict(list)`, and the `(-count, name)` sort key\n- `100.0 * a / NULLIF(b, 0)`\n\nThen one easy problem you have already solved, for the feel of it. **Do not attempt\nanything new today.** A new problem this morning can only do two things: confirm what you\nalready know, or shake your confidence an hour before it matters.\n\n## Thirty minutes before\n\nStop studying. Water, bathroom, quiet room, notifications off, door shut. Have a scratch\neditor open and a pen and paper next to you. Join the call a few minutes early with the\neditor already open.\n\nThe frame to hold, and it is worth saying to yourself: *my job in the next forty-five\nminutes is to be someone they would want to debug a customer outage with at 11pm. Not to\nbe a code golfer.*\n\n## The one-page refresher\n\n```python\nfrom collections import defaultdict, Counter, deque\nimport heapq, bisect\n\ncounts = Counter(xs)                                  # frequencies\ngroups = defaultdict(list); groups[k].append(v)       # grouping\nranked = sorted(d.items(), key=lambda kv: (-kv[1], kv[0]))\nq = deque([start]); q.popleft()                       # BFS; list.pop(0) is O(n)\nheapq.heappush(h, x); heapq.heappop(h)                # MIN heap; push -x for max\nmid = (lo + hi) // 2                                  # // not /\nfor i, x in enumerate(xs):                            # (index, value)\nd.get(k, 0)                                           # never d[k] on maybe-missing\n```\n\n```sql\n-- latest row per key\nWITH ranked AS (\n  SELECT *, ROW_NUMBER() OVER (PARTITION BY k ORDER BY ts DESC, id DESC) rn FROM t\n) SELECT * FROM ranked WHERE rn = 1;\n\n-- do not fan out\nWITH totals AS (SELECT parent_id, SUM(x) s FROM child GROUP BY parent_id)\nSELECT ... FROM parent p LEFT JOIN totals t ON t.parent_id = p.id;\n\nCOUNT(*) vs COUNT(col)            -- col skips NULLs, which is what LEFT JOIN gives you\n100.0 * a / NULLIF(b, 0)          -- float maths, no divide by zero\nWHERE filters rows, HAVING filters groups\nNOT EXISTS, not NOT IN\nFROM -> WHERE -> GROUP BY -> HAVING -> window -> SELECT -> ORDER BY -> LIMIT\n```\n\n## Have two questions ready\n\nAsk something you actually want to know; it shows when you do not. Good shapes: what a\ntypical project looks like end to end, where things usually get hard, what the hardest\nscaling problem the system has actually hit. Avoid anything answerable from the careers\npage.\n\n## Immediately afterwards\n\nWithin thirty minutes, while it is fresh, write down every problem you were asked and\neverything you fumbled. Whatever the outcome, that note is worth more than the round -\nit is the only accurate list you will ever get of what you actually need to work on.",
+      "problems": [
+        {
+          "slug": "py_01_two_sum_premium",
+          "note": "One easy, already-solved problem for the feel of the pad. Not for the difficulty.",
+          "optional": true
+        }
+      ],
+      "checkpoint": {
+        "id": "day-5-checkpoint",
+        "title": "Cold recall",
+        "questions": [
+          {
+            "id": "q-cold-window",
+            "kind": "recall",
+            "prompt": "Empty file, nothing open: the sliding window template.",
+            "modelAnswer": "Extend right, `while` invalid shrink left, then record right - left + 1. If this came out without pausing, you are ready. If it did not, do it three more times - it is fifteen lines and it is the most reused shape in the set."
+          },
+          {
+            "id": "q-cold-dedupe",
+            "kind": "recall",
+            "prompt": "Empty file: the latest-row-per-key query, including the tie-break.",
+            "modelAnswer": "WITH ranked AS (SELECT *, ROW_NUMBER() OVER (PARTITION BY k ORDER BY ts DESC, id DESC) rn FROM t) SELECT * FROM ranked WHERE rn = 1;"
+          },
+          {
+            "id": "q-cold-topo",
+            "kind": "recall",
+            "prompt": "Empty file: Kahn's topological sort, with cycle detection.",
+            "modelAnswer": "In-degree map, queue of the zero-in-degree nodes, pop and decrement, enqueue on reaching zero, and compare the length of the output to the node count to detect a cycle."
+          },
+          {
+            "id": "q-frame",
+            "kind": "explain",
+            "prompt": "Say out loud what your job is in the round.",
+            "modelAnswer": "'To be someone they would want to debug an outage with at 11pm.' Which in practice means: restate the problem, think out loud, write something that works, check your own edge cases, and say what you would do differently with more time."
+          }
+        ]
+      },
+      "completion": {
+        "rule": "checkpoint-only",
+        "requireCheckpoint": true,
+        "checkpointPassScore": 0.75,
+        "notes": "No new problems today. Completion is cold recall, and then stopping."
+      },
+      "recap": "That is the course. The thing to carry forward is the habit, not the problem count: restate, narrate, check your own edges, state the trade-off you did not take."
+    }
+  ]
+}

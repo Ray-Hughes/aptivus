@@ -4,6 +4,7 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { db } from "@/db";
 import { attempts, problems } from "@/db/schema";
+import { syncAchievements } from "@/lib/achievements";
 import { awardCleanSolve, getBalance } from "@/lib/entitlements";
 
 const Body = z.object({
@@ -66,15 +67,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
   });
 
   let gemsAwarded = 0;
+  let newlyEarned: { name: string; gems: number }[] = [];
   if (solved) {
     const diff = (["easy", "medium", "hard"] as const).includes(row.difficulty as "easy")
       ? (row.difficulty as "easy" | "medium" | "hard") : "medium";
     const award = await awardCleanSolve(session.user.id, row.id, diff);
     gemsAwarded = award.awarded;
+    newlyEarned = (await syncAchievements(session.user.id)).newlyEarned;
   }
 
   return NextResponse.json({
-    results, passed, total: tests.length, solved, gemsAwarded,
+    results, passed, total: tests.length, solved, gemsAwarded, newlyEarned,
     gems: await getBalance(session.user.id),
   });
 }

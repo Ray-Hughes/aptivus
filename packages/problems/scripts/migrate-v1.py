@@ -124,7 +124,9 @@ SIGNATURES = {
 
 PACK_META = {
     "federato": {
-        "companies": ["federato"],
+        "companies": [
+            {"slug": "federato", "name": "Federato", "industry": "Insurance (P&C RiskOps)"},
+        ],
     },
 }
 

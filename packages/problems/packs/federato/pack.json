@@ -3,7 +3,11 @@
   "title": "Federato / insurance RiskOps",
   "description": "SQL and algorithms in a P&C insurance underwriting domain: submissions, quotes, policies, appetite, portfolio accumulation. Built for a Forward Deployed Engineer round that is part SQL, part data structures.",
   "companies": [
-    "federato"
+    {
+      "slug": "federato",
+      "name": "Federato",
+      "industry": "Insurance (P&C RiskOps)"
+    }
   ],
   "source": "Assembled from reported Federato interview structure (45 min, part SQL + part DS&A) plus the canonical patterns those rounds draw from."
 }
