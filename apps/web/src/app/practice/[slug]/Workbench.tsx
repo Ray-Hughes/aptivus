@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Markdown } from "@/components/Markdown";
 import {
   getEngine, type ResultRow, type TestCase, type TraceResult,
 } from "@/lib/engine-client";
@@ -20,6 +21,7 @@ export function Workbench(props: {
   const [trace, setTrace] = useState<TraceResult | null>(null);
   const [step, setStep] = useState(0);
   const [pinned, setPinned] = useState<string[]>([]);
+  const [tab, setTab] = useState<"results" | "trace">("results");
   const [expr, setExpr] = useState("");
   const [replLog, setReplLog] = useState<{ q: string; a: string; bad?: boolean }[]>([]);
   const [hints, setHints] = useState<string[]>([]);
@@ -44,7 +46,7 @@ export function Workbench(props: {
   const runSamples = () => guard("run", async () => {
     setTrace(null);
     const { results } = await engine.current.run(code, props.sampleTests, "function", props.func);
-    setResults(results);
+    setResults(results); setTab("results");
     const passed = results.filter((r) => r.passed).length;
     setBanner({
       tone: passed === results.length ? "ok" : "bad",
@@ -103,7 +105,7 @@ export function Workbench(props: {
       setBanner({ tone: "bad", text: t.error || "Nothing to trace — is the function written?" });
       return;
     }
-    setTrace(t); setStep(0); setPinned([]); setReplLog([]);
+    setTrace(t); setStep(0); setPinned([]); setReplLog([]); setTab("trace");
     setBanner(null);
   });
 
@@ -156,8 +158,8 @@ export function Workbench(props: {
   const btn = "rounded-lg px-3.5 py-2 text-[13px] font-medium transition disabled:opacity-40 disabled:cursor-not-allowed";
 
   return (
-    <main className="min-h-screen bg-[#0f1013] text-[#dfe1e5]">
-      <header className="flex items-center justify-between border-b border-[#24262b] px-5 py-3">
+    <main className="flex h-screen flex-col overflow-hidden bg-[#0b0c0f] text-[#e6e8ec]">
+      <header className="flex shrink-0 items-center justify-between border-b border-white/[0.07] px-5 py-3">
         <div className="flex items-baseline gap-3">
           <a href="/dashboard" className="text-[13px] text-[#8b8f96] hover:text-[#dfe1e5]">&larr;</a>
           <h1 className="text-[15px] font-semibold">{props.title}</h1>
@@ -171,10 +173,10 @@ export function Workbench(props: {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)]">
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden p-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
         {/* problem */}
-        <section className={`${card} p-5`}>
-          <div className="whitespace-pre-wrap text-[13.5px] leading-relaxed text-[#c8ccd2]">{props.prompt}</div>
+        <section className={`${card} flex min-h-0 flex-col overflow-y-auto p-5`}>
+          <Markdown source={props.prompt} className="text-[13.5px] text-[#c8ccd4]" />
 
           {hints.map((h, i) => (
             <p key={i} className="mt-3 rounded-lg border border-[#4a4520] bg-[#231f10] px-3 py-2 text-[12.5px] text-[#e2d07a]">
@@ -200,8 +202,8 @@ export function Workbench(props: {
         </section>
 
         {/* editor + results */}
-        <section className="flex flex-col gap-4">
-          <div className={`${card} overflow-hidden`}>
+        <section className="flex min-h-0 flex-col gap-4">
+          <div className={`${card} flex min-h-0 flex-[3] flex-col overflow-hidden`}>
             <div className="flex items-center justify-between border-b border-[#24262b] px-4 py-2.5">
               <span className="text-[12.5px] text-[#8b8f96]">Python 3</span>
               <span className="text-[11.5px] text-[#6f747c]">
@@ -210,7 +212,7 @@ export function Workbench(props: {
             </div>
             <textarea
               value={code} onChange={(e) => setCode(e.target.value)} spellCheck={false}
-              className="h-[300px] w-full resize-y bg-[#101115] p-4 font-mono text-[13px] leading-relaxed text-[#dfe1e5] outline-none"
+              className="min-h-0 w-full flex-1 resize-none bg-[#0b0c0f] p-4 font-mono text-[13px] leading-relaxed text-[#e6e8ec] outline-none"
               aria-label="Code editor"
             />
             <div className="flex items-center justify-between border-t border-[#24262b] px-4 py-2.5">
@@ -231,117 +233,175 @@ export function Workbench(props: {
             </div>
           </div>
 
-          {banner && (
-            <div role="status" className={`rounded-lg px-4 py-2.5 text-[13px] font-medium ${
-              banner.tone === "ok" ? "bg-[#12331f] text-[#7fe0a2]" : "bg-[#2a1618] text-[#ffa1a1]"}`}>
-              {banner.text}
-            </div>
-          )}
-
-          {/* stepper */}
-          {trace && cur && (
-            <div className={`${card} p-4`}>
-              <div className="flex flex-wrap items-center gap-2">
-                <button onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}
-                        className={`${btn} border border-[#33363d]`} aria-label="Previous step">◀</button>
-                <button onClick={() => setStep((s) => Math.min(trace.steps.length - 1, s + 1))}
-                        disabled={step >= trace.steps.length - 1}
-                        className={`${btn} border border-[#33363d]`} aria-label="Next step">▶</button>
-                <input type="range" min={0} max={trace.steps.length - 1} value={step}
-                       onChange={(e) => setStep(Number(e.target.value))}
-                       className="flex-1 accent-[#39c06c]" aria-label="Step" />
-                <span className="font-mono text-[11.5px] text-[#8b8f96]">
-                  {step + 1} / {trace.steps.length}
-                </span>
-              </div>
-
-              <p className="mt-3 text-[13px] text-[#39c06c]">{narrate()}</p>
-              <p className="mt-1 font-mono text-[12px] text-[#8b8f96]">
-                line {cur.line}: {(trace.source[cur.line - 1] ?? "").trim()}
-              </p>
-
-              <div className="mt-3 flex flex-wrap gap-2">
-                {Object.keys(cur.locals).sort().map((n) => (
-                  <button key={n} onClick={() => setPinned((p) =>
-                            p.includes(n) ? p.filter((x) => x !== n) : [...p, n])}
-                          className={`rounded-full border px-3 py-1 font-mono text-[11.5px] ${
-                            cur.changed.includes(n)
-                              ? "border-[#2f6b45] bg-[#12331f]"
-                              : pinned.includes(n)
-                                ? "border-[#4aa3ff] bg-[#16283a]"
-                                : "border-[#3a3d42] bg-[#1d1f24]"}`}>
-                    <span className="text-[#4aa3ff]">{n}</span>{" "}
-                    <span className="text-[#dfe1e5]">{trace.pool[cur.locals[n]]?.s}</span>
+          <div className={`${card} flex min-h-0 flex-[2] flex-col overflow-hidden`}>
+            <div className="flex shrink-0 items-center justify-between border-b border-white/[0.07] px-4 py-2.5">
+              <div className="flex gap-1">
+                {(["results", "trace"] as const).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setTab(t)}
+                    aria-pressed={tab === t}
+                    className={`rounded-lg px-3 py-1 text-[12.5px] transition ${
+                      tab === t ? "bg-white/[0.1] text-white" : "text-[#8b929d] hover:text-white"
+                    }`}
+                  >
+                    {t === "results" ? "Test cases" : "Trace"}
                   </button>
                 ))}
               </div>
-
-              {pinned.length > 0 && (
-                <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                  {pinned.map((n) => {
-                    const v = valueOf(n);
-                    return (
-                      <div key={n} className="rounded-lg border border-[#4aa3ff] bg-[#17181c]">
-                        <div className="flex justify-between border-b border-[#24262b] bg-[#16283a] px-3 py-1.5 font-mono text-[11.5px]">
-                          <span className="text-[#4aa3ff]">{n}</span>
-                          <span className="text-[#8b8f96]">{v?.t}{v?.n != null ? ` · ${v.n}` : ""}</span>
-                        </div>
-                        <pre className="max-h-40 overflow-auto p-3 font-mono text-[11.5px]">
-                          {v?.p ?? "not in scope here"}
-                        </pre>
-                      </div>
-                    );
-                  })}
-                </div>
+              {banner && (
+                <span
+                  role="status"
+                  className={`rounded-md px-2.5 py-1 text-[12px] font-medium ${
+                    banner.tone === "ok" ? "bg-[#12331f] text-[#7fe0a2]" : "bg-[#2a1618] text-[#ffa1a1]"
+                  }`}
+                >
+                  {banner.text}
+                </span>
               )}
-
-              <div className="mt-3 border-t border-[#24262b] pt-3">
-                {replLog.map((r, i) => (
-                  <div key={i} className="mb-2 font-mono text-[11.5px]">
-                    <div className="text-[#4aa3ff]">&gt;&gt;&gt; {r.q}</div>
-                    <div className={r.bad ? "text-[#ec5b5b]" : "text-[#dfe1e5]"}>{r.a}</div>
-                  </div>
-                ))}
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-[12px] font-bold text-[#39c06c]">&gt;&gt;&gt;</span>
-                  <input value={expr} onChange={(e) => setExpr(e.target.value)}
-                         onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); evalExpr(); } }}
-                         placeholder="evaluate an expression at this step"
-                         aria-label="Expression console"
-                         className="flex-1 rounded-lg border border-[#33363d] bg-[#101115] px-3 py-1.5 font-mono text-[12px] outline-none focus:border-[#4aa3ff]" />
-                </div>
-              </div>
             </div>
-          )}
 
-          {/* results */}
-          {results && (
-            <div className={`${card} p-4`}>
-              <p className="mb-2 text-[12px] text-[#8b8f96]">
-                {props.hiddenCount} hidden test{props.hiddenCount === 1 ? "" : "s"} run on submit
-              </p>
-              <ul className="space-y-1.5">
-                {results.map((r, i) => (
-                  <li key={i} className={`rounded-lg border-l-2 bg-[#1d1f24] px-3 py-2 text-[12.5px] ${
-                        r.passed ? "border-[#39c06c]" : "border-[#ec5b5b]"}`}>
-                    <div className="flex justify-between">
-                      <span>Test {i + 1}{r.sample ? " (sample)" : ""}</span>
-                      <span className={r.passed ? "text-[#39c06c]" : "text-[#ec5b5b]"}>
-                        {r.passed ? "Passed" : "Failed"}
+            <div className="min-h-0 flex-1 overflow-y-auto p-4">
+              {tab === "trace" ? (
+                trace && cur ? (
+                  <>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}
+                              className={`${btn} border border-white/12`} aria-label="Previous step">◀</button>
+                      <button onClick={() => setStep((s) => Math.min(trace.steps.length - 1, s + 1))}
+                              disabled={step >= trace.steps.length - 1}
+                              className={`${btn} border border-white/12`} aria-label="Next step">▶</button>
+                      <input type="range" min={0} max={trace.steps.length - 1} value={step}
+                             onChange={(e) => setStep(Number(e.target.value))}
+                             className="flex-1 accent-[#00E5FF]" aria-label="Step" />
+                      <span className="font-mono text-[11.5px] text-[#8b929d]">
+                        {step + 1} / {trace.steps.length}
                       </span>
                     </div>
-                    {!r.passed && (
-                      <div className="mt-1 font-mono text-[11.5px] text-[#8b8f96]">
-                        <div>in: {String(r.input)}</div>
-                        <div>expected: {JSON.stringify(r.expected)}</div>
-                        <div>got: {r.error ? r.error : JSON.stringify(r.got)}</div>
+
+                    <p className="mt-3 text-[13px] leading-relaxed text-[#00E5FF]">{narrate()}</p>
+                    <p className="mt-1 font-mono text-[12px] text-[#8b929d]">
+                      line {cur.line}: {(trace.source[cur.line - 1] ?? "").trim()}
+                    </p>
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {Object.keys(cur.locals).sort().map((n) => (
+                        <button key={n} onClick={() => setPinned((p) =>
+                                  p.includes(n) ? p.filter((x) => x !== n) : [...p, n])}
+                                className={`rounded-full border px-3 py-1 font-mono text-[11.5px] ${
+                                  cur.changed.includes(n)
+                                    ? "border-[#2f6b45] bg-[#12331f]"
+                                    : pinned.includes(n)
+                                      ? "border-[#4aa3ff] bg-[#16283a]"
+                                      : "border-white/12 bg-white/[0.03]"}`}>
+                          <span className="text-[#4aa3ff]">{n}</span>{" "}
+                          <span>{trace.pool[cur.locals[n]]?.s}</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {pinned.length > 0 && (
+                      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                        {pinned.map((n) => {
+                          const v = valueOf(n);
+                          return (
+                            <div key={n} className="overflow-hidden rounded-lg border border-[#4aa3ff]/60">
+                              <div className="flex justify-between bg-[#16283a] px-3 py-1.5 font-mono text-[11.5px]">
+                                <span className="text-[#4aa3ff]">{n}</span>
+                                <span className="text-[#8b929d]">{v?.t}{v?.n != null ? ` · ${v.n}` : ""}</span>
+                              </div>
+                              <pre className="max-h-32 overflow-auto p-3 font-mono text-[11.5px]">
+                                {v?.p ?? "not in scope here"}
+                              </pre>
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
-                  </li>
-                ))}
-              </ul>
+
+                    <div className="mt-3 border-t border-white/[0.07] pt-3">
+                      {replLog.map((r, n) => (
+                        <div key={n} className="mb-2 font-mono text-[11.5px]">
+                          <div className="text-[#4aa3ff]">&gt;&gt;&gt; {r.q}</div>
+                          <div className={r.bad ? "text-[#ff9d9d]" : "text-[#e6e8ec]"}>{r.a}</div>
+                        </div>
+                      ))}
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-[12px] font-bold text-[#39c06c]">&gt;&gt;&gt;</span>
+                        <input value={expr} onChange={(e) => setExpr(e.target.value)}
+                               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); evalExpr(); } }}
+                               placeholder="evaluate an expression at this step, e.g. seen"
+                               aria-label="Expression console"
+                               className="flex-1 rounded-lg border border-white/12 bg-[#0b0c0f] px-3 py-1.5 font-mono text-[12px] outline-none focus:border-[#4aa3ff]" />
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="grid h-full place-items-center text-center">
+                    <div className="max-w-sm">
+                      <p className="text-[14px] font-medium text-[#c8ccd4]">Step through what your code did</p>
+                      <p className="mt-2 text-[13px] leading-relaxed text-[#8b929d]">
+                        Trace runs your code one line at a time and shows every variable as it
+                        changes. It works on a half-finished attempt, so you do not need a
+                        correct answer first.
+                      </p>
+                      <button onClick={runTrace} disabled={!!busy || booting}
+                              className={`${btn} mt-4 border border-white/12 text-[#e6e8ec]`}>
+                        {busy === "trace" ? "Tracing…" : "Trace this problem"}
+                      </button>
+                    </div>
+                  </div>
+                )
+              ) : results ? (
+                <>
+                  <p className="mb-2 text-[12px] text-[#8b929d]">
+                    {props.hiddenCount} hidden test{props.hiddenCount === 1 ? "" : "s"} run on submit
+                  </p>
+                  <ul className="space-y-1.5">
+                    {results.map((r, n) => (
+                      <li key={n} className={`rounded-lg border-l-2 bg-white/[0.03] px-3 py-2 text-[12.5px] ${
+                            r.passed ? "border-[#39c06c]" : "border-[#ec5b5b]"}`}>
+                        <div className="flex justify-between">
+                          <span>Test {n + 1}{r.sample ? " (sample)" : ""}</span>
+                          <span className={r.passed ? "text-[#7fe0a2]" : "text-[#ff9d9d]"}>
+                            {r.passed ? "Passed" : "Failed"}
+                          </span>
+                        </div>
+                        {!r.passed && (
+                          <div className="mt-1 font-mono text-[11.5px] text-[#8b929d]">
+                            <div>in: {String(r.input)}</div>
+                            {r.expected !== null && <div>expected: {JSON.stringify(r.expected)}</div>}
+                            <div>got: {r.error ? r.error : JSON.stringify(r.got)}</div>
+                          </div>
+                        )}
+                        {!r.passed && (
+                          <button onClick={runTrace} disabled={!!busy}
+                                  className="mt-2 rounded-md border border-white/12 px-2.5 py-1 text-[11.5px] text-[#c8ccd4] hover:bg-white/[0.06]">
+                            Trace this case
+                          </button>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : (
+                <div className="grid h-full place-items-center text-center">
+                  <div className="max-w-sm">
+                    <p className="text-[14px] font-medium text-[#c8ccd4]">
+                      {props.sampleTests.length} sample case{props.sampleTests.length === 1 ? "" : "s"},{" "}
+                      {props.hiddenCount} hidden
+                    </p>
+                    <p className="mt-2 text-[13px] leading-relaxed text-[#8b929d]">
+                      <span className="text-[#c8ccd4]">Run</span> checks the samples in your browser.{" "}
+                      <span className="text-[#c8ccd4]">Submit</span> runs the hidden set too and
+                      records the attempt. Stuck? <span className="text-[#c8ccd4]">Trace</span> steps
+                      through what actually happened.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </section>
       </div>
     </main>
