@@ -14,7 +14,8 @@
  *     No dependencies on purpose: this runs in CI and in a bare checkout.
  *
  *  2. Semantics. The rules a schema cannot express: problem slugs must exist in
- *     `packs/`, planned problems must be optional so a course is completable today,
+ *     the library - either format, `packages/problems/packs/` or the v1 `packs/` -
+ *     planned problems must be optional so a course is completable today,
  *     estimated hours must match the modules, checkpoint answers must be in range.
  *
  * Exit code is 1 if there are errors, 0 if there are only warnings.
@@ -27,6 +28,7 @@ import { fileURLToPath } from "node:url";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(HERE, "..", "..");
 const PACKS = join(REPO, "packs");
+const V2_PACKS = join(REPO, "packages", "problems", "packs");
 const SCHEMA_PATH = join(HERE, "course-schema.json");
 
 const argv = new Set(process.argv.slice(2));
@@ -144,33 +146,77 @@ function check(value, schema, root, path, errs = []) {
 /* Packs                                                               */
 /* ------------------------------------------------------------------ */
 
+/** Pack directories, in the order they are searched. */
+const packRoots = () => [
+  // Format v2: one JSON document per problem, id == filename stem.
+  { root: V2_PACKS, read: readV2Pack },
+  // Format v1: a Python module per problem under packs/<pack>/{python,sql}/.
+  // Still the shape `app/server.py: load_problems()` reads, so it stays until
+  // that server is retired. Anything already migrated is found above first.
+  { root: PACKS, read: readV1Pack },
+];
+
+/** v2: packages/problems/packs/<pack>/<id>.json, ignoring the pack manifest. */
+function readV2Pack(packDir, pack, found) {
+  let files = [];
+  try {
+    files = readdirSync(packDir);
+  } catch {
+    return;
+  }
+  for (const fn of files.sort()) {
+    if (!fn.endsWith(".json") || fn === "pack.json" || fn.startsWith("_")) continue;
+    const id = fn.slice(0, -5);
+    let kind = "code";
+    try {
+      kind = JSON.parse(readFileSync(join(packDir, fn), "utf8")).kind ?? "code";
+    } catch {
+      // A problem this validator cannot parse is still a problem that exists;
+      // `packages/problems/verify.mjs` is what holds the format to account.
+    }
+    if (!found.has(id)) found.set(id, `${pack}/${kind}`);
+  }
+}
+
+/** v1: packs/<pack>/{python,sql}/<id>.py, ignoring files that start with "_". */
+function readV1Pack(packDir, pack, found) {
+  for (const kind of ["python", "sql"]) {
+    const dir = join(packDir, kind);
+    let files = [];
+    try {
+      files = readdirSync(dir);
+    } catch {
+      continue;
+    }
+    for (const fn of files.sort()) {
+      if (!fn.endsWith(".py") || fn.startsWith("_")) continue;
+      const id = fn.slice(0, -3);
+      if (!found.has(id)) found.set(id, `${pack}/${kind}`);
+    }
+  }
+}
+
 /**
- * Mirrors `app/server.py: load_problems()`. A problem's id is the filename stem
- * under packs/<pack>/{python,sql}/, ignoring files that start with "_".
+ * Every problem id the library can serve today, from both pack formats.
+ *
+ * A course names a problem by id and does not care which format it is stored
+ * in. Reading only v1 here would mean a problem authored in v2 - which is every
+ * new one - still looked "not yet written" to the course backlog, and the
+ * planned list would never empty.
  */
 function loadProblemIds() {
   const found = new Map(); // id -> "pack/kind"
-  let packDirs = [];
-  try {
-    packDirs = readdirSync(PACKS);
-  } catch {
-    return found;
-  }
-  for (const pack of packDirs.sort()) {
-    const packDir = join(PACKS, pack);
-    if (pack.startsWith(".") || !statSync(packDir).isDirectory()) continue;
-    for (const kind of ["python", "sql"]) {
-      const dir = join(packDir, kind);
-      let files = [];
-      try {
-        files = readdirSync(dir);
-      } catch {
-        continue;
-      }
-      for (const fn of files.sort()) {
-        if (!fn.endsWith(".py") || fn.startsWith("_")) continue;
-        found.set(fn.slice(0, -3), `${pack}/${kind}`);
-      }
+  for (const { root, read } of packRoots()) {
+    let packDirs = [];
+    try {
+      packDirs = readdirSync(root);
+    } catch {
+      continue;
+    }
+    for (const pack of packDirs.sort()) {
+      const packDir = join(root, pack);
+      if (pack.startsWith(".") || !statSync(packDir).isDirectory()) continue;
+      read(packDir, pack, found);
     }
   }
   return found;

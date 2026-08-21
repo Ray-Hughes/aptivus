@@ -29,7 +29,7 @@ node validate.mjs --json     # machine-readable
 |---|---|---|---|
 | `interview-sprint` | 6 | 13 | 27 |
 | `sql-for-interviews` | 8 | 7.75 | 12 |
-| `patterns-that-actually-come-up` | 8 | 9 | 15 existing + 5 planned |
+| `patterns-that-actually-come-up` | 8 | 10 | 20 |
 | `switching-to-python` | 6 | 6.25 | 12 |
 | `system-design-foundations` | 8 | 7 | 4 |
 

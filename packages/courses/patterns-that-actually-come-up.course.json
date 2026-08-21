@@ -5,8 +5,8 @@
   "subtitle": "The canonical set, each with the cue that tells you to reach for it",
   "audience": "Engineers who can solve problems given the approach, but who lose the first ten minutes of a round working out which approach it is. Assumes you can write code fluently; this is about recognition and templates, not about learning to program.",
   "level": "intermediate",
-  "estimatedHours": 9,
-  "timeNote": "About nine hours: fifteen existing problems whose target times total roughly three and a half hours, plus teaching, checkpoints, and the recall drills that are the actual point. Five problems in the two-pointers, intervals, binary search and DP modules are not written yet and are marked optional, so the course is completable today - it is just thinner in those four places.",
+  "estimatedHours": 10,
+  "timeNote": "About ten hours: twenty problems whose target times total a little under five hours, plus teaching, checkpoints, and the recall drills that are the actual point. Every problem the course names now exists, so nothing here is optional-because-unwritten - the only optional reference is py_11 in the intervals module, which is there as a deliberate compare-and-contrast with the sweep line.",
   "prerequisites": [
     "You can write code fluently in at least one language",
     "You know what O(n log n) means and can state the complexity of a loop"
@@ -108,7 +108,7 @@
       "id": "two-pointers",
       "title": "Two pointers",
       "summary": "Two indices moving through a sequence under a rule. The whole family: converging from both ends, running in parallel through two sorted inputs, and the fast/slow pair.",
-      "estimatedMinutes": 40,
+      "estimatedMinutes": 55,
       "objectives": [
         "Recognise 'sorted input, find a pair' as the converging-pointer cue",
         "Merge two sorted sequences without materialising a combined list",
@@ -118,29 +118,11 @@
       "problems": [
         {
           "slug": "py_16_sorted_pair_sum",
-          "planned": true,
-          "optional": true,
-          "note": "The converging-pointer version of two-sum, on a sorted input, in O(1) space.",
-          "plannedSpec": {
-            "title": "Two accounts hitting a target, on a sorted book",
-            "pattern": "two pointers",
-            "difficulty": "easy",
-            "minutes": 10,
-            "brief": "Sorted list of premiums and a target; return the two indices, O(1) extra space. Follow-ups: return all distinct pairs; what changes if the list is not sorted (sort first, and now it is O(n log n) but still O(1) space, versus the dict at O(n) time and O(n) space)."
-          }
+          "note": "The converging-pointer version of two-sum, on a sorted input, in O(1) space."
         },
         {
           "slug": "py_17_merge_sorted_feeds",
-          "planned": true,
-          "optional": true,
-          "note": "Parallel pointers over two sorted sequences: merge, and then the intersection and difference variants.",
-          "plannedSpec": {
-            "title": "Merge two sorted policy feeds",
-            "pattern": "two pointers",
-            "difficulty": "easy",
-            "minutes": 12,
-            "brief": "Merge two lists sorted by effective date into one sorted list, stably, without concatenate-then-sort. Follow-ups: only the records present in both; only those present in the first; what changes when the feeds are too large to hold in memory (the answer is: nothing, this streams)."
-          }
+          "note": "Parallel pointers over two sorted sequences: merge, and then the intersection and difference variants."
         }
       ],
       "checkpoint": {
@@ -180,10 +162,9 @@
         ]
       },
       "completion": {
-        "rule": "checkpoint-only",
+        "rule": "all-required-problems",
         "requireCheckpoint": true,
-        "checkpointPassScore": 0.66,
-        "notes": "Both problems for this module are still to be written. Until they exist, the module is teaching plus the checkpoint - and the sliding window module immediately afterwards gives you two-pointer code to write."
+        "checkpointPassScore": 0.66
       },
       "recap": "Two pointers is the O(1)-space answer to problems a dict solves in O(n) space, when the input is sorted. Next module is the same machinery with a different rule for moving the pointers."
     },
@@ -260,7 +241,7 @@
       "id": "intervals",
       "title": "Intervals: sort first, then sweep",
       "summary": "Anything with start and end pairs begins with a sort. What you sort by, and what you carry forward as you sweep, is the whole problem.",
-      "estimatedMinutes": 50,
+      "estimatedMinutes": 65,
       "objectives": [
         "Recognise interval problems and start with the sort",
         "Merge overlapping intervals in one pass",
@@ -280,16 +261,7 @@
         },
         {
           "slug": "py_18_insert_interval",
-          "planned": true,
-          "optional": true,
-          "note": "Insertion into an already-merged set, which forces the three-phase structure.",
-          "plannedSpec": {
-            "title": "Insert a coverage period into an existing schedule",
-            "pattern": "intervals",
-            "difficulty": "medium",
-            "minutes": 15,
-            "brief": "Given non-overlapping intervals sorted by start, insert a new interval and merge as needed. Tests the three-phase structure and the empty-input and insert-at-the-end cases. Follow-up: remove an interval, which can split an existing one in two."
-          }
+          "note": "Insertion into an already-merged set, which forces the three-phase structure."
         }
       ],
       "checkpoint": {
@@ -338,7 +310,7 @@
       "id": "binary-search",
       "title": "Binary search, including on the answer",
       "summary": "The easy half is searching a sorted array. The half that actually gets asked is the boundary variant, and the half that separates candidates is binary searching over a range of possible answers.",
-      "estimatedMinutes": 50,
+      "estimatedMinutes": 68,
       "objectives": [
         "Write the boundary variants without an off-by-one",
         "Use bisect rather than hand-rolling when a plain search will do",
@@ -352,16 +324,7 @@
         },
         {
           "slug": "py_19_min_capacity",
-          "planned": true,
-          "optional": true,
-          "note": "Binary search on the answer, with a feasibility check the candidate has to write themselves.",
-          "plannedSpec": {
-            "title": "Smallest capacity to clear the queue in n days",
-            "pattern": "binary search on the answer",
-            "difficulty": "medium",
-            "minutes": 18,
-            "brief": "Given a list of daily workloads that must be processed in order and a deadline in days, find the minimum per-day capacity. Tests naming the monotone predicate, justifying the bounds (max single item, and the total), and stating O(n log(range))."
-          }
+          "note": "Binary search on the answer, with a feasibility check the candidate has to write themselves."
         }
       ],
       "checkpoint": {
@@ -486,7 +449,7 @@
       "id": "dynamic-programming",
       "title": "Dynamic programming, at interview scale",
       "summary": "You will not be asked for anything exotic. You will be asked to define a state, write a recurrence, and say why the subproblems overlap. Do it in that order and out loud.",
-      "estimatedMinutes": 60,
+      "estimatedMinutes": 75,
       "objectives": [
         "State a DP as: what is the state, what is the recurrence, what are the base cases",
         "Convert a recursion into memoised form with one decorator",
@@ -501,16 +464,7 @@
         },
         {
           "slug": "py_20_grid_paths",
-          "planned": true,
-          "optional": true,
-          "note": "A 2D table, so the state is a cell rather than a number, and the loop ordering has to be argued for.",
-          "plannedSpec": {
-            "title": "Routes through a grid with blocked cells",
-            "pattern": "dynamic programming (grid)",
-            "difficulty": "medium",
-            "minutes": 15,
-            "brief": "Count paths from the top-left to the bottom-right moving only right and down, with some cells blocked. Tests the 2D state, the base row and column, and the blocked-cell zero. Follow-ups: reduce to one row of space; return one such path rather than the count."
-          }
+          "note": "A 2D table, so the state is a cell rather than a number, and the loop ordering has to be argued for."
         }
       ],
       "checkpoint": {
