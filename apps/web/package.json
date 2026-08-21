@@ -10,12 +10,14 @@
     "problems:verify": "node ../../packages/problems/verify.mjs",
     "problems:import": "node scripts/import-problems.mjs",
     "courses:import": "node scripts/import-courses.mjs",
-    "prebuild": "node scripts/check-engine-sync.mjs && node scripts/check-transitions.mjs",
+    "prebuild": "node scripts/check-engine-sync.mjs && node scripts/check-transitions.mjs && node scripts/check-schema.mjs",
     "db:migrate": "node scripts/migrate.mjs",
     "db:seed": "node scripts/seed.mjs",
     "db:import": "node scripts/import-problems.mjs && node scripts/import-companies.mjs && node scripts/import-courses.mjs",
     "test:tracks": "node scripts/test-tracks.mjs",
-    "test:coach": "node scripts/test-coach.mjs"
+    "test:coach": "node scripts/test-coach.mjs",
+    "db:schema": "node scripts/check-schema.mjs",
+    "db:flag": "node scripts/set-flag.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0",
