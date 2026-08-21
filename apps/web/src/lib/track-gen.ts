@@ -1,6 +1,7 @@
 import "server-only";
 import { generateJson, type AiResult } from "./ai";
 import { loadTransition, transitionBrief } from "./transitions";
+import { signalBrief, type Signal } from "./track-signal";
 
 /**
  * Generating a language roadmap aimed at one person's actual job.
@@ -154,6 +155,8 @@ export function lessonPrompt(input: {
   spec: Roadmap["lessons"][number];
   position: number;
   total: number;
+  /** How the previous lessons actually went. Absent for lesson one. */
+  signal?: Signal;
 }) {
   const map = loadTransition(input.knownLanguages, input.targetLanguage);
   return `
@@ -191,6 +194,8 @@ ${map ? transitionBrief(map) : "No authored transition map for this pair - only 
 
 - "hints": exactly three, escalating - a nudge, then the structure, then
   almost the answer.
+
+${input.signal ? signalBrief(input.signal) : ""}
 
 ${VOICE}
 `.trim();

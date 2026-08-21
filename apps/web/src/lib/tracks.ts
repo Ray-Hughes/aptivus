@@ -9,6 +9,7 @@ import {
   generateLesson, generateRoadmap,
 } from "./track-gen";
 import { verifyLesson } from "./lesson-verify";
+import { learnerSignal } from "./track-signal";
 
 /**
  * The server side of a language track: create it, fill it in, hand it out.
@@ -201,6 +202,9 @@ export async function ensureLessonWritten(
   };
   const total = await db.$count(trackLessons, eq(trackLessons.trackId, track.id));
   const { expertise } = await knownFor(track.userId, track.targetLanguage);
+  // Read at write time, which is the whole reason lessons are written lazily:
+  // by the time lesson 5 is generated, lessons 1-4 have actually been done.
+  const signal = await learnerSignal(track.userId, track.id, lesson.position);
 
   let lastReason = "";
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -212,6 +216,7 @@ export async function ensureLessonWritten(
       spec,
       position: lesson.position,
       total,
+      signal,
     });
     if (!written.ok) {
       await db.update(trackLessons)
@@ -228,7 +233,15 @@ export async function ensureLessonWritten(
           title: written.value.title,
           relevance: written.value.relevance,
           estimatedMinutes: written.value.estimatedMinutes,
-          body: written.value as unknown as Record<string, unknown>,
+          // Stored alongside the lesson so the learner can be told what it
+          // adapted to, and so a bad adaptation can be diagnosed later rather
+          // than guessed at.
+          body: {
+            ...written.value,
+            adapted: signal.pace === "unknown"
+              ? null
+              : { pace: signal.pace, summary: signal.summary, basedOn: signal.recent.length },
+          } as unknown as Record<string, unknown>,
           verifiedAt: Math.floor(Date.now() / 1000),
           verifyError: null,
         })
@@ -252,8 +265,15 @@ export async function ensureLessonWritten(
  * Hints and the solution are metered, so they are stripped here and served
  * one at a time by their own routes.
  */
-export function publicLesson(lesson: Lesson, unlocked: { hints: number; solution: boolean }) {
+export function publicLesson(
+  lesson: Lesson & { adapted?: { pace: string; summary: string; basedOn: number } | null },
+  unlocked: { hints: number; solution: boolean },
+) {
   return {
+    // Shown to the learner. Being told what a thing adapted to is the
+    // difference between a system that feels responsive and one that feels
+    // arbitrary, and it is the only way they can tell us it got it wrong.
+    adapted: lesson.adapted ?? null,
     title: lesson.title,
     relevance: lesson.relevance,
     estimatedMinutes: lesson.estimatedMinutes,

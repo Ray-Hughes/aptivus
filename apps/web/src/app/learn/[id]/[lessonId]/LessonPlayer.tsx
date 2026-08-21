@@ -15,6 +15,7 @@ import { getJsEngine } from "@/lib/js-client";
  */
 
 type PublicLesson = {
+  adapted: { pace: string; summary: string; basedOn: number } | null;
   title: string;
   relevance: string;
   estimatedMinutes: number;
@@ -249,6 +250,12 @@ export function LessonPlayer(props: {
             Why this is here
           </p>
           <p className="mt-1.5 text-[13px] leading-relaxed text-[#9aa1ad]">{lesson.relevance}</p>
+          {lesson.adapted && (
+            <p className="mt-3 flex items-start gap-2 rounded-lg border border-white/[0.07] bg-white/[0.02] px-3 py-2 text-[12.5px] leading-relaxed text-[#8b929d]">
+              <span aria-hidden className="mt-px text-[#4aa3ff]">&#8635;</span>
+              <span>{lesson.adapted.summary}</span>
+            </p>
+          )}
           <Markdown source={lesson.teaching} variant="prose" className="mt-6 max-w-[68ch]" />
         </section>
 
