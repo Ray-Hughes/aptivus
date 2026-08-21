@@ -8,7 +8,11 @@
     "start": "next start",
     "lint": "eslint",
     "problems:verify": "node ../../packages/problems/verify.mjs",
-    "problems:import": "node scripts/import-problems.mjs"
+    "problems:import": "node scripts/import-problems.mjs",
+    "prebuild": "node scripts/check-engine-sync.mjs",
+    "db:migrate": "node scripts/migrate.mjs",
+    "db:seed": "node scripts/seed.mjs",
+    "db:import": "node scripts/import-problems.mjs && node scripts/import-companies.mjs"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.3",
@@ -34,5 +38,8 @@
     "tailwindcss": "^4",
     "tsx": "^4.23.12",
     "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=20.9.0"
   }
 }

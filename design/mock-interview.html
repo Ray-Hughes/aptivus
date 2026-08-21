@@ -859,6 +859,12 @@ body.in-round { overflow: hidden; }
 .clockbar .tick.half { background: var(--text-3); opacity: .8; }
 .clockbar .tick.five { background: var(--warning); opacity: 0; transition: opacity var(--dur-3) var(--ease); }
 .clockbar .tick.five.on { opacity: 1; }
+.clockbar .tick.end { background: var(--danger); width: 2px; z-index: 3; }
+.clockbar .overwash {
+  position: absolute; top: 0; bottom: 0; right: 0; z-index: 2; pointer-events: none;
+  background: repeating-linear-gradient(45deg, var(--danger) 0 2px, transparent 2px 6px), var(--danger-quiet);
+  opacity: .85;
+}
 .clockbar.over { background: var(--danger-quiet); box-shadow: inset 0 0 0 1px var(--danger-line); }
 .clockbar .tick { z-index: 2; }
 
@@ -1112,6 +1118,8 @@ body.col-resizing { cursor: col-resize; user-select: none; }
   .pane { display: none; }
   .pane.shown { display: flex; }
   .paneswitch { display: inline-flex !important; }
+  .ptab { max-width: 210px; padding: 0 10px; }
+  .ptab .pt span { display: none; }
   .shape-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 760px) {
@@ -1376,8 +1384,10 @@ body.col-resizing { cursor: col-resize; user-select: none; }
 
   <div class="clockbar" id="clockBar" role="img" aria-label="Time used, coloured by which problem you were on">
     <div class="segs" id="clockSegs"></div>
+    <span class="overwash" id="overWash" hidden></span>
     <span class="tick half" id="tickHalf" title="halfway"></span>
     <span class="tick five" id="tickFive" title="five minutes left"></span>
+    <span class="tick end" id="tickEnd" title="where the clock ran out" hidden></span>
   </div>
 
   <div class="rgrid" id="rgrid">
@@ -2109,15 +2119,19 @@ function paintClock() {
     const last = runs[runs.length - 1];
     if (last && last.p === b.p) last.d += b.d; else runs.push({ p: b.p, d: b.d });
   }
-  const denom = R.len;
+  const denom = Math.max(R.len, R.elapsed);
   $("#clockSegs").innerHTML = runs.map(r =>
     `<i class="seg-p${r.p}" style="width:${clamp(r.d / denom * 100, 0, 100)}%"></i>`).join("");
   $("#clockBar").classList.toggle("over", left <= 0);
   $("#clockBar").classList.toggle("soon", left <= 300 && left > 0);
-  $("#tickHalf").style.left = "50%";
+  $("#tickHalf").style.left = (R.len / 2 / denom * 100) + "%";
   $("#tickFive").style.left = ((denom - 300) / denom * 100) + "%";
   $("#tickFive").style.display = denom > 900 ? "" : "none";
-  $("#tickFive").classList.toggle("on", R.elapsed > denom * .5);
+  $("#tickFive").classList.toggle("on", R.elapsed > R.len * .5 && left > 0);
+  const ow = $("#overWash"), te = $("#tickEnd");
+  if (left < 0) { ow.hidden = false; te.hidden = false;
+                  ow.style.width = (-left / denom * 100) + "%"; te.style.left = (R.len / denom * 100) + "%"; }
+  else { ow.hidden = true; te.hidden = true; }
   $("#onThis").textContent = "on this problem " + mmss(R.problems[R.cur].seconds);
   renderPrailTimes();
 }
@@ -2780,7 +2794,7 @@ function setState(s) {
   $("#protoNote").textContent = s === "pre" ? "The real controls work too — Start the round begins state 2."
     : s === "round" ? "The clock is live. End round takes you to the scorecard."
     : "Four outcomes, so the honest ones are visible too.";
-  if (s === "round") { setTimeout(() => { $("#edTa").focus(); paintEditor(); }, 30); }
+  if (s === "round") { syncPanes(); setTimeout(() => { $("#edTa").focus(); paintEditor(); }, 30); }
   if (s === "card" && CURRENT) setTimeout(() => drawTimeline(CURRENT), 30);
   syncChrome();
 }
@@ -2816,7 +2830,7 @@ function syncChrome() {
   const h = $(".app-top").offsetHeight + $("#protobar").offsetHeight;
   document.documentElement.style.setProperty("--chrome-h", h + "px");
 }
-window.addEventListener("resize", () => { syncChrome(); if (CURRENT && !$("#viewCard").hidden) drawTimeline(CURRENT); });
+window.addEventListener("resize", () => { syncChrome(); syncPanes(); if (CURRENT && !$("#viewCard").hidden) drawTimeline(CURRENT); });
 
 function say(msg) { $("#live").textContent = msg; }
 
@@ -2858,11 +2872,16 @@ document.addEventListener("click", () => {
 $("#userPanel").addEventListener("click", e => e.stopPropagation());
 $("#signOut").addEventListener("click", () => toast("info", "Signed out", "Not really — this is a prototype."));
 
-/* pane switch (tablet) */
+/* pane switch (tablet). Above 1120px both panes are always shown. */
+function syncPanes() {
+  const narrow = window.matchMedia("(max-width: 1120px)").matches;
+  const sel = ($("#paneSwitch button[aria-selected='true']") || {}).dataset;
+  $$(".rgrid .pane").forEach(p => p.classList.toggle("shown", !narrow || p.dataset.pane === (sel ? sel.p : "problem")));
+}
 $("#paneSwitch").addEventListener("click", (e) => {
   const b = e.target.closest("button"); if (!b) return;
   $$("#paneSwitch button").forEach(x => x.setAttribute("aria-selected", String(x === b)));
-  $$(".rgrid .pane").forEach(p => p.classList.toggle("shown", p.dataset.pane === b.dataset.p));
+  syncPanes();
 });
 
 /* splitter */
@@ -2898,6 +2917,7 @@ document.addEventListener("keydown", (e) => {
 });
 
 /* boot */
+syncPanes();
 renderPre();
 syncChrome();
 showScorecard(SCENS.B);
